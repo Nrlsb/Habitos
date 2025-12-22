@@ -7,13 +7,15 @@ function HabitStats({ habitId, onBack }) {
     const [habit, setHabit] = useState(null)
     const [loading, setLoading] = useState(true)
 
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
     useEffect(() => {
         fetchHabitDetails()
     }, [habitId])
 
     const fetchHabitDetails = async () => {
         try {
-            const response = await fetch(`http://localhost:3000/api/habits/${habitId}`)
+            const response = await fetch(`${API_URL}/api/habits/${habitId}`)
             const data = await response.json()
             setHabit(data)
         } catch (error) {
@@ -86,59 +88,6 @@ function HabitStats({ habitId, onBack }) {
         }
 
         return { currentStreak, longestStreak }
-    }
-
-    const handleDateClick = async (dateStr) => {
-        // If habit is counter type, we need to ask for value
-        if (habit.type === 'counter') {
-            const existing = habit.completions.find(c => c.completed_date === dateStr)
-            const currentValue = existing ? existing.value : 0
-
-            const newValueStr = prompt(`Ingresa la cantidad de ${habit.unit} para el día ${dateStr}:`, currentValue)
-            if (newValueStr === null) return // Cancelled
-
-            const newValue = parseInt(newValueStr)
-            if (isNaN(newValue)) return alert('Por favor ingresa un número válido')
-
-            // Determine state based on goal
-            const newState = newValue >= habit.goal ? 'completed' : 'none' // Or 'partial' if we supported it
-
-            try {
-                const response = await fetch(`http://localhost:3000/api/habits/${habitId}/toggle`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: dateStr, state: newState, value: newValue })
-                })
-
-                if (response.ok) {
-                    fetchHabitDetails()
-                }
-            } catch (error) {
-                console.error('Error updating habit value:', error)
-            }
-        } else {
-            // Boolean logic (existing)
-            const existing = habit.completions.find(c => c.completed_date === dateStr)
-            let nextState = 'completed'
-
-            if (existing) {
-                nextState = null // Delete (Toggle off)
-            }
-
-            try {
-                const response = await fetch(`http://localhost:3000/api/habits/${habitId}/toggle`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: dateStr, state: nextState })
-                })
-
-                if (response.ok) {
-                    fetchHabitDetails()
-                }
-            } catch (error) {
-                console.error('Error toggling habit:', error)
-            }
-        }
     }
 
     if (loading) return (

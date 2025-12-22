@@ -14,13 +14,15 @@ function App() {
   const [habitUnit, setHabitUnit] = useState('')
   const [habitCategory, setHabitCategory] = useState('General')
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
   useEffect(() => {
     fetchHabits()
   }, [])
 
   const fetchHabits = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/habits')
+      const response = await fetch(`${API_URL}/api/habits`)
       const data = await response.json()
       setHabits(data)
     } catch (error) {
@@ -35,7 +37,7 @@ function App() {
     if (!newHabitTitle.trim()) return
 
     try {
-      const response = await fetch('http://localhost:3000/api/habits', {
+      const response = await fetch(`${API_URL}/api/habits`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,13 +63,14 @@ function App() {
   }
 
   const deleteHabit = async (id) => {
-    if (!confirm('¿Estás seguro de que quieres eliminar este hábito?')) return
+    if (!confirm('¿Estás seguro de eliminar este hábito?')) return
 
     try {
-      await fetch(`http://localhost:3000/api/habits/${id}`, {
+      await fetch(`${API_URL}/api/habits/${id}`, {
         method: 'DELETE',
       })
-      setHabits(habits.filter(habit => habit.id !== id))
+      setHabits(habits.filter(h => h.id !== id))
+      if (selectedHabitId === id) setSelectedHabitId(null)
     } catch (error) {
       console.error('Error al eliminar hábito:', error)
     }
