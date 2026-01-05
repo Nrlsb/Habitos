@@ -669,6 +669,93 @@ app.get('/api/expenses/daily', authenticateUser, async (req, res) => {
     }
 });
 
+// 4. Planning / Tasks Routes
+
+// Get tasks (supports date filtering)
+app.get('/api/tasks', authenticateUser, async (req, res) => {
+    const { start_date, end_date } = req.query;
+
+    let query = supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', req.user.id)
+        .order('due_date', { ascending: true });
+
+    if (start_date && end_date) {
+        query = query
+            .gte('due_date', `${start_date}T00:00:00`)
+            .lte('due_date', `${end_date}T23:59:59`);
+    }
+
+    const { data, error } = await query;
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
+// Create task
+app.post('/api/tasks', authenticateUser, async (req, res) => {
+    const { title, description, due_date, priority } = req.body;
+
+    if (!title || !due_date) {
+        return res.status(400).json({ error: 'Title and due_date are required' });
+    }
+
+    const newTask = {
+        user_id: req.user.id,
+        title,
+        description: description || '',
+        due_date, // Client should send ISO string
+        priority: priority || 'medium',
+        is_completed: false
+    };
+
+    const { data, error } = await supabase
+        .from('tasks')
+        .insert([newTask])
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data[0]);
+});
+
+// Update task
+app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { title, description, due_date, priority, is_completed } = req.body;
+
+    const updates = {};
+    if (title !== undefined) updates.title = title;
+    if (description !== undefined) updates.description = description;
+    if (due_date !== undefined) updates.due_date = due_date;
+    if (priority !== undefined) updates.priority = priority;
+    if (is_completed !== undefined) updates.is_completed = is_completed;
+
+    const { data, error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', req.user.id)
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+});
+
+// Delete task
+app.delete('/api/tasks/:id', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+
+    const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', req.user.id);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ message: 'Task deleted' });
+});
+
 // 3. BNA Route (Dollar Rate)
 
 // URL ÚNICA de BNA

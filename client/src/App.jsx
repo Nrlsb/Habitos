@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut } from 'lucide-react'
+import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut, Layout } from 'lucide-react'
 import HabitStats from './HabitStats'
 import Expenses from './features/expenses/Expenses'
 import DailyExpenses from './features/expenses/DailyExpenses'
+import Planning from './features/planning/Planning'
 import { ExpensesProvider } from './features/expenses/ExpensesContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
@@ -162,10 +163,22 @@ function AppContent() {
               <Calendar size={18} />
               Diario
             </button>
+            <button
+              onClick={() => setView('planning')}
+              className={`px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium ${view === 'planning'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+            >
+              <Layout size={18} />
+              Planificación
+            </button>
           </div>
         </header>
 
-        {view === 'expenses' || view === 'daily-expenses' ? (
+        {view === 'planning' ? (
+          <Planning />
+        ) : view === 'expenses' || view === 'daily-expenses' ? (
           <ExpensesProvider>
             {view === 'expenses' ? <Expenses /> : <DailyExpenses />}
           </ExpensesProvider>
