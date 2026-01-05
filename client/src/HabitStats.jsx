@@ -7,6 +7,8 @@ import Calendar from './Calendar'
 function HabitStats({ habitId, onBack }) {
     const [habit, setHabit] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [selectedDate, setSelectedDate] = useState(null)
+    const [inputValue, setInputValue] = useState('')
     const { session } = useAuth()
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
@@ -111,7 +113,47 @@ function HabitStats({ habitId, onBack }) {
     const { currentStreak, longestStreak } = calculateStats(habit.completions)
 
     const handleDateClick = (date) => {
-        console.log('Date clicked:', date)
+        setSelectedDate(date)
+        const existingCompletion = habit.completions.find(c => (c.completed_date || c) === date)
+        if (habit.type === 'counter') {
+            setInputValue(existingCompletion ? existingCompletion.value : '')
+        }
+    }
+
+    const handleSaveCompletion = async () => {
+        if (!selectedDate) return
+
+        let method = 'POST'
+        let body = { date: selectedDate }
+
+        // Ensure completion endpoints are correct based on backend implementation
+        // Assuming POST /api/habits/:id/completion to toggle/add
+        // For 'counter' type, we need to send the value
+
+        if (habit.type === 'counter') {
+            body.value = parseInt(inputValue)
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/api/habits/${habitId}/completion`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(body)
+            })
+
+            if (response.ok) {
+                fetchHabitDetails()
+                setSelectedDate(null)
+                setInputValue('')
+            } else {
+                console.error('Failed to save completion')
+            }
+        } catch (error) {
+            console.error('Error saving completion:', error)
+        }
     }
 
     // Prepare chart data
@@ -233,6 +275,51 @@ function HabitStats({ habitId, onBack }) {
                     </div>
                 )}
             </div>
+            {/* Modal for adding/editing completion */}
+            {selectedDate && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
+                        <h3 className="text-xl font-bold text-white mb-4">
+                            {new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                        </h3>
+
+                        {habit.type === 'counter' ? (
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-slate-400 mb-2">
+                                    Cantidad ({habit.unit})
+                                </label>
+                                <input
+                                    type="number"
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                                    placeholder={`Meta: ${habit.goal}`}
+                                    autoFocus
+                                />
+                            </div>
+                        ) : (
+                            <p className="text-slate-300 mb-6">
+                                ¿Marcaste este hábito como completado?
+                            </p>
+                        )}
+
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setSelectedDate(null)}
+                                className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleSaveCompletion}
+                                className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/25"
+                            >
+                                Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
