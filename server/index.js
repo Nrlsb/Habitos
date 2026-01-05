@@ -495,9 +495,9 @@ app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, re
     }
 
     const {
-        description,
         amount,
         currency,
+        category, // New field
         esCompartido,
         enCuotas,
         cuotaActual,
@@ -509,6 +509,7 @@ app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, re
         description,
         amount,
         currency: currency || 'ARS',
+        category: category || 'General', // Default to General
         is_shared: esCompartido || false,
         is_installment: enCuotas || false,
         current_installment: cuotaActual || null,
@@ -549,6 +550,7 @@ app.put('/api/expenses/:id', authenticateUser, async (req, res) => {
         description,
         amount,
         currency,
+        category, // New field
         esCompartido,
         enCuotas,
         cuotaActual,
@@ -559,6 +561,7 @@ app.put('/api/expenses/:id', authenticateUser, async (req, res) => {
         description,
         amount,
         currency,
+        category, // New field
         is_shared: esCompartido,
         is_installment: enCuotas,
         current_installment: cuotaActual,

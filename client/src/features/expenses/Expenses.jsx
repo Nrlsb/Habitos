@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from './ExpensesContext';
 import { getDolarRate } from '../../services/dolarApi';
-import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List } from 'lucide-react';
+import ExpensesAnalysis from './ExpensesAnalysis';
 
 function Expenses() {
     const {
@@ -34,7 +35,10 @@ function Expenses() {
     const [enCuotas, setEnCuotas] = useState(false);
     const [totalCuotas, setTotalCuotas] = useState('');
     const [cuotaActual, setCuotaActual] = useState('');
+    const [category, setCategory] = useState('General'); // New Category State
     const [editingId, setEditingId] = useState(null);
+
+    const [activeTab, setActiveTab] = useState('list'); // 'list' or 'analysis'
 
     const [dolarRate, setDolarRate] = useState(null);
 
@@ -75,6 +79,7 @@ function Expenses() {
         setEnCuotas(false);
         setCuotaActual('');
         setTotalCuotas('');
+        setCategory('General');
         setEditingId(null);
     };
 
@@ -86,6 +91,7 @@ function Expenses() {
             description,
             amount: parseFloat(amount),
             currency,
+            category,
             esCompartido,
             enCuotas,
             cuotaActual: enCuotas ? parseInt(cuotaActual) : null,
@@ -105,6 +111,7 @@ function Expenses() {
         setDescription(expense.description);
         setAmount(expense.amount);
         setCurrency(expense.currency || 'ARS');
+        setCategory(expense.category || 'General');
         setEsCompartido(expense.is_shared);
         setEnCuotas(expense.is_installment);
         setCuotaActual(expense.current_installment || '');
@@ -320,311 +327,359 @@ function Expenses() {
                     </div>
                 </div>
 
-                {/* ADD NEW EXPENSE FORM */}
-                <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-sm">
-                    <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
-                        <Plus size={20} className="text-indigo-400" />
-                        {editingId ? 'Editar Gasto' : 'Añadir Nuevo Gasto'}
-                    </h3>
-                    <form onSubmit={handleSubmitExpense}>
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
-                            <div className="md:col-span-6">
-                                <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Descripción</label>
-                                <input
-                                    type="text"
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    placeholder="Ej: Compra en el supermercado"
-                                    className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600"
-                                />
-                            </div>
-                            <div className="md:col-span-3">
-                                <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Monto</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={amount}
-                                    onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="0.00"
-                                    className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600 tabular-nums"
-                                />
-                            </div>
-                            <div className="md:col-span-3">
-                                <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Moneda</label>
-                                <div className="relative">
-                                    <select
-                                        value={currency}
-                                        onChange={(e) => setCurrency(e.target.value)}
-                                        className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
-                                    >
-                                        <option value="ARS">ARS 🇦🇷</option>
-                                        <option value="USD">USD 🇺🇸</option>
-                                    </select>
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                {/* TABS NAVIGATION */}
+                <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-fit border border-slate-700/50">
+                    <button
+                        onClick={() => setActiveTab('list')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'list' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                    >
+                        <List size={18} />
+                        Lista
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('analysis')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'analysis' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                    >
+                        <PieChart size={18} />
+                        Análisis
+                    </button>
+                </div>
+
+                {activeTab === 'analysis' ? (
+                    <ExpensesAnalysis expenses={expenses} dolarRate={dolarRate} />
+                ) : (
+                    <>
+                        {/* ADD NEW EXPENSE FORM */}
+                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-sm">
+                            <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
+                                <Plus size={20} className="text-indigo-400" />
+                                {editingId ? 'Editar Gasto' : 'Añadir Nuevo Gasto'}
+                            </h3>
+                            <form onSubmit={handleSubmitExpense}>
+                                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
+                                    <div className="md:col-span-5">
+                                        <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Descripción</label>
+                                        <input
+                                            type="text"
+                                            value={description}
+                                            onChange={(e) => setDescription(e.target.value)}
+                                            placeholder="Ej: Compra en el supermercado"
+                                            className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-3">
+                                        <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Categoría</label>
+                                        <div className="relative">
+                                            <select
+                                                value={category}
+                                                onChange={(e) => setCategory(e.target.value)}
+                                                className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                                            >
+                                                <option value="General">General</option>
+                                                <option value="Comida">Comida 🍔</option>
+                                                <option value="Transporte">Transporte 🚌</option>
+                                                <option value="Servicios">Servicios 💡</option>
+                                                <option value="Supermercado">Supermercado 🛒</option>
+                                                <option value="Ocio">Ocio 🎬</option>
+                                                <option value="Salud">Salud 💊</option>
+                                                <option value="Ropa">Ropa 👕</option>
+                                                <option value="Educación">Educación 📚</option>
+                                                <option value="Otros">Otros 📦</option>
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Monto</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
+                                            placeholder="0.00"
+                                            className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600 tabular-nums"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Moneda</label>
+                                        <div className="relative">
+                                            <select
+                                                value={currency}
+                                                onChange={(e) => setCurrency(e.target.value)}
+                                                className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                                            >
+                                                <option value="ARS">ARS 🇦🇷</option>
+                                                <option value="USD">USD 🇺🇸</option>
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+
+                                <div className="flex flex-wrap gap-4 mb-6">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600 bg-slate-900/50 group-hover:border-slate-500'}`}>
+                                            {esCompartido && <CheckCircle size={14} className="text-white" />}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={esCompartido}
+                                            onChange={(e) => setEsCompartido(e.target.checked)}
+                                            className="hidden"
+                                        />
+                                        <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">Gasto Compartido</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600 bg-slate-900/50 group-hover:border-slate-500'}`}>
+                                            {enCuotas && <CheckCircle size={14} className="text-white" />}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={enCuotas}
+                                            onChange={(e) => setEnCuotas(e.target.checked)}
+                                            className="hidden"
+                                        />
+                                        <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">Pagar en cuotas</span>
+                                    </label>
+                                </div>
+
+                                {enCuotas && (
+                                    <div className="flex gap-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300 bg-slate-900/30 p-4 rounded-xl border border-slate-700/30">
+                                        <div className="w-32">
+                                            <label className="block text-xs text-slate-500 mb-1.5 ml-1">Cuota Actual</label>
+                                            <input
+                                                type="number"
+                                                value={cuotaActual}
+                                                onChange={(e) => setCuotaActual(e.target.value)}
+                                                className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                        <div className="w-32">
+                                            <label className="block text-xs text-slate-500 mb-1.5 ml-1">Total Cuotas</label>
+                                            <input
+                                                type="number"
+                                                value={totalCuotas}
+                                                onChange={(e) => setTotalCuotas(e.target.value)}
+                                                className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex gap-3">
+                                    <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex-1 md:flex-none md:min-w-[120px]">
+                                        {editingId ? 'Actualizar' : 'Añadir Gasto'}
+                                    </button>
+                                    {editingId && (
+                                        <button type="button" onClick={resetForm} className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-medium transition-colors">
+                                            Cancelar
+                                        </button>
+                                    )}
+                                </div>
+                            </form>
                         </div>
 
-                        <div className="flex flex-wrap gap-4 mb-6">
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600 bg-slate-900/50 group-hover:border-slate-500'}`}>
-                                    {esCompartido && <CheckCircle size={14} className="text-white" />}
-                                </div>
-                                <input
-                                    type="checkbox"
-                                    checked={esCompartido}
-                                    onChange={(e) => setEsCompartido(e.target.checked)}
-                                    className="hidden"
-                                />
-                                <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">Gasto Compartido</span>
-                            </label>
-
-                            <label className="flex items-center gap-2 cursor-pointer group">
-                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600 bg-slate-900/50 group-hover:border-slate-500'}`}>
-                                    {enCuotas && <CheckCircle size={14} className="text-white" />}
-                                </div>
-                                <input
-                                    type="checkbox"
-                                    checked={enCuotas}
-                                    onChange={(e) => setEnCuotas(e.target.checked)}
-                                    className="hidden"
-                                />
-                                <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">Pagar en cuotas</span>
-                            </label>
+                        {/* EXPENSES TABLE */}
+                        <div className="mb-4">
+                            <h3 className="text-xl font-bold text-slate-200 mb-2">Historial de Gastos</h3>
                         </div>
 
-                        {enCuotas && (
-                            <div className="flex gap-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300 bg-slate-900/30 p-4 rounded-xl border border-slate-700/30">
-                                <div className="w-32">
-                                    <label className="block text-xs text-slate-500 mb-1.5 ml-1">Cuota Actual</label>
-                                    <input
-                                        type="number"
-                                        value={cuotaActual}
-                                        onChange={(e) => setCuotaActual(e.target.value)}
-                                        className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    />
+                        {/* MOBILE CARD VIEW */}
+                        <div className="block md:hidden space-y-4">
+                            {expenses.length === 0 ? (
+                                <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-700 rounded-xl bg-slate-800/20">
+                                    No hay gastos registrados.
                                 </div>
-                                <div className="w-32">
-                                    <label className="block text-xs text-slate-500 mb-1.5 ml-1">Total Cuotas</label>
-                                    <input
-                                        type="number"
-                                        value={totalCuotas}
-                                        onChange={(e) => setTotalCuotas(e.target.value)}
-                                        className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    />
-                                </div>
-                            </div>
-                        )}
+                            ) : (
+                                expenses.map((expense) => {
+                                    const montoTotalArs = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
+                                    const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
 
-                        <div className="flex gap-3">
-                            <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex-1 md:flex-none md:min-w-[120px]">
-                                {editingId ? 'Actualizar' : 'Añadir Gasto'}
-                            </button>
-                            {editingId && (
-                                <button type="button" onClick={resetForm} className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-medium transition-colors">
-                                    Cancelar
-                                </button>
+                                    // Calculate USD amount for display
+                                    let montoUsdDisplay = null;
+                                    if (expense.currency === 'USD') {
+                                        montoUsdDisplay = `USD $${expense.amount.toFixed(2)}`;
+                                    } else if (dolarRate) {
+                                        montoUsdDisplay = `USD $${(expense.amount / dolarRate).toFixed(2)}`;
+                                    }
+
+                                    return (
+                                        <div key={expense.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div>
+                                                    <h4 className="font-semibold text-slate-200 text-lg">{expense.description}</h4>
+                                                    <p className="text-xs text-slate-500">{new Date(expense.created_at).toLocaleDateString()}</p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleEditExpense(expense)}
+                                                        className="text-slate-500 hover:text-indigo-400 p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
+                                                    >
+                                                        <Edit2 size={18} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteExpense(expense.id)}
+                                                        className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm mb-4">
+                                                <div className="bg-slate-900/50 p-2 rounded-lg">
+                                                    <span className="text-slate-500 text-[10px] uppercase tracking-wider block mb-0.5">Monto Total</span>
+                                                    <span className="font-medium text-slate-300 tabular-nums">${montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                                <div className="bg-indigo-900/20 p-2 rounded-lg border border-indigo-500/20">
+                                                    <span className="text-indigo-400 text-[10px] uppercase tracking-wider block mb-0.5">Personal</span>
+                                                    <span className="font-bold text-indigo-300 tabular-nums">${montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
+                                                </div>
+                                                {montoUsdDisplay && (
+                                                    <div className="col-span-2 flex justify-between items-center border-t border-slate-700 pt-2 mt-1">
+                                                        <span className="text-slate-500 text-xs">Equivalente USD</span>
+                                                        <span className="text-slate-400 font-mono text-xs">{montoUsdDisplay}</span>
+                                                    </div>
+                                                )}
+                                                {expense.is_installment && (
+                                                    <div className="col-span-2">
+                                                        <div className="flex justify-between text-xs text-slate-500 mb-1">
+                                                            <span>Progreso Cuotas</span>
+                                                            <span>{expense.current_installment}/{expense.total_installments}</span>
+                                                        </div>
+                                                        <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                                                            <div
+                                                                style={{ width: `${(expense.current_installment / expense.total_installments) * 100}%` }}
+                                                                className="h-full bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full"
+                                                            ></div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="flex gap-2">
+                                                {expense.is_shared ? (
+                                                    <span className="bg-cyan-500/10 text-cyan-400 text-xs px-2.5 py-1 rounded-full font-medium border border-cyan-500/20">Compartido</span>
+                                                ) : (
+                                                    <span className="bg-slate-700 text-slate-400 text-xs px-2.5 py-1 rounded-full font-medium border border-slate-600">Personal</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
                             )}
                         </div>
-                    </form>
-                </div>
 
-                {/* EXPENSES TABLE */}
-                <div className="mb-4">
-                    <h3 className="text-xl font-bold text-slate-200 mb-2">Historial de Gastos</h3>
-                </div>
-
-                {/* MOBILE CARD VIEW */}
-                <div className="block md:hidden space-y-4">
-                    {expenses.length === 0 ? (
-                        <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-700 rounded-xl bg-slate-800/20">
-                            No hay gastos registrados.
-                        </div>
-                    ) : (
-                        expenses.map((expense) => {
-                            const montoTotalArs = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
-                            const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
-
-                            // Calculate USD amount for display
-                            let montoUsdDisplay = null;
-                            if (expense.currency === 'USD') {
-                                montoUsdDisplay = `USD $${expense.amount.toFixed(2)}`;
-                            } else if (dolarRate) {
-                                montoUsdDisplay = `USD $${(expense.amount / dolarRate).toFixed(2)}`;
-                            }
-
-                            return (
-                                <div key={expense.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div>
-                                            <h4 className="font-semibold text-slate-200 text-lg">{expense.description}</h4>
-                                            <p className="text-xs text-slate-500">{new Date(expense.created_at).toLocaleDateString()}</p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                onClick={() => handleEditExpense(expense)}
-                                                className="text-slate-500 hover:text-indigo-400 p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
-                                            >
-                                                <Edit2 size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteExpense(expense.id)}
-                                                className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm mb-4">
-                                        <div className="bg-slate-900/50 p-2 rounded-lg">
-                                            <span className="text-slate-500 text-[10px] uppercase tracking-wider block mb-0.5">Monto Total</span>
-                                            <span className="font-medium text-slate-300 tabular-nums">${montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
-                                        </div>
-                                        <div className="bg-indigo-900/20 p-2 rounded-lg border border-indigo-500/20">
-                                            <span className="text-indigo-400 text-[10px] uppercase tracking-wider block mb-0.5">Personal</span>
-                                            <span className="font-bold text-indigo-300 tabular-nums">${montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
-                                        </div>
-                                        {montoUsdDisplay && (
-                                            <div className="col-span-2 flex justify-between items-center border-t border-slate-700 pt-2 mt-1">
-                                                <span className="text-slate-500 text-xs">Equivalente USD</span>
-                                                <span className="text-slate-400 font-mono text-xs">{montoUsdDisplay}</span>
-                                            </div>
-                                        )}
-                                        {expense.is_installment && (
-                                            <div className="col-span-2">
-                                                <div className="flex justify-between text-xs text-slate-500 mb-1">
-                                                    <span>Progreso Cuotas</span>
-                                                    <span>{expense.current_installment}/{expense.total_installments}</span>
-                                                </div>
-                                                <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
-                                                    <div
-                                                        style={{ width: `${(expense.current_installment / expense.total_installments) * 100}%` }}
-                                                        className="h-full bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full"
-                                                    ></div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        {expense.is_shared ? (
-                                            <span className="bg-cyan-500/10 text-cyan-400 text-xs px-2.5 py-1 rounded-full font-medium border border-cyan-500/20">Compartido</span>
-                                        ) : (
-                                            <span className="bg-slate-700 text-slate-400 text-xs px-2.5 py-1 rounded-full font-medium border border-slate-600">Personal</span>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
-
-                {/* DESKTOP TABLE VIEW */}
-                <div className="hidden md:block bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-slate-400">
-                            <thead className="text-xs text-slate-300 uppercase bg-slate-900/80 border-b border-slate-700">
-                                <tr>
-                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide">Descripción</th>
-                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Total (ARS)</th>
-                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Personal (ARS)</th>
-                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Ref. USD</th>
-                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Cuotas</th>
-                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Tipo</th>
-                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Fecha</th>
-                                    <th scope="col" className="px-6 py-4 text-center"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-700/50">
-                                {expenses.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="8" className="px-6 py-12 text-center text-slate-500">
-                                            No hay gastos registrados en esta planilla.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    expenses.map((expense, index) => {
-                                        const montoTotalArs = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
-                                        const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
-
-                                        // Calculate USD amount for display
-                                        let montoUsdDisplay = '-';
-                                        if (expense.currency === 'USD') {
-                                            montoUsdDisplay = `$${expense.amount.toFixed(2)}`;
-                                        } else if (dolarRate) {
-                                            montoUsdDisplay = `$${(expense.amount / dolarRate).toFixed(2)}`;
-                                        }
-
-                                        return (
-                                            <tr key={expense.id} className={`group hover:bg-slate-700/30 transition-colors ${index % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/30'}`}>
-                                                <td className="px-6 py-4 font-medium text-slate-200">
-                                                    {expense.description}
-                                                </td>
-                                                <td className="px-6 py-4 text-right tabular-nums text-slate-300">
-                                                    $ {montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </td>
-                                                <td className="px-6 py-4 text-right tabular-nums font-semibold text-indigo-300">
-                                                    $ {montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </td>
-                                                <td className="px-6 py-4 text-right tabular-nums text-slate-500 font-mono text-xs">
-                                                    {montoUsdDisplay}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {expense.is_installment ? (
-                                                        <div className="w-24 mx-auto">
-                                                            <div className="flex justify-between text-[10px] text-slate-500 mb-1">
-                                                                <span>{expense.current_installment}/{expense.total_installments}</span>
-                                                            </div>
-                                                            <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
-                                                                <div
-                                                                    style={{ width: `${(expense.current_installment / expense.total_installments) * 100}%` }}
-                                                                    className={`h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400`}
-                                                                ></div>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="text-center text-slate-600">-</div>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    {expense.is_shared ? (
-                                                        <span className="inline-flex items-center justify-center bg-cyan-500/10 text-cyan-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-cyan-500/20 tracking-wide">Shared</span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center justify-center text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-slate-700 tracking-wide">Personal</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 text-right text-slate-500 text-xs">
-                                                    {new Date(expense.created_at).toLocaleDateString()}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button
-                                                            onClick={() => handleEditExpense(expense)}
-                                                            className="text-slate-400 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
-                                                            title="Editar"
-                                                        >
-                                                            <Edit2 size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteExpense(expense.id)}
-                                                            className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
-                                                            title="Eliminar"
-                                                        >
-                                                            <Trash2 size={16} />
-                                                        </button>
-                                                    </div>
+                        {/* DESKTOP TABLE VIEW */}
+                        <div className="hidden md:block bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-sm text-left text-slate-400">
+                                    <thead className="text-xs text-slate-300 uppercase bg-slate-900/80 border-b border-slate-700">
+                                        <tr>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide">Descripción</th>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Total (ARS)</th>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Personal (ARS)</th>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Ref. USD</th>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Cuotas</th>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Tipo</th>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Fecha</th>
+                                            <th scope="col" className="px-6 py-4 text-center"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-700/50">
+                                        {expenses.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="8" className="px-6 py-12 text-center text-slate-500">
+                                                    No hay gastos registrados en esta planilla.
                                                 </td>
                                             </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                        ) : (
+                                            expenses.map((expense, index) => {
+                                                const montoTotalArs = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
+                                                const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
+
+                                                // Calculate USD amount for display
+                                                let montoUsdDisplay = '-';
+                                                if (expense.currency === 'USD') {
+                                                    montoUsdDisplay = `$${expense.amount.toFixed(2)}`;
+                                                } else if (dolarRate) {
+                                                    montoUsdDisplay = `$${(expense.amount / dolarRate).toFixed(2)}`;
+                                                }
+
+                                                return (
+                                                    <tr key={expense.id} className={`group hover:bg-slate-700/30 transition-colors ${index % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/30'}`}>
+                                                        <td className="px-6 py-4 font-medium text-slate-200">
+                                                            {expense.description}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right tabular-nums text-slate-300">
+                                                            $ {montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right tabular-nums font-semibold text-indigo-300">
+                                                            $ {montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right tabular-nums text-slate-500 font-mono text-xs">
+                                                            {montoUsdDisplay}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            {expense.is_installment ? (
+                                                                <div className="w-24 mx-auto">
+                                                                    <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                                                                        <span>{expense.current_installment}/{expense.total_installments}</span>
+                                                                    </div>
+                                                                    <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                                                                        <div
+                                                                            style={{ width: `${(expense.current_installment / expense.total_installments) * 100}%` }}
+                                                                            className={`h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400`}
+                                                                        ></div>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-center text-slate-600">-</div>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            {expense.is_shared ? (
+                                                                <span className="inline-flex items-center justify-center bg-cyan-500/10 text-cyan-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-cyan-500/20 tracking-wide">Shared</span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center justify-center text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-slate-700 tracking-wide">Personal</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right text-slate-500 text-xs">
+                                                            {new Date(expense.created_at).toLocaleDateString()}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                <button
+                                                                    onClick={() => handleEditExpense(expense)}
+                                                                    className="text-slate-400 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+                                                                    title="Editar"
+                                                                >
+                                                                    <Edit2 size={16} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDeleteExpense(expense.id)}
+                                                                    className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+                                                                    title="Eliminar"
+                                                                >
+                                                                    <Trash2 size={16} />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
