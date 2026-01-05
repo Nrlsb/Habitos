@@ -168,7 +168,6 @@ export const ExpensesProvider = ({ children }) => {
         getExpenses,
         addExpense,
         updateExpense,
-        updateExpense,
         deleteExpense,
         sharePlanilla
     };

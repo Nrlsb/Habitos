@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from './ExpensesContext';
 import { getDolarRate } from '../../services/dolarApi';
-import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X } from 'lucide-react';
 
 function Expenses() {
     const {
@@ -13,11 +13,18 @@ function Expenses() {
         getExpenses,
         addExpense,
         updateExpense,
-        deleteExpense
+        deleteExpense,
+        sharePlanilla
     } = useExpenses();
 
     const [selectedPlanillaId, setSelectedPlanillaId] = useState(null);
     const [newPlanillaName, setNewPlanillaName] = useState('');
+
+    // Share Modal State
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [shareEmail, setShareEmail] = useState('');
+    const [shareError, setShareError] = useState('');
+    const [shareSuccess, setShareSuccess] = useState('');
 
     // Expense Form State
     const [description, setDescription] = useState('');
@@ -110,6 +117,24 @@ function Expenses() {
         }
     };
 
+    const handleShareSubmit = async (e) => {
+        e.preventDefault();
+        setShareError('');
+        setShareSuccess('');
+
+        try {
+            await sharePlanilla(selectedPlanillaId, shareEmail);
+            setShareSuccess(`Invitación enviada a ${shareEmail}`);
+            setShareEmail('');
+            setTimeout(() => {
+                setIsShareModalOpen(false);
+                setShareSuccess('');
+            }, 2000);
+        } catch (err) {
+            setShareError(err.message || 'Error al compartir');
+        }
+    };
+
     const totalPersonalARS = useMemo(() => {
         if (!dolarRate) return 0;
         return expenses.reduce((acc, expense) => {
@@ -150,20 +175,25 @@ function Expenses() {
                             className="bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 rounded-xl p-5 flex justify-between items-center cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                                    <Plus size={24} />
+                                <div className={`h-12 w-12 rounded-full flex items-center justify-center ${planilla.is_shared_with_me ? 'bg-cyan-500/10 text-cyan-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
+                                    {planilla.is_shared_with_me ? <Users size={24} /> : <Wallet size={24} />}
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-slate-200">{planilla.nombre}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-lg font-semibold text-slate-200">{planilla.nombre}</h3>
+                                        {planilla.is_shared_with_me && <span className="bg-cyan-500/20 text-cyan-400 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide">Compartida</span>}
+                                    </div>
                                     <p className="text-sm text-slate-500">{new Date(planilla.created_at).toLocaleDateString()}</p>
                                 </div>
                             </div>
-                            <button
-                                onClick={(e) => handleDeletePlanilla(planilla.id, e)}
-                                className="text-slate-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
-                            >
-                                <Trash2 size={20} />
-                            </button>
+                            {!planilla.is_shared_with_me && (
+                                <button
+                                    onClick={(e) => handleDeletePlanilla(planilla.id, e)}
+                                    className="text-slate-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                            )}
                         </div>
                     ))}
                     {planillas.length === 0 && (
@@ -178,7 +208,62 @@ function Expenses() {
 
     // VIEW: EXPENSE SHEET
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen relative">
+            {/* Share Modal */}
+            {isShareModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+                        <button
+                            onClick={() => setIsShareModalOpen(false)}
+                            className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                            <Share2 className="text-indigo-400" size={24} />
+                            Compartir Planilla
+                        </h3>
+                        <p className="text-slate-400 text-sm mb-6">
+                            Invita a otros usuarios a colaborar en "{currentPlanilla?.nombre}".
+                        </p>
+
+                        <form onSubmit={handleShareSubmit}>
+                            <div className="mb-4">
+                                <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Email del usuario</label>
+                                <input
+                                    type="email"
+                                    value={shareEmail}
+                                    onChange={(e) => setShareEmail(e.target.value)}
+                                    placeholder="usuario@ejemplo.com"
+                                    className="w-full bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                    required
+                                />
+                            </div>
+
+                            {shareError && <p className="text-red-400 text-sm mb-4 bg-red-500/10 p-2 rounded-lg">{shareError}</p>}
+                            {shareSuccess && <p className="text-emerald-400 text-sm mb-4 bg-emerald-500/10 p-2 rounded-lg">{shareSuccess}</p>}
+
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsShareModalOpen(false)}
+                                    className="text-slate-300 hover:text-white px-4 py-2"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-medium"
+                                >
+                                    Enviar Invitación
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
             <button
                 onClick={() => setSelectedPlanillaId(null)}
                 className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 font-medium"
@@ -189,9 +274,26 @@ function Expenses() {
 
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200">
-                        {currentPlanilla?.nombre}
-                    </h2>
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200">
+                            {currentPlanilla?.nombre}
+                        </h2>
+                        {currentPlanilla?.is_shared_with_me && (
+                            <span className="bg-cyan-500/20 text-cyan-400 text-xs px-2 py-0.5 rounded-full border border-cyan-500/30">
+                                Compartido
+                            </span>
+                        )}
+                    </div>
+
+                    {!currentPlanilla?.is_shared_with_me && (
+                        <button
+                            onClick={() => setIsShareModalOpen(true)}
+                            className="flex items-center gap-2 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 px-4 py-2 rounded-xl border border-indigo-500/20 transition-all font-medium"
+                        >
+                            <Share2 size={18} />
+                            Compartir
+                        </button>
+                    )}
                 </div>
 
                 {/* TOTAL HEADER */}
