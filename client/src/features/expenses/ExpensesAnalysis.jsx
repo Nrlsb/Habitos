@@ -298,7 +298,14 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
                             <h3 className="text-xl font-bold text-slate-200">
                                 ${projectedTotal.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </h3>
-                            <p className="text-[10px] text-slate-500 mt-1">Estimado base 30 días</p>
+                            <div className="flex flex-col">
+                                <p className="text-[10px] text-slate-500 mt-1">
+                                    Base Var. (30d): <span className="text-slate-400">${(projectedTotal - activeInstallmentSum).toLocaleString('es-AR', { maximumFractionDigits: 0 })}</span>
+                                </p>
+                                <p className="text-[10px] text-slate-500">
+                                    + Cuotas Activas: <span className="text-amber-500">${activeInstallmentSum.toLocaleString('es-AR', { maximumFractionDigits: 0 })}</span>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
