@@ -33,17 +33,19 @@ app.use(express.json());
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // New Env Var
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
     console.error('CRITICAL ERROR: Supabase URL or Key is missing in environment variables!');
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// CRITICAL FIX: Use Service Role Key for the main client if available.
+// This allows the backend to bypass RLS policies (which require a user token that we aren't forwarding).
+// We rely on the code-level checks (req.user.id) for security.
+const supabase = createClient(supabaseUrl, supabaseServiceKey || supabaseKey);
 
-// Admin client for privileged operations (like listing users)
-// Fallback to supabaseKey if service key is missing, but it might fail for admin tasks.
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseKey);
+// Admin client alias (points to the same instance if service key is used)
+const supabaseAdmin = supabase;
 
 // --- MIDDLEWARE DE AUTENTICACIÓN ---
 const authenticateUser = async (req, res, next) => {
