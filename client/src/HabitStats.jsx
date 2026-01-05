@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useAuth } from './context/AuthContext'
 import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import Calendar from './Calendar'
@@ -6,16 +7,23 @@ import Calendar from './Calendar'
 function HabitStats({ habitId, onBack }) {
     const [habit, setHabit] = useState(null)
     const [loading, setLoading] = useState(true)
+    const { session } = useAuth()
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
     useEffect(() => {
-        fetchHabitDetails()
-    }, [habitId])
+        if (session) {
+            fetchHabitDetails()
+        }
+    }, [habitId, session])
 
     const fetchHabitDetails = async () => {
         try {
-            const response = await fetch(`${API_URL}/api/habits/${habitId}`)
+            const response = await fetch(`${API_URL}/api/habits/${habitId}`, {
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
+            })
             const data = await response.json()
             setHabit(data)
         } catch (error) {
