@@ -259,7 +259,12 @@ function HabitStats({ habitId, onBack }) {
                 </div>
             )}
 
-            <Calendar completions={habit.completions} onDateClick={handleDateClick} />
+            <Calendar
+                completions={habit.completions}
+                onDateClick={handleDateClick}
+                habitType={habit.type}
+                habitGoal={habit.goal}
+            />
 
             <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/30 rounded-2xl p-6">
                 <h3 className="text-xl font-semibold text-slate-200 mb-4 flex items-center gap-2">

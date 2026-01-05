@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-function Calendar({ completions, onDateClick }) {
+function Calendar({ completions, onDateClick, habitType, habitGoal }) {
     const [currentDate, setCurrentDate] = useState(new Date())
 
     const getDaysInMonth = (date) => {
@@ -63,15 +63,27 @@ function Calendar({ completions, onDateClick }) {
             let state = 'none'
             let value = null
 
+            const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), i)
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            const isPast = checkDate < today
+            const isToday = checkDate.getTime() === today.getTime()
+
             if (completion) {
-                state = completion.state || 'completed'
                 value = completion.value
+                if (habitType === 'counter') {
+                    if (value >= habitGoal) {
+                        state = 'completed'
+                    } else {
+                        // If it has value but less than goal, and it's past or today, show as missed/incomplete
+                        // Unless user wants it green only if completed. User said: "solo aparesca en verde si se completo... de lo contrario rojo"
+                        state = 'missed'
+                    }
+                } else {
+                    state = completion.state || 'completed'
+                }
             } else {
-                // Check if past
-                const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), i)
-                const today = new Date()
-                today.setHours(0, 0, 0, 0)
-                if (checkDate < today) state = 'missed'
+                if (isPast) state = 'missed'
             }
 
             let bgColor = 'bg-slate-800'
