@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from './ExpensesContext';
 import { getDolarRate } from '../../services/dolarApi';
-import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check } from 'lucide-react';
 import ExpensesAnalysis from './ExpensesAnalysis';
 
 function Expenses() {
@@ -37,6 +37,10 @@ function Expenses() {
     const [cuotaActual, setCuotaActual] = useState('');
     const [category, setCategory] = useState('General'); // New Category State
     const [editingId, setEditingId] = useState(null);
+
+    // Inline Editing State
+    const [editingRowId, setEditingRowId] = useState(null);
+    const [editFormData, setEditFormData] = useState({});
 
     const [activeTab, setActiveTab] = useState('list'); // 'list' or 'analysis'
 
@@ -116,6 +120,52 @@ function Expenses() {
         setEnCuotas(expense.is_installment);
         setCuotaActual(expense.current_installment || '');
         setTotalCuotas(expense.total_installments || '');
+    };
+
+    // Inline Editing Handlers
+    const handleStartInlineEdit = (expense) => {
+        setEditingRowId(expense.id);
+        setEditFormData({
+            description: expense.description,
+            amount: expense.amount,
+            category: expense.category || 'General',
+            currency: expense.currency || 'ARS'
+        });
+    };
+
+    const handleCancelInlineEdit = () => {
+        setEditingRowId(null);
+        setEditFormData({});
+    };
+
+    const handleSaveInlineEdit = async (id) => {
+        const originalExpense = expenses.find(e => e.id === id);
+        if (!originalExpense) return;
+
+        const updatedData = {
+            ...originalExpense, // Keep other fields untouched
+            description: editFormData.description,
+            amount: parseFloat(editFormData.amount),
+            category: editFormData.category,
+            currency: editFormData.currency,
+            // Map back to DB field names if needed by updateExpense helper, 
+            // but updateExpense usually takes the object and component logic might need to ensure backend expectation.
+            // Looking at updateExpense implementation in ExpensesContext or usage in handleSubmitExpense:
+            // It expects: { description, amount, currency, category, esCompartido, enCuotas... }
+            // Let's pass the specific fields we allowed editing.
+            esCompartido: originalExpense.is_shared,
+            enCuotas: originalExpense.is_installment,
+            cuotaActual: originalExpense.current_installment,
+            totalCuotas: originalExpense.total_installments
+        };
+
+        await updateExpense(selectedPlanillaId, id, updatedData);
+        setEditingRowId(null);
+        setEditFormData({});
+    };
+
+    const handleInlineChange = (field, value) => {
+        setEditFormData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleDeleteExpense = async (id) => {
@@ -379,7 +429,12 @@ function Expenses() {
                                                 <option value="Comida">Comida 🍔</option>
                                                 <option value="Transporte">Transporte 🚌</option>
                                                 <option value="Servicios">Servicios 💡</option>
+                                                <option value="Alquiler">Alquiler 🏠</option>
                                                 <option value="Supermercado">Supermercado 🛒</option>
+                                                <option value="Mascota">Mascota 🐶</option>
+                                                <option value="Hogar">Hogar 🛋️</option>
+                                                <option value="Viandas">Viandas 🍱</option>
+                                                <option value="Alcohol">Alcohol 🍺</option>
                                                 <option value="Ocio">Ocio 🎬</option>
                                                 <option value="Salud">Salud 💊</option>
                                                 <option value="Ropa">Ropa 👕</option>
@@ -583,6 +638,7 @@ function Expenses() {
                                         <tr>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide">Descripción</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Total (ARS)</th>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Categoría</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Personal (ARS)</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Ref. USD</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Cuotas</th>
@@ -600,6 +656,8 @@ function Expenses() {
                                             </tr>
                                         ) : (
                                             expenses.map((expense, index) => {
+                                                const isEditing = editingRowId === expense.id;
+
                                                 const montoTotalArs = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
                                                 const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
 
@@ -614,10 +672,68 @@ function Expenses() {
                                                 return (
                                                     <tr key={expense.id} className={`group hover:bg-slate-700/30 transition-colors ${index % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/30'}`}>
                                                         <td className="px-6 py-4 font-medium text-slate-200">
-                                                            {expense.description}
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={editFormData.description}
+                                                                    onChange={(e) => handleInlineChange('description', e.target.value)}
+                                                                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none"
+                                                                    autoFocus
+                                                                />
+                                                            ) : (
+                                                                expense.description
+                                                            )}
                                                         </td>
                                                         <td className="px-6 py-4 text-right tabular-nums text-slate-300">
-                                                            $ {montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                            {isEditing ? (
+                                                                <div className="flex items-center gap-2 justify-end">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={editFormData.amount}
+                                                                        onChange={(e) => handleInlineChange('amount', e.target.value)}
+                                                                        className="w-24 bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-sm text-right focus:border-indigo-500 focus:outline-none"
+                                                                    />
+                                                                    <select
+                                                                        value={editFormData.currency}
+                                                                        onChange={(e) => handleInlineChange('currency', e.target.value)}
+                                                                        className="bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-xs focus:border-indigo-500 focus:outline-none"
+                                                                    >
+                                                                        <option value="ARS">ARS</option>
+                                                                        <option value="USD">USD</option>
+                                                                    </select>
+                                                                </div>
+                                                            ) : (
+                                                                `$ ${montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            {isEditing ? (
+                                                                <select
+                                                                    value={editFormData.category}
+                                                                    onChange={(e) => handleInlineChange('category', e.target.value)}
+                                                                    className="bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none"
+                                                                >
+                                                                    <option value="General">General</option>
+                                                                    <option value="Comida">Comida 🍔</option>
+                                                                    <option value="Transporte">Transporte 🚌</option>
+                                                                    <option value="Servicios">Servicios 💡</option>
+                                                                    <option value="Alquiler">Alquiler 🏠</option>
+                                                                    <option value="Supermercado">Supermercado 🛒</option>
+                                                                    <option value="Mascota">Mascota 🐶</option>
+                                                                    <option value="Hogar">Hogar 🛋️</option>
+                                                                    <option value="Viandas">Viandas 🍱</option>
+                                                                    <option value="Alcohol">Alcohol 🍺</option>
+                                                                    <option value="Ocio">Ocio 🎬</option>
+                                                                    <option value="Salud">Salud 💊</option>
+                                                                    <option value="Ropa">Ropa 👕</option>
+                                                                    <option value="Educación">Educación 📚</option>
+                                                                    <option value="Otros">Otros 📦</option>
+                                                                </select>
+                                                            ) : (
+                                                                <span className="bg-slate-700/50 text-slate-300 px-2 py-1 rounded-md text-xs border border-slate-600/50">
+                                                                    {expense.category || 'General'}
+                                                                </span>
+                                                            )}
                                                         </td>
                                                         <td className="px-6 py-4 text-right tabular-nums font-semibold text-indigo-300">
                                                             $ {montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -653,21 +769,42 @@ function Expenses() {
                                                             {new Date(expense.created_at).toLocaleDateString()}
                                                         </td>
                                                         <td className="px-6 py-4">
-                                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <button
-                                                                    onClick={() => handleEditExpense(expense)}
-                                                                    className="text-slate-400 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
-                                                                    title="Editar"
-                                                                >
-                                                                    <Edit2 size={16} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleDeleteExpense(expense.id)}
-                                                                    className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
-                                                                    title="Eliminar"
-                                                                >
-                                                                    <Trash2 size={16} />
-                                                                </button>
+                                                            <div className={`flex justify-end gap-2 transition-opacity ${isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                                                {isEditing ? (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => handleSaveInlineEdit(expense.id)}
+                                                                            className="text-emerald-400 hover:text-emerald-300 p-1.5 rounded-lg hover:bg-emerald-500/10 transition-colors"
+                                                                            title="Guardar"
+                                                                        >
+                                                                            <Check size={18} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={handleCancelInlineEdit}
+                                                                            className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-red-500/10 transition-colors"
+                                                                            title="Cancelar"
+                                                                        >
+                                                                            <X size={18} />
+                                                                        </button>
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => handleStartInlineEdit(expense)}
+                                                                            className="text-slate-400 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+                                                                            title="Editar"
+                                                                        >
+                                                                            <Edit2 size={16} />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleDeleteExpense(expense.id)}
+                                                                            className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+                                                                            title="Eliminar"
+                                                                        >
+                                                                            <Trash2 size={16} />
+                                                                        </button>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </td>
                                                     </tr>
