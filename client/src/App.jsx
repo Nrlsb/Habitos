@@ -83,9 +83,9 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <header className="mb-10 text-center">
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 mb-2">
+      <div className="max-w-2xl mx-auto px-4 py-6 md:py-12">
+        <header className="mb-6 md:mb-10 text-center">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 mb-2">
             Mis Hábitos & Gastos
           </h1>
           <p className="text-slate-400 text-lg">Construye tu mejor versión, día a día.</p>
@@ -95,8 +95,8 @@ function App() {
             <button
               onClick={() => setView('habits')}
               className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${view === 'habits'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                 }`}
             >
               <CheckCircle size={18} />
@@ -105,8 +105,8 @@ function App() {
             <button
               onClick={() => setView('expenses')}
               className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${view === 'expenses'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-                  : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
+                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                 }`}
             >
               <Wallet size={18} />
@@ -250,7 +250,7 @@ function App() {
                           e.stopPropagation()
                           deleteHabit(habit.id)
                         }}
-                        className="text-slate-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        className="text-slate-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-all md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 opacity-100"
                         title="Eliminar hábito"
                       >
                         <Trash2 size={18} />

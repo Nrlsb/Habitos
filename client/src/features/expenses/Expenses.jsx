@@ -299,7 +299,85 @@ function Expenses() {
                 <div className="mb-2">
                     <h3 className="text-lg font-semibold text-slate-800 mb-2">Historial de Gastos</h3>
                 </div>
-                <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+
+                {/* MOBILE CARD VIEW */}
+                <div className="block md:hidden space-y-4">
+                    {expenses.length === 0 ? (
+                        <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50">
+                            No hay gastos registrados.
+                        </div>
+                    ) : (
+                        expenses.map((expense) => {
+                            const montoTotalArs = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
+                            const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
+
+                            // Calculate USD amount for display
+                            let montoUsdDisplay = '-';
+                            if (expense.currency === 'USD') {
+                                montoUsdDisplay = `USD $${expense.amount.toFixed(2)}`;
+                            } else if (dolarRate) {
+                                montoUsdDisplay = `USD $${(expense.amount / dolarRate).toFixed(2)}`;
+                            }
+
+                            return (
+                                <div key={expense.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div>
+                                            <h4 className="font-semibold text-slate-800 text-lg">{expense.description}</h4>
+                                            <p className="text-xs text-slate-500">{new Date(expense.created_at).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleEditExpense(expense)}
+                                                className="text-slate-400 hover:text-blue-600 p-1"
+                                            >
+                                                <Edit2 size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteExpense(expense.id)}
+                                                className="text-slate-400 hover:text-red-600 p-1"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-y-2 text-sm mb-3">
+                                        <div>
+                                            <span className="text-slate-500 text-xs block">Monto Total</span>
+                                            <span className="font-medium text-slate-800">ARS ${montoTotalArs.toFixed(2)}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 text-xs block">Monto Personal</span>
+                                            <span className="font-bold text-blue-600">ARS ${montoPersonalArs.toFixed(2)}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 text-xs block">USD</span>
+                                            <span className="text-slate-600">{montoUsdDisplay}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-slate-500 text-xs block">Cuotas</span>
+                                            <span className="text-slate-600">
+                                                {expense.is_installment ? `${expense.current_installment}/${expense.total_installments}` : '-'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        {expense.is_shared ? (
+                                            <span className="bg-cyan-100 text-cyan-700 text-xs px-2 py-1 rounded-full font-medium border border-cyan-200">Compartido</span>
+                                        ) : (
+                                            <span className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full font-medium border border-slate-200">Personal</span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+
+                {/* DESKTOP TABLE VIEW */}
+                <div className="hidden md:block bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm text-left text-slate-600">
                             <thead className="text-xs text-white uppercase bg-slate-900">
