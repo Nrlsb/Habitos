@@ -295,16 +295,49 @@ app.get('/api/completions', authenticateUser, async (req, res) => {
 
 // 1. Planillas Routes
 
-// Get all planillas
+// Get all planillas (Owned + Shared)
 app.get('/api/planillas', authenticateUser, async (req, res) => {
-    const { data, error } = await supabase
-        .from('planillas')
-        .select('*')
-        .eq('user_id', req.user.id)
-        .order('created_at', { ascending: false });
+    try {
+        // 1. Get Owned Planillas
+        const { data: owned, error: ownedError } = await supabase
+            .from('planillas')
+            .select('*')
+            .eq('user_id', req.user.id)
+            .order('created_at', { ascending: false });
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+        if (ownedError) throw ownedError;
+
+        // 2. Get Shared Planillas
+        const { data: shares, error: sharesError } = await supabase
+            .from('planilla_shares')
+            .select('planilla_id')
+            .eq('user_id', req.user.id);
+
+        let sharedPlanillas = [];
+        if (!sharesError && shares && shares.length > 0) {
+            const planillaIds = shares.map(s => s.planilla_id);
+            const { data: shared, error: sharedDetailsError } = await supabase
+                .from('planillas')
+                .select('*')
+                .in('id', planillaIds)
+                .order('created_at', { ascending: false });
+
+            if (!sharedDetailsError && shared) {
+                // Mark as shared
+                sharedPlanillas = shared.map(p => ({ ...p, is_shared_with_me: true }));
+            }
+        }
+
+        // Combine and sort
+        const allPlanillas = [...owned, ...sharedPlanillas].sort((a, b) =>
+            new Date(b.created_at) - new Date(a.created_at)
+        );
+
+        res.json(allPlanillas);
+    } catch (err) {
+        console.error("Error getting planillas:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Create a new planilla
@@ -319,6 +352,70 @@ app.post('/api/planillas', authenticateUser, async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message });
     res.status(201).json(data[0]);
+});
+
+// Share a planilla
+app.post('/api/planillas/:id/share', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { email } = req.body;
+
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    try {
+        // 1. Verify Ownership
+        const { data: planilla, error: planillaError } = await supabase
+            .from('planillas')
+            .select('id, nombre')
+            .eq('id', id)
+            .eq('user_id', req.user.id)
+            .single();
+
+        if (planillaError || !planilla) {
+            return res.status(403).json({ error: 'Unauthorized or planilla not found' });
+        }
+
+        // 2. Find User by Email
+        // Try 'profiles' table first (common pattern)
+        let targetUserId = null;
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (profile) {
+            targetUserId = profile.id;
+        } else {
+            // Fallback: Admin List Users
+            const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
+            if (!listError && users) {
+                const foundUser = users.find(u => u.email === email);
+                if (foundUser) targetUserId = foundUser.id;
+            }
+        }
+
+        if (!targetUserId) {
+            return res.status(404).json({ error: 'User not found with this email' });
+        }
+
+        // 3. Insert into planilla_shares
+        const { error: shareError } = await supabase
+            .from('planilla_shares')
+            .insert([{ planilla_id: id, user_id: targetUserId }]);
+
+        if (shareError) {
+            if (shareError.code === '23505') {
+                return res.status(400).json({ error: 'Planilla already shared with this user' });
+            }
+            throw shareError;
+        }
+
+        res.json({ message: `Planilla shared with ${email}` });
+
+    } catch (err) {
+        console.error("Error sharing planilla:", err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // Delete a planilla
@@ -336,19 +433,34 @@ app.delete('/api/planillas/:id', authenticateUser, async (req, res) => {
 
 // 2. Expenses Routes
 
+// Helper to check access (Owner OR Shared)
+const checkPlanillaAccess = async (planillaId, userId) => {
+    // Check Owner
+    const { data: owner } = await supabase
+        .from('planillas')
+        .select('id')
+        .eq('id', planillaId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (owner) return true;
+
+    // Check Shared
+    const { data: shared } = await supabase
+        .from('planilla_shares')
+        .select('id')
+        .eq('planilla_id', planillaId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    return !!shared;
+};
+
 // Get expenses for a specific planilla
 app.get('/api/planillas/:planillaId/expenses', authenticateUser, async (req, res) => {
     const { planillaId } = req.params;
 
-    // Verificar que la planilla pertenezca al usuario
-    const { data: planilla, error: planillaError } = await supabase
-        .from('planillas')
-        .select('id')
-        .eq('id', planillaId)
-        .eq('user_id', req.user.id)
-        .single();
-
-    if (planillaError || !planilla) {
+    if (!(await checkPlanillaAccess(planillaId, req.user.id))) {
         return res.status(403).json({ error: 'Unauthorized or planilla not found' });
     }
 
@@ -366,15 +478,7 @@ app.get('/api/planillas/:planillaId/expenses', authenticateUser, async (req, res
 app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, res) => {
     const { planillaId } = req.params;
 
-    // Verificar que la planilla pertenezca al usuario
-    const { data: planilla, error: planillaError } = await supabase
-        .from('planillas')
-        .select('id')
-        .eq('id', planillaId)
-        .eq('user_id', req.user.id)
-        .single();
-
-    if (planillaError || !planilla) {
+    if (!(await checkPlanillaAccess(planillaId, req.user.id))) {
         return res.status(403).json({ error: 'Unauthorized or planilla not found' });
     }
 
