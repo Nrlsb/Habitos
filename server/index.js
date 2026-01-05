@@ -16,6 +16,7 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('PORT:', port);
 console.log('SUPABASE_URL exists:', !!process.env.SUPABASE_URL);
 console.log('SUPABASE_KEY exists:', !!process.env.SUPABASE_KEY);
+console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
 // -----------------------------
 
 app.use(cors({
@@ -392,8 +393,11 @@ app.post('/api/planillas/:id/share', authenticateUser, async (req, res) => {
             targetUserId = profile.id;
         } else {
             // Fallback: Admin List Users
-            const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
-            if (!listError && users) {
+            // Use supabaseAdmin because listing users requires service_role key
+            const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+            if (listError) {
+                console.error("Error listing users:", listError);
+            } else if (users) {
                 const foundUser = users.find(u => u.email === email);
                 if (foundUser) targetUserId = foundUser.id;
             }
