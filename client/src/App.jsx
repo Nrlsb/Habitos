@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet } from 'lucide-react'
+import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut } from 'lucide-react'
 import HabitStats from './HabitStats'
 import Expenses from './features/expenses/Expenses'
 import { ExpensesProvider } from './features/expenses/ExpensesContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import Login from './pages/Login'
 
-function App() {
+function AppContent() {
+  const { user, loading: authLoading, signOut } = useAuth()
   const [view, setView] = useState('habits') // 'habits' | 'expenses'
   const [habits, setHabits] = useState([])
   const [loading, setLoading] = useState(true)
@@ -20,10 +23,10 @@ function App() {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
   useEffect(() => {
-    if (view === 'habits') {
+    if (user && view === 'habits') {
       fetchHabits()
     }
-  }, [view])
+  }, [view, user])
 
   const fetchHabits = async () => {
     try {
@@ -81,10 +84,31 @@ function App() {
     }
   }
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Login />
+  }
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
       <div className="max-w-2xl mx-auto px-4 py-6 md:py-12">
-        <header className="mb-6 md:mb-10 text-center">
+        <header className="mb-6 md:mb-10 text-center relative">
+          <div className="absolute top-0 right-0">
+            <button
+              onClick={signOut}
+              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+              title="Cerrar sesión"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 mb-2">
             Mis Hábitos & Gastos
           </h1>
@@ -264,6 +288,14 @@ function App() {
         )}
       </div>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 
