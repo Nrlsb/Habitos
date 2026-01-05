@@ -72,6 +72,27 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, fetchPlanillas]);
 
+    const sharePlanilla = useCallback(async (id, email) => {
+        try {
+            const response = await fetch(`${API_URL}/api/planillas/${id}/share`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to share planilla');
+            }
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session]);
+
     // CRUD operations for Expenses
     const getExpenses = useCallback(async (planillaId) => {
         if (!planillaId || !session) return;
@@ -147,7 +168,9 @@ export const ExpensesProvider = ({ children }) => {
         getExpenses,
         addExpense,
         updateExpense,
+        updateExpense,
         deleteExpense,
+        sharePlanilla
     };
 
     return (
