@@ -22,7 +22,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
         totalSpent,
         topCategory,
         dailyAverage,
-        projectedTotal
+        projectedTotal,
+        futureProjections
     } = useMemo(() => {
         if (!expenses || expenses.length === 0) {
             return { categoryData: [], dailyData: [], monthlyData: [], sharedVsPersonalData: [], installmentVsCurrentData: [], dayOfWeekData: [], currencyData: [], topExpenses: [], totalSpent: 0, topCategory: null, dailyAverage: 0, projectedTotal: 0 };
