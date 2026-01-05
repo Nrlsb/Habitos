@@ -133,10 +133,10 @@ function AppContent() {
           <p className="text-slate-400 text-lg">Construye tu mejor versión, día a día.</p>
 
           {/* Navigation */}
-          <div className="flex justify-center gap-3 mt-8 bg-slate-900/50 p-1.5 rounded-full border border-slate-800 backdrop-blur-sm w-fit mx-auto">
+          <div className="flex justify-start md:justify-center gap-2 md:gap-3 mt-6 md:mt-8 bg-slate-900/50 p-1.5 rounded-full border border-slate-800 backdrop-blur-sm w-full md:w-fit mx-auto overflow-x-auto max-w-full">
             <button
               onClick={() => setView('habits')}
-              className={`px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium ${view === 'habits'
+              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'habits'
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                 }`}
@@ -146,7 +146,7 @@ function AppContent() {
             </button>
             <button
               onClick={() => setView('expenses')}
-              className={`px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium ${view === 'expenses'
+              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'expenses'
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                 }`}
@@ -156,7 +156,7 @@ function AppContent() {
             </button>
             <button
               onClick={() => setView('daily-expenses')}
-              className={`px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium ${view === 'daily-expenses'
+              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'daily-expenses'
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                 }`}
@@ -166,7 +166,7 @@ function AppContent() {
             </button>
             <button
               onClick={() => setView('planning')}
-              className={`px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium ${view === 'planning'
+              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'planning'
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                 }`}
