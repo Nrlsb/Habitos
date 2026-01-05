@@ -158,14 +158,36 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, getExpenses]);
 
+    // Daily Expenses
+    const [dailyExpenses, setDailyExpenses] = useState([]);
+
+    const getDailyExpenses = useCallback(async (dateString) => {
+        if (!session) return;
+        setLoading(true);
+        try {
+            const response = await fetch(`${API_URL}/api/expenses/daily?date=${dateString}`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch daily expenses');
+            const data = await response.json();
+            setDailyExpenses(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }, [API_URL, session]);
+
     const value = {
         planillas,
         expenses,
+        dailyExpenses, // Add to context
         loading,
         error,
         addPlanilla,
         deletePlanilla,
         getExpenses,
+        getDailyExpenses, // Add to context
         addExpense,
         updateExpense,
         deleteExpense,

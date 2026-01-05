@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut } from 'lucide-react'
 import HabitStats from './HabitStats'
 import Expenses from './features/expenses/Expenses'
+import DailyExpenses from './features/expenses/DailyExpenses'
 import { ExpensesProvider } from './features/expenses/ExpensesContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
@@ -151,12 +152,22 @@ function AppContent() {
               <Wallet size={18} />
               Gastos
             </button>
+            <button
+              onClick={() => setView('daily-expenses')}
+              className={`px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium ${view === 'daily-expenses'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+            >
+              <Calendar size={18} />
+              Diario
+            </button>
           </div>
         </header>
 
-        {view === 'expenses' ? (
+        {view === 'expenses' || view === 'daily-expenses' ? (
           <ExpensesProvider>
-            <Expenses />
+            {view === 'expenses' ? <Expenses /> : <DailyExpenses />}
           </ExpensesProvider>
         ) : selectedHabitId ? (
           <HabitStats habitId={selectedHabitId} onBack={() => setSelectedHabitId(null)} />

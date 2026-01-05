@@ -605,6 +605,70 @@ app.delete('/api/expenses/:id', authenticateUser, async (req, res) => {
     res.json({ message: 'Expense deleted successfully' });
 });
 
+// Get daily expenses (aggregated from all owned/shared planillas)
+app.get('/api/expenses/daily', authenticateUser, async (req, res) => {
+    const { date } = req.query;
+
+    if (!date) {
+        return res.status(400).json({ error: 'Date query parameter is required (YYYY-MM-DD)' });
+    }
+
+    try {
+        // 1. Get all accessible planillas (Owned + Shared)
+        // Owned
+        const { data: owned } = await supabase
+            .from('planillas')
+            .select('id')
+            .eq('user_id', req.user.id);
+
+        // Shared
+        const { data: shares } = await supabase
+            .from('planilla_shares')
+            .select('planilla_id')
+            .eq('user_id', req.user.id);
+
+        const ownedIds = owned ? owned.map(p => p.id) : [];
+        const sharedIds = shares ? shares.map(s => s.planilla_id) : [];
+        const allPlanillaIds = [...new Set([...ownedIds, ...sharedIds])];
+
+        if (allPlanillaIds.length === 0) {
+            return res.json([]);
+        }
+
+        // 2. Query expenses
+        // Note: 'created_at' is timestamptz. We need to filter by date.
+        // Supabase/PostgREST allows filtering by date directly implicitly if casting or using proper range, 
+        // but simple string matching might fail if time is included.
+        // Using gte/lt for the day range is safer.
+
+        const startDate = `${date}T00:00:00`;
+        const endDate = `${date}T23:59:59.999`;
+
+        const { data: expenses, error } = await supabase
+            .from('expenses')
+            .select(`
+                *,
+                planillas (
+                    id,
+                    nombre,
+                    user_id
+                )
+            `)
+            .in('planilla_id', allPlanillaIds)
+            .gte('created_at', startDate)
+            .lte('created_at', endDate)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        res.json(expenses);
+
+    } catch (err) {
+        console.error("Error fetching daily expenses:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 3. BNA Route (Dollar Rate)
 
 // URL ÚNICA de BNA
