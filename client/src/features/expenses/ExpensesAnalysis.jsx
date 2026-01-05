@@ -149,39 +149,82 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
             daysSpan = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
         }
 
-        // Smart Projection
-        // 1. Variable Expenses (Non-installments): Projected based on daily average
-        // 2. Installments: Only add those that continue next month (current < total)
 
+        // Smart Projection & Future Installments Logic
         let variableTotal = 0;
         let activeInstallmentSum = 0;
+        const futureInstallmentsMap = {}; // Key: "Year-Month", Value: { label, amount, sortDate }
 
+        const today = new Date();
+        const currentMonthIndex = today.getMonth(); // 0-11
+        const currentYear = today.getFullYear();
+
+        // 1. First Pass: Separate totals and identify installment timelines
         expenses.forEach(expense => {
             const amountInARS = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
             const finalAmount = expense.is_shared ? amountInARS / 2 : amountInARS;
 
             if (expense.is_installment) {
-                // Check if installment continues
-                // Assuming 'current_installment' and 'total_installments' are available on expense object
-                // If current < total, this cost persists. If current == total, it ends this month.
-                // Fallback: if data missing, assume it persists (safe bet) unless explicitly Last.
                 const current = expense.current_installment || 0;
                 const totalInst = expense.total_installments || 1;
+                const remaining = totalInst - current;
 
-                if (current < totalInst) {
+                if (remaining > 0) {
                     activeInstallmentSum += finalAmount;
+
+                    // Accumulate installment cost for relevant future months
+                    for (let i = 1; i <= remaining; i++) {
+                        const targetDate = new Date(currentYear, currentMonthIndex + i, 1);
+                        const monthKey = `${targetDate.getFullYear()}-${targetDate.getMonth()}`;
+                        const displayLabel = targetDate.toLocaleDateString('es-AR', { month: 'long', year: '2-digit' });
+
+                        // We strictly sum installment costs here first
+                        if (!futureInstallmentsMap[monthKey]) {
+                            futureInstallmentsMap[monthKey] = { label: displayLabel, amount: 0, sortDate: targetDate };
+                        }
+                        futureInstallmentsMap[monthKey].amount += finalAmount;
+                    }
                 }
             } else {
                 variableTotal += finalAmount;
             }
         });
 
+        // 2. Calculate Base Variable Projection (The "Standard of Living" cost)
         const dailyAverageVariable = variableTotal / daysSpan;
         const projectedVariable = dailyAverageVariable * 30;
-
-        // Total Projection = Projected Variable + Fixed Active Installments
         const projectedMonthly = projectedVariable + activeInstallmentSum;
-        const dailyAverage = total / daysSpan; // Keep global average for simple display if needed
+        const dailyAverage = total / daysSpan;
+
+        // 3. Second Pass: Add Variable Base to Future Months & Fill Gaps
+        // Determine how far we want to show. At least 6 months, or up to max installment.
+        // If map is empty (no installments), create 6 months of just variable.
+        const maxMonths = 6;
+        const existingKeys = Object.keys(futureInstallmentsMap);
+
+        // Ensure we have at least 'maxMonths' entries generated
+        for (let i = 1; i <= maxMonths; i++) {
+            const targetDate = new Date(currentYear, currentMonthIndex + i, 1);
+            const monthKey = `${targetDate.getFullYear()}-${targetDate.getMonth()}`;
+            const displayLabel = targetDate.toLocaleDateString('es-AR', { month: 'long', year: '2-digit' });
+
+            if (!futureInstallmentsMap[monthKey]) {
+                futureInstallmentsMap[monthKey] = { label: displayLabel, amount: 0, sortDate: targetDate };
+            }
+        }
+
+        // Add the Variable Base to ALL future months in the map
+        Object.values(futureInstallmentsMap).forEach(month => {
+            month.amount += projectedVariable;
+        });
+
+        // Convert Map to Sorted Array
+        const futureProjections = Object.values(futureInstallmentsMap)
+            .sort((a, b) => a.sortDate - b.sortDate)
+            // Optional: Filter out months waaaay in the future if we didn't cap it? 
+            // We capped generation at 6, but installments might go further. That's fine.
+            ;
+
 
         return {
             categoryData,
@@ -195,8 +238,9 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
             totalSpent: total,
             topCategory,
             dailyAverage,
-            projectedTotal: projectedMonthly,
-            activeInstallmentSum // Export for UI if needed
+            projectedTotal: projectedMonthly, // Current Month Projection
+            activeInstallmentSum,
+            futureProjections // List for "Proyecciones Futuras"
         };
     }, [expenses, dolarRate]);
 
