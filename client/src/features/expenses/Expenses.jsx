@@ -135,9 +135,9 @@ function Expenses() {
                         value={newPlanillaName}
                         onChange={(e) => setNewPlanillaName(e.target.value)}
                         placeholder="Nueva planilla (ej. Enero 2026)"
-                        className="flex-1 bg-white border border-slate-300 text-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+                        className="flex-1 bg-slate-800/50 border border-slate-700 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 placeholder:text-slate-500 shadow-lg shadow-black/10"
                     />
-                    <button type="submit" disabled={!newPlanillaName.trim()} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 shadow-sm">
+                    <button type="submit" disabled={!newPlanillaName.trim()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 shadow-lg shadow-indigo-500/20">
                         <Plus size={20} />
                     </button>
                 </form>
@@ -147,27 +147,27 @@ function Expenses() {
                         <div
                             key={planilla.id}
                             onClick={() => setSelectedPlanillaId(planilla.id)}
-                            className="bg-white hover:bg-slate-50 border border-slate-200 rounded-xl p-5 flex justify-between items-center cursor-pointer transition-all hover:shadow-md"
+                            className="bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 rounded-xl p-5 flex justify-between items-center cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <div className="h-12 w-12 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400">
                                     <Plus size={24} />
                                 </div>
                                 <div>
-                                    <h3 className="text-lg font-semibold text-slate-800">{planilla.nombre}</h3>
+                                    <h3 className="text-lg font-semibold text-slate-200">{planilla.nombre}</h3>
                                     <p className="text-sm text-slate-500">{new Date(planilla.created_at).toLocaleDateString()}</p>
                                 </div>
                             </div>
                             <button
                                 onClick={(e) => handleDeletePlanilla(planilla.id, e)}
-                                className="text-slate-400 hover:text-red-500 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                className="text-slate-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
                             >
                                 <Trash2 size={20} />
                             </button>
                         </div>
                     ))}
                     {planillas.length === 0 && (
-                        <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50">
+                        <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-700 rounded-xl bg-slate-800/20">
                             No tienes planillas creadas.
                         </div>
                     )}
@@ -178,116 +178,150 @@ function Expenses() {
 
     // VIEW: EXPENSE SHEET
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-slate-100 min-h-screen p-6">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen">
             <button
                 onClick={() => setSelectedPlanillaId(null)}
-                className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors mb-6 font-medium"
+                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 font-medium"
             >
                 <ArrowLeft size={20} />
                 <span>Volver a Planillas</span>
             </button>
 
             <div className="max-w-7xl mx-auto">
-                <h2 className="text-3xl font-bold text-slate-800 mb-6 text-center">Planilla: {currentPlanilla?.nombre}</h2>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200">
+                        {currentPlanilla?.nombre}
+                    </h2>
+                </div>
 
                 {/* TOTAL HEADER */}
-                <div className="bg-white border border-slate-200 rounded-lg p-4 mb-6 shadow-sm">
-                    <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-800">Gasto Personal Total:</span>
-                        <span className="text-blue-600 font-bold text-xl">ARS ${totalPersonalARS.toFixed(2)}</span>
+                <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity duration-700 group-hover:opacity-75"></div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 bg-indigo-500/20 rounded-xl text-indigo-300">
+                                <Wallet size={24} />
+                            </div>
+                            <div>
+                                <span className="text-slate-400 text-sm font-medium uppercase tracking-wider">Gasto Personal Total</span>
+                                <div className="text-3xl font-bold text-white tabular-nums mt-1">
+                                    ARS <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">${totalPersonalARS.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {dolarRate && (
+                            <div className="text-right bg-slate-900/50 px-4 py-2 rounded-lg border border-slate-700/50">
+                                <span className="text-xs text-slate-500 uppercase block">Cotización Dólar</span>
+                                <span className="text-emerald-400 font-mono font-medium">${dolarRate}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* ADD NEW EXPENSE FORM */}
-                <div className="bg-white border border-slate-200 rounded-lg p-6 mb-8 shadow-sm">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-4 border-b pb-2">
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-sm">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
+                        <Plus size={20} className="text-indigo-400" />
                         {editingId ? 'Editar Gasto' : 'Añadir Nuevo Gasto'}
                     </h3>
                     <form onSubmit={handleSubmitExpense}>
-                        <div className="flex flex-col md:flex-row gap-4 items-end mb-4">
-                            <div className="flex-grow">
-                                <label className="block text-xs text-slate-500 mb-1">Descripción</label>
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
+                            <div className="md:col-span-6">
+                                <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Descripción</label>
                                 <input
                                     type="text"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Ej: Compra en el supermercado"
-                                    className="w-full bg-white border border-slate-300 text-slate-800 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600"
                                 />
                             </div>
-                            <div className="w-32">
-                                <label className="block text-xs text-slate-500 mb-1">Monto</label>
+                            <div className="md:col-span-3">
+                                <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Monto</label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    placeholder="Ej: 50.25"
-                                    className="w-full bg-white border border-slate-300 text-slate-800 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    placeholder="0.00"
+                                    className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600 tabular-nums"
                                 />
                             </div>
-                            <div className="w-24">
-                                <label className="block text-xs text-slate-500 mb-1">Moneda</label>
-                                <select
-                                    value={currency}
-                                    onChange={(e) => setCurrency(e.target.value)}
-                                    className="w-full bg-white border border-slate-300 text-slate-800 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                >
-                                    <option value="ARS">ARS</option>
-                                    <option value="USD">USD</option>
-                                </select>
-                            </div>
-                            <div className="flex items-center gap-4 pb-2">
-                                <label className="flex items-center gap-2 cursor-pointer text-slate-600 text-sm">
-                                    <input
-                                        type="checkbox"
-                                        checked={esCompartido}
-                                        onChange={(e) => setEsCompartido(e.target.checked)}
-                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span>Gasto Compartido</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer text-slate-600 text-sm">
-                                    <input
-                                        type="checkbox"
-                                        checked={enCuotas}
-                                        onChange={(e) => setEnCuotas(e.target.checked)}
-                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span>Pagar en cuotas</span>
-                                </label>
+                            <div className="md:col-span-3">
+                                <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Moneda</label>
+                                <div className="relative">
+                                    <select
+                                        value={currency}
+                                        onChange={(e) => setCurrency(e.target.value)}
+                                        className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                                    >
+                                        <option value="ARS">ARS 🇦🇷</option>
+                                        <option value="USD">USD 🇺🇸</option>
+                                    </select>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
+                        <div className="flex flex-wrap gap-4 mb-6">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600 bg-slate-900/50 group-hover:border-slate-500'}`}>
+                                    {esCompartido && <CheckCircle size={14} className="text-white" />}
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={esCompartido}
+                                    onChange={(e) => setEsCompartido(e.target.checked)}
+                                    className="hidden"
+                                />
+                                <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">Gasto Compartido</span>
+                            </label>
+
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600 bg-slate-900/50 group-hover:border-slate-500'}`}>
+                                    {enCuotas && <CheckCircle size={14} className="text-white" />}
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={enCuotas}
+                                    onChange={(e) => setEnCuotas(e.target.checked)}
+                                    className="hidden"
+                                />
+                                <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">Pagar en cuotas</span>
+                            </label>
+                        </div>
+
                         {enCuotas && (
-                            <div className="flex gap-4 mb-4 animate-in fade-in slide-in-from-top-2">
+                            <div className="flex gap-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300 bg-slate-900/30 p-4 rounded-xl border border-slate-700/30">
                                 <div className="w-32">
-                                    <label className="block text-xs text-slate-500 mb-1">Cuota Actual</label>
+                                    <label className="block text-xs text-slate-500 mb-1.5 ml-1">Cuota Actual</label>
                                     <input
                                         type="number"
                                         value={cuotaActual}
                                         onChange={(e) => setCuotaActual(e.target.value)}
-                                        className="w-full bg-white border border-slate-300 text-slate-800 rounded px-3 py-2 text-sm"
+                                        className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                     />
                                 </div>
                                 <div className="w-32">
-                                    <label className="block text-xs text-slate-500 mb-1">Total Cuotas</label>
+                                    <label className="block text-xs text-slate-500 mb-1.5 ml-1">Total Cuotas</label>
                                     <input
                                         type="number"
                                         value={totalCuotas}
                                         onChange={(e) => setTotalCuotas(e.target.value)}
-                                        className="w-full bg-white border border-slate-300 text-slate-800 rounded px-3 py-2 text-sm"
+                                        className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                     />
                                 </div>
                             </div>
                         )}
 
-                        <div className="flex gap-2">
-                            <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-medium transition-colors text-sm">
-                                {editingId ? 'Actualizar' : 'Añadir'}
+                        <div className="flex gap-3">
+                            <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex-1 md:flex-none md:min-w-[120px]">
+                                {editingId ? 'Actualizar' : 'Añadir Gasto'}
                             </button>
                             {editingId && (
-                                <button type="button" onClick={resetForm} className="px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2 rounded font-medium transition-colors text-sm">
+                                <button type="button" onClick={resetForm} className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-medium transition-colors">
                                     Cancelar
                                 </button>
                             )}
@@ -296,14 +330,14 @@ function Expenses() {
                 </div>
 
                 {/* EXPENSES TABLE */}
-                <div className="mb-2">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-2">Historial de Gastos</h3>
+                <div className="mb-4">
+                    <h3 className="text-xl font-bold text-slate-200 mb-2">Historial de Gastos</h3>
                 </div>
 
                 {/* MOBILE CARD VIEW */}
                 <div className="block md:hidden space-y-4">
                     {expenses.length === 0 ? (
-                        <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-300 rounded-xl bg-slate-50">
+                        <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-700 rounded-xl bg-slate-800/20">
                             No hay gastos registrados.
                         </div>
                     ) : (
@@ -312,7 +346,7 @@ function Expenses() {
                             const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
 
                             // Calculate USD amount for display
-                            let montoUsdDisplay = '-';
+                            let montoUsdDisplay = null;
                             if (expense.currency === 'USD') {
                                 montoUsdDisplay = `USD $${expense.amount.toFixed(2)}`;
                             } else if (dolarRate) {
@@ -320,54 +354,64 @@ function Expenses() {
                             }
 
                             return (
-                                <div key={expense.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
-                                    <div className="flex justify-between items-start mb-2">
+                                <div key={expense.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
+                                    <div className="flex justify-between items-start mb-3">
                                         <div>
-                                            <h4 className="font-semibold text-slate-800 text-lg">{expense.description}</h4>
+                                            <h4 className="font-semibold text-slate-200 text-lg">{expense.description}</h4>
                                             <p className="text-xs text-slate-500">{new Date(expense.created_at).toLocaleDateString()}</p>
                                         </div>
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => handleEditExpense(expense)}
-                                                className="text-slate-400 hover:text-blue-600 p-1"
+                                                className="text-slate-500 hover:text-indigo-400 p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
                                             >
                                                 <Edit2 size={18} />
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteExpense(expense.id)}
-                                                className="text-slate-400 hover:text-red-600 p-1"
+                                                className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
                                             >
                                                 <Trash2 size={18} />
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-y-2 text-sm mb-3">
-                                        <div>
-                                            <span className="text-slate-500 text-xs block">Monto Total</span>
-                                            <span className="font-medium text-slate-800">ARS ${montoTotalArs.toFixed(2)}</span>
+                                    <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm mb-4">
+                                        <div className="bg-slate-900/50 p-2 rounded-lg">
+                                            <span className="text-slate-500 text-[10px] uppercase tracking-wider block mb-0.5">Monto Total</span>
+                                            <span className="font-medium text-slate-300 tabular-nums">${montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
                                         </div>
-                                        <div>
-                                            <span className="text-slate-500 text-xs block">Monto Personal</span>
-                                            <span className="font-bold text-blue-600">ARS ${montoPersonalArs.toFixed(2)}</span>
+                                        <div className="bg-indigo-900/20 p-2 rounded-lg border border-indigo-500/20">
+                                            <span className="text-indigo-400 text-[10px] uppercase tracking-wider block mb-0.5">Personal</span>
+                                            <span className="font-bold text-indigo-300 tabular-nums">${montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
                                         </div>
-                                        <div>
-                                            <span className="text-slate-500 text-xs block">USD</span>
-                                            <span className="text-slate-600">{montoUsdDisplay}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-slate-500 text-xs block">Cuotas</span>
-                                            <span className="text-slate-600">
-                                                {expense.is_installment ? `${expense.current_installment}/${expense.total_installments}` : '-'}
-                                            </span>
-                                        </div>
+                                        {montoUsdDisplay && (
+                                            <div className="col-span-2 flex justify-between items-center border-t border-slate-700 pt-2 mt-1">
+                                                <span className="text-slate-500 text-xs">Equivalente USD</span>
+                                                <span className="text-slate-400 font-mono text-xs">{montoUsdDisplay}</span>
+                                            </div>
+                                        )}
+                                        {expense.is_installment && (
+                                            <div className="col-span-2">
+                                                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                                                    <span>Progreso Cuotas</span>
+                                                    <span>{expense.current_installment}/{expense.total_installments}</span>
+                                                </div>
+                                                <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                                                    <div
+                                                        style={{ width: `${(expense.current_installment / expense.total_installments) * 100}%` }}
+                                                        className="h-full bg-gradient-to-r from-indigo-500 to-cyan-500 rounded-full"
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex gap-2">
                                         {expense.is_shared ? (
-                                            <span className="bg-cyan-100 text-cyan-700 text-xs px-2 py-1 rounded-full font-medium border border-cyan-200">Compartido</span>
+                                            <span className="bg-cyan-500/10 text-cyan-400 text-xs px-2.5 py-1 rounded-full font-medium border border-cyan-500/20">Compartido</span>
                                         ) : (
-                                            <span className="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded-full font-medium border border-slate-200">Personal</span>
+                                            <span className="bg-slate-700 text-slate-400 text-xs px-2.5 py-1 rounded-full font-medium border border-slate-600">Personal</span>
                                         )}
                                     </div>
                                 </div>
@@ -377,26 +421,26 @@ function Expenses() {
                 </div>
 
                 {/* DESKTOP TABLE VIEW */}
-                <div className="hidden md:block bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+                <div className="hidden md:block bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left text-slate-600">
-                            <thead className="text-xs text-white uppercase bg-slate-900">
+                        <table className="w-full text-sm text-left text-slate-400">
+                            <thead className="text-xs text-slate-300 uppercase bg-slate-900/80 border-b border-slate-700">
                                 <tr>
-                                    <th scope="col" className="px-6 py-3">Descripción</th>
-                                    <th scope="col" className="px-6 py-3">Monto Total (ARS)</th>
-                                    <th scope="col" className="px-6 py-3">Monto Personal (ARS)</th>
-                                    <th scope="col" className="px-6 py-3">Monto en Dólares</th>
-                                    <th scope="col" className="px-6 py-3">Cuotas</th>
-                                    <th scope="col" className="px-6 py-3">Tipo</th>
-                                    <th scope="col" className="px-6 py-3">Fecha</th>
-                                    <th scope="col" className="px-6 py-3 text-center">Acciones</th>
+                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide">Descripción</th>
+                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Total (ARS)</th>
+                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Personal (ARS)</th>
+                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Ref. USD</th>
+                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Cuotas</th>
+                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Tipo</th>
+                                    <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Fecha</th>
+                                    <th scope="col" className="px-6 py-4 text-center"></th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-slate-700/50">
                                 {expenses.length === 0 ? (
                                     <tr>
-                                        <td colSpan="8" className="px-6 py-8 text-center text-slate-400">
-                                            No hay gastos registrados.
+                                        <td colSpan="8" className="px-6 py-12 text-center text-slate-500">
+                                            No hay gastos registrados en esta planilla.
                                         </td>
                                     </tr>
                                 ) : (
@@ -407,51 +451,67 @@ function Expenses() {
                                         // Calculate USD amount for display
                                         let montoUsdDisplay = '-';
                                         if (expense.currency === 'USD') {
-                                            montoUsdDisplay = `USD $${expense.amount.toFixed(2)}`;
+                                            montoUsdDisplay = `$${expense.amount.toFixed(2)}`;
                                         } else if (dolarRate) {
-                                            montoUsdDisplay = `USD $${(expense.amount / dolarRate).toFixed(2)}`;
+                                            montoUsdDisplay = `$${(expense.amount / dolarRate).toFixed(2)}`;
                                         }
 
                                         return (
-                                            <tr key={expense.id} className={`border-b border-slate-200 hover:bg-slate-50 ${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}`}>
-                                                <td className="px-6 py-4 font-medium text-slate-800">
+                                            <tr key={expense.id} className={`group hover:bg-slate-700/30 transition-colors ${index % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/30'}`}>
+                                                <td className="px-6 py-4 font-medium text-slate-200">
                                                     {expense.description}
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    ARS ${montoTotalArs.toFixed(2)}
+                                                <td className="px-6 py-4 text-right tabular-nums text-slate-300">
+                                                    $ {montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="px-6 py-4 font-semibold text-slate-700">
-                                                    ARS ${montoPersonalArs.toFixed(2)}
+                                                <td className="px-6 py-4 text-right tabular-nums font-semibold text-indigo-300">
+                                                    $ {montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </td>
-                                                <td className="px-6 py-4 text-slate-500">
+                                                <td className="px-6 py-4 text-right tabular-nums text-slate-500 font-mono text-xs">
                                                     {montoUsdDisplay}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    {expense.is_installment ? `${expense.current_installment}/${expense.total_installments}` : '-'}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {expense.is_shared ? (
-                                                        <span className="bg-cyan-500 text-white text-xs px-2 py-1 rounded font-medium">Compartido</span>
+                                                    {expense.is_installment ? (
+                                                        <div className="w-24 mx-auto">
+                                                            <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                                                                <span>{expense.current_installment}/{expense.total_installments}</span>
+                                                            </div>
+                                                            <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                                                                <div
+                                                                    style={{ width: `${(expense.current_installment / expense.total_installments) * 100}%` }}
+                                                                    className={`h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400`}
+                                                                ></div>
+                                                            </div>
+                                                        </div>
                                                     ) : (
-                                                        <span className="text-slate-500 text-xs font-medium">Personal</span>
+                                                        <div className="text-center text-slate-600">-</div>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-6 py-4 text-center">
+                                                    {expense.is_shared ? (
+                                                        <span className="inline-flex items-center justify-center bg-cyan-500/10 text-cyan-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-cyan-500/20 tracking-wide">Shared</span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center justify-center text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-slate-700 tracking-wide">Personal</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4 text-right text-slate-500 text-xs">
                                                     {new Date(expense.created_at).toLocaleDateString()}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <div className="flex justify-center gap-2">
+                                                    <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <button
                                                             onClick={() => handleEditExpense(expense)}
-                                                            className="text-slate-500 border border-slate-300 hover:bg-slate-100 hover:text-blue-600 px-3 py-1 rounded text-xs transition-colors"
+                                                            className="text-slate-400 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+                                                            title="Editar"
                                                         >
-                                                            Editar
+                                                            <Edit2 size={16} />
                                                         </button>
                                                         <button
                                                             onClick={() => handleDeleteExpense(expense.id)}
-                                                            className="text-red-500 border border-red-200 hover:bg-red-50 hover:text-red-600 px-3 py-1 rounded text-xs transition-colors"
+                                                            className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+                                                            title="Eliminar"
                                                         >
-                                                            Eliminar
+                                                            <Trash2 size={16} />
                                                         </button>
                                                     </div>
                                                 </td>

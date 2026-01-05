@@ -106,8 +106,14 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans selection:bg-indigo-500 selection:text-white">
-      <div className="max-w-2xl mx-auto px-4 py-6 md:py-12">
+    <div className="min-h-screen bg-[#0f172a] text-slate-100 font-sans selection:bg-indigo-500 selection:text-white relative overflow-hidden">
+      {/* Background Gradients/Blobs */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-900/20 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-900/10 rounded-full blur-[120px]"></div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-8 md:py-12 relative z-10">
         <header className="mb-6 md:mb-10 text-center relative">
           <div className="absolute top-0 right-0">
             <button
@@ -124,12 +130,12 @@ function AppContent() {
           <p className="text-slate-400 text-lg">Construye tu mejor versión, día a día.</p>
 
           {/* Navigation */}
-          <div className="flex justify-center gap-4 mt-6">
+          <div className="flex justify-center gap-3 mt-8 bg-slate-900/50 p-1.5 rounded-full border border-slate-800 backdrop-blur-sm w-fit mx-auto">
             <button
               onClick={() => setView('habits')}
-              className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${view === 'habits'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              className={`px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium ${view === 'habits'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                 }`}
             >
               <CheckCircle size={18} />
@@ -137,9 +143,9 @@ function AppContent() {
             </button>
             <button
               onClick={() => setView('expenses')}
-              className={`px-4 py-2 rounded-full flex items-center gap-2 transition-all ${view === 'expenses'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25'
-                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+              className={`px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium ${view === 'expenses'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                 }`}
             >
               <Wallet size={18} />

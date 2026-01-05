@@ -147,7 +147,7 @@ function HabitStats({ habitId, onBack }) {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800 transition-colors">
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
                     <div className="h-12 w-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3">
                         <CheckCircle size={24} />
                     </div>
@@ -155,7 +155,7 @@ function HabitStats({ habitId, onBack }) {
                     <span className="text-sm text-slate-400">Total Completado</span>
                 </div>
 
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800 transition-colors md:col-span-2">
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors md:col-span-2">
                     <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 mb-3">
                         <Trophy size={24} />
                     </div>
@@ -165,7 +165,7 @@ function HabitStats({ habitId, onBack }) {
             </div>
 
             {habit.type === 'counter' && chartData.length > 0 && (
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl">
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Reciente</h3>
                     <div className="h-64 w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -205,7 +205,7 @@ function HabitStats({ habitId, onBack }) {
 
             <Calendar completions={habit.completions} onDateClick={handleDateClick} />
 
-            <div className="bg-slate-800/30 border border-slate-700/30 rounded-2xl p-6">
+            <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/30 rounded-2xl p-6">
                 <h3 className="text-xl font-semibold text-slate-200 mb-4 flex items-center gap-2">
                     <CalendarIcon size={20} className="text-indigo-400" />
                     Historial Reciente

@@ -111,7 +111,7 @@ function Calendar({ completions, onDateClick }) {
     ]
 
     return (
-        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6">
+        <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-semibold text-slate-200 capitalize">
                     {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
