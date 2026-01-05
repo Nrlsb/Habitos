@@ -23,7 +23,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
         topCategory,
         dailyAverage,
         projectedTotal,
-        futureProjections
+        futureProjections,
+        activeInstallmentSum
     } = useMemo(() => {
         if (!expenses || expenses.length === 0) {
             return { categoryData: [], dailyData: [], monthlyData: [], sharedVsPersonalData: [], installmentVsCurrentData: [], dayOfWeekData: [], currencyData: [], topExpenses: [], totalSpent: 0, topCategory: null, dailyAverage: 0, projectedTotal: 0 };
@@ -320,6 +321,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
                             <h3 className="text-xl font-bold text-slate-200">
                                 ${dailyAverage.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </h3>
+                            <p className="text-[10px] text-slate-500 mt-1">Calculado sobre {daysSpan} días</p>
                         </div>
                     </div>
                 </div>
