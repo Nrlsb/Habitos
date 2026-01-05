@@ -19,7 +19,13 @@ console.log('SUPABASE_KEY exists:', !!process.env.SUPABASE_KEY);
 // -----------------------------
 
 app.use(cors({
-    origin: ['https://habitos-y7im.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
+    origin: [
+        'https://habitos-y7im.vercel.app',
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://192.168.1.109:5173',
+        'http://192.168.1.109:3000'
+    ],
     credentials: true
 }));
 app.use(express.json());
