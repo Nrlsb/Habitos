@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from './ExpensesContext';
 import { getDolarRate } from '../../services/dolarApi';
-import { Plus, Trash2, ArrowLeft, Edit2 } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle } from 'lucide-react';
 
 function Expenses() {
     const {
