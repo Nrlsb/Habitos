@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard } from 'lucide-react';
 
@@ -9,6 +9,7 @@ const INSTALLMENT_COLORS = ['#f59e0b', '#10b981']; // Installments (Amber), Curr
 const CURRENCY_COLORS = ['#6366f1', '#22c55e']; // ARS (Indigo), USD (Green)
 
 const ExpensesAnalysis = ({ expenses, dolarRate }) => {
+    const [showProjection, setShowProjection] = useState(true);
 
     const {
         categoryData,
@@ -218,7 +219,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
 
         // Add the Variable Base to ALL future months in the map
         Object.values(futureInstallmentsMap).forEach(month => {
-            month.amount += projectedVariable;
+            month.installmentOnly = month.amount; // Guardamos el valor limpio de solo cuotas
+            month.amount += projectedVariable; // El valor default incluye la proyección
         });
 
         // Convert Map to Sorted Array
@@ -347,28 +349,62 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
 
             </div>
 
+
             {/* Proyección de Gastos Futuros (Base Variable + Cuotas) */}
             {futureProjections && futureProjections.length > 0 && (
                 <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
-                    <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
-                        <Calendar size={20} className="text-amber-500" />
-                        Proyección de Gastos Futuros
-                    </h3>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                        <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
+                            <Calendar size={20} className="text-amber-500" />
+                            Proyección de Gastos Futuros
+                        </h3>
+
+                        {/* Toggle Switch */}
+                        <div className="flex items-center bg-slate-900/50 p-1 rounded-lg border border-slate-700/50">
+                            <button
+                                onClick={() => setShowProjection(true)}
+                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${showProjection
+                                    ? 'bg-indigo-500 text-white shadow-lg'
+                                    : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                            >
+                                Proyección Total
+                            </button>
+                            <button
+                                onClick={() => setShowProjection(false)}
+                                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!showProjection
+                                    ? 'bg-indigo-500 text-white shadow-lg'
+                                    : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                            >
+                                Solo Cuotas
+                            </button>
+                        </div>
+                    </div>
 
                     <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                        {futureProjections.map((item, index) => (
-                            <div key={index} className="flex-shrink-0 bg-slate-900 border border-slate-700 rounded-xl p-4 w-48 text-center shadow-md hover:border-amber-500/50 transition-colors">
-                                <div className="bg-slate-800 text-slate-300 text-xs font-bold py-1 px-3 rounded-full mb-3 inline-block capitalize">
-                                    {item.label}
+                        {futureProjections.map((item, index) => {
+                            const displayAmount = showProjection ? item.amount : item.installmentOnly;
+                            const isZero = displayAmount === 0;
+
+                            // Si estamos en modo "Solo Cuotas" y es 0, quizás queramos mostrarlo diferente o visualmente indicar que no hay cuotas
+                            // Pero para mantener consistencia visual dejaremos el card.
+
+                            return (
+                                <div key={index} className="flex-shrink-0 bg-slate-900 border border-slate-700 rounded-xl p-4 w-48 text-center shadow-md hover:border-amber-500/50 transition-colors">
+                                    <div className={`text-xs font-bold py-1 px-3 rounded-full mb-3 inline-block capitalize ${index === 0 ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-800 text-slate-300'
+                                        }`}>
+                                        {item.label}
+                                    </div>
+                                    <div className={`text-xl font-bold ${isZero ? 'text-slate-600' : 'text-slate-200'}`}>
+                                        ${displayAmount.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500 mt-1 flex flex-col gap-0.5">
+                                        <span>{showProjection ? 'Base Variable + Cuotas' : 'Solo Cuotas Activas'}</span>
+                                    </div>
                                 </div>
-                                <div className="text-xl font-bold text-slate-200">
-                                    ${item.amount.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                                </div>
-                                <div className="text-[10px] text-slate-500 mt-1 flex flex-col gap-0.5">
-                                    <span>Base Variable + Cuotas</span>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
