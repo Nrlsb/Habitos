@@ -217,7 +217,7 @@ function HabitStats({ habitId, onBack }) {
             {habit.type === 'counter' && chartData.length > 0 && (
                 <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Reciente</h3>
-                    <div className="h-64 w-full">
+                    <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={chartData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
