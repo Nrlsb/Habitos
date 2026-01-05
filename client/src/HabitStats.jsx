@@ -9,7 +9,13 @@ function HabitStats({ habitId, onBack }) {
     const [loading, setLoading] = useState(true)
     const [selectedDate, setSelectedDate] = useState(null)
     const [inputValue, setInputValue] = useState('')
+    const [mounted, setMounted] = useState(false)
     const { session } = useAuth()
+
+    useEffect(() => {
+        const timer = setTimeout(() => setMounted(true), 500) // Delay chart render to avoid width(-1) warning
+        return () => clearTimeout(timer)
+    }, [])
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -214,7 +220,7 @@ function HabitStats({ habitId, onBack }) {
                 </div>
             </div>
 
-            {habit.type === 'counter' && chartData.length > 0 && (
+            {habit.type === 'counter' && chartData.length > 0 && mounted && (
                 <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Reciente</h3>
                     <div className="h-64 w-full min-w-0">

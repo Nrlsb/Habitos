@@ -108,7 +108,7 @@ app.get('/api/habits/:id', authenticateUser, async (req, res) => {
         // Get completions for this habit
         const { data: completions, error: completionsError } = await supabase
             .from('habit_completions')
-            .select('completed_date')
+            .select('*')
             .eq('habit_id', id)
             .order('completed_date', { ascending: false });
 
