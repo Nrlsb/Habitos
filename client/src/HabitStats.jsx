@@ -135,7 +135,7 @@ function HabitStats({ habitId, onBack }) {
         }
 
         try {
-            const response = await fetch(`${API_URL}/api/habits/${habitId}/completion`, {
+            const response = await fetch(`${API_URL}/api/habits/${habitId}/toggle`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
