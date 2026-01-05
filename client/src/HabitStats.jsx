@@ -102,6 +102,10 @@ function HabitStats({ habitId, onBack }) {
 
     const { currentStreak, longestStreak } = calculateStats(habit.completions)
 
+    const handleDateClick = (date) => {
+        console.log('Date clicked:', date)
+    }
+
     // Prepare chart data
     const chartData = habit.completions
         .map(c => ({
