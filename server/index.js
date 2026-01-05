@@ -495,6 +495,7 @@ app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, re
     }
 
     const {
+        description,
         amount,
         currency,
         category, // New field
