@@ -133,23 +133,55 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
             .sort((a, b) => b.finalAmount - a.finalAmount)
             .slice(0, 5);
 
+
         // Metrics
         const topCategory = categoryData.length > 0 ? categoryData[0] : null;
 
-        // Daily Average & Projection
+        // Daily Average & Projection Logic
         const sortedExpenses = [...expenses].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         let daysSpan = 1;
+
+        // Calculate Days Span
         if (sortedExpenses.length > 1) {
             const first = new Date(sortedExpenses[0].created_at);
             const last = new Date(sortedExpenses[sortedExpenses.length - 1].created_at);
             const diffTime = Math.abs(last - first);
             daysSpan = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
         }
-        const dailyAverage = total / daysSpan;
 
-        // Better metric: Monthly Projection for Current Month.
-        const projectedMonthly = dailyAverage * 30;
+        // Smart Projection
+        // 1. Variable Expenses (Non-installments): Projected based on daily average
+        // 2. Installments: Only add those that continue next month (current < total)
 
+        let variableTotal = 0;
+        let activeInstallmentSum = 0;
+
+        expenses.forEach(expense => {
+            const amountInARS = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
+            const finalAmount = expense.is_shared ? amountInARS / 2 : amountInARS;
+
+            if (expense.is_installment) {
+                // Check if installment continues
+                // Assuming 'current_installment' and 'total_installments' are available on expense object
+                // If current < total, this cost persists. If current == total, it ends this month.
+                // Fallback: if data missing, assume it persists (safe bet) unless explicitly Last.
+                const current = expense.current_installment || 0;
+                const totalInst = expense.total_installments || 1;
+
+                if (current < totalInst) {
+                    activeInstallmentSum += finalAmount;
+                }
+            } else {
+                variableTotal += finalAmount;
+            }
+        });
+
+        const dailyAverageVariable = variableTotal / daysSpan;
+        const projectedVariable = dailyAverageVariable * 30;
+
+        // Total Projection = Projected Variable + Fixed Active Installments
+        const projectedMonthly = projectedVariable + activeInstallmentSum;
+        const dailyAverage = total / daysSpan; // Keep global average for simple display if needed
 
         return {
             categoryData,
@@ -163,7 +195,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
             totalSpent: total,
             topCategory,
             dailyAverage,
-            projectedTotal: projectedMonthly
+            projectedTotal: projectedMonthly,
+            activeInstallmentSum // Export for UI if needed
         };
     }, [expenses, dolarRate]);
 
