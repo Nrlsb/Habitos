@@ -671,14 +671,177 @@ app.get('/api/expenses/daily', authenticateUser, async (req, res) => {
 
 // 4. Planning / Tasks Routes
 
-// Get tasks (supports date filtering)
+// --- Helper: Check Planning Sheet Access ---
+const checkPlanningSheetAccess = async (sheetId, userId) => {
+    // Check Owner
+    const { data: owner } = await supabase
+        .from('planning_sheets')
+        .select('id')
+        .eq('id', sheetId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (owner) return true;
+
+    // Check Shared
+    const { data: shared } = await supabase
+        .from('planning_shares')
+        .select('id')
+        .eq('planning_sheet_id', sheetId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    return !!shared;
+};
+
+// --- Planning Sheets Routes ---
+
+// Get all sheets (Owned + Shared)
+app.get('/api/planning-sheets', authenticateUser, async (req, res) => {
+    try {
+        // 1. Get Owned
+        const { data: owned, error: ownedError } = await supabase
+            .from('planning_sheets')
+            .select('*')
+            .eq('user_id', req.user.id)
+            .order('created_at', { ascending: false });
+
+        if (ownedError) throw ownedError;
+
+        // 2. Get Shared
+        const { data: shares, error: sharesError } = await supabase
+            .from('planning_shares')
+            .select('planning_sheet_id')
+            .eq('user_id', req.user.id);
+
+        let sharedSheets = [];
+        if (!sharesError && shares && shares.length > 0) {
+            const sheetIds = shares.map(s => s.planning_sheet_id);
+            const { data: shared, error: sharedDetailsError } = await supabase
+                .from('planning_sheets')
+                .select('*')
+                .in('id', sheetIds)
+                .order('created_at', { ascending: false });
+
+            if (!sharedDetailsError && shared) {
+                sharedSheets = shared.map(s => ({ ...s, is_shared_with_me: true }));
+            }
+        }
+
+        const allSheets = [...owned, ...sharedSheets].sort((a, b) =>
+            new Date(b.created_at) - new Date(a.created_at)
+        );
+
+        res.json(allSheets);
+    } catch (err) {
+        console.error("Error getting planning sheets:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Create Planning Sheet
+app.post('/api/planning-sheets', authenticateUser, async (req, res) => {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+
+    const { data, error } = await supabase
+        .from('planning_sheets')
+        .insert([{ name, user_id: req.user.id }])
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data[0]);
+});
+
+// Delete Planning Sheet
+app.delete('/api/planning-sheets/:id', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabase
+        .from('planning_sheets')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', req.user.id);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ message: 'Sheet deleted successfully' });
+});
+
+// Share Planning Sheet
+app.post('/api/planning-sheets/:id/share', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { email } = req.body;
+
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    try {
+        // 1. Verify Ownership
+        const { data: sheet, error: sheetError } = await supabase
+            .from('planning_sheets')
+            .select('id, name')
+            .eq('id', id)
+            .eq('user_id', req.user.id)
+            .single();
+
+        if (sheetError || !sheet) {
+            return res.status(403).json({ error: 'Unauthorized or sheet not found' });
+        }
+
+        // 2. Find User
+        let targetUserId = null;
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', email)
+            .maybeSingle();
+
+        if (profile) {
+            targetUserId = profile.id;
+        } else {
+            const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+            if (users) {
+                const foundUser = users.find(u => u.email === email);
+                if (foundUser) targetUserId = foundUser.id;
+            }
+        }
+
+        if (!targetUserId) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // 3. Share
+        const { error: shareError } = await supabaseAdmin
+            .from('planning_shares')
+            .insert([{ planning_sheet_id: id, user_id: targetUserId }]);
+
+        if (shareError) {
+            if (shareError.code === '23505') return res.status(400).json({ error: 'Already shared' });
+            throw shareError;
+        }
+
+        res.json({ message: `Shared with ${email}` });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+// --- Tasks Routes (Scoped by Sheet) ---
+
+// Get tasks
 app.get('/api/tasks', authenticateUser, async (req, res) => {
-    const { start_date, end_date } = req.query;
+    const { sheet_id, start_date, end_date } = req.query;
+
+    if (!sheet_id) return res.status(400).json({ error: 'sheet_id is required' });
+
+    if (!(await checkPlanningSheetAccess(sheet_id, req.user.id))) {
+        return res.status(403).json({ error: 'Unauthorized access to this sheet' });
+    }
 
     let query = supabase
         .from('tasks')
         .select('*')
-        .eq('user_id', req.user.id)
+        .eq('planning_sheet_id', sheet_id)
         .order('due_date', { ascending: true });
 
     if (start_date && end_date) {
@@ -695,17 +858,22 @@ app.get('/api/tasks', authenticateUser, async (req, res) => {
 
 // Create task
 app.post('/api/tasks', authenticateUser, async (req, res) => {
-    const { title, description, due_date, priority } = req.body;
+    const { title, description, due_date, priority, sheet_id } = req.body;
 
-    if (!title || !due_date) {
-        return res.status(400).json({ error: 'Title and due_date are required' });
+    if (!title || !due_date || !sheet_id) {
+        return res.status(400).json({ error: 'Title, due_date and sheet_id are required' });
+    }
+
+    if (!(await checkPlanningSheetAccess(sheet_id, req.user.id))) {
+        return res.status(403).json({ error: 'Unauthorized access to this sheet' });
     }
 
     const newTask = {
         user_id: req.user.id,
+        planning_sheet_id: sheet_id,
         title,
         description: description || '',
-        due_date, // Client should send ISO string
+        due_date,
         priority: priority || 'medium',
         is_completed: false
     };
@@ -724,6 +892,20 @@ app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
     const { id } = req.params;
     const { title, description, due_date, priority, is_completed } = req.body;
 
+    // Check ownership of the task OR access to the sheet. 
+    // Simpler: Fetch task first to get sheet_id, then check access.
+    const { data: task, error: fetchError } = await supabase
+        .from('tasks')
+        .select('planning_sheet_id')
+        .eq('id', id)
+        .single();
+
+    if (fetchError || !task) return res.status(404).json({ error: 'Task not found' });
+
+    if (!(await checkPlanningSheetAccess(task.planning_sheet_id, req.user.id))) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
     const updates = {};
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
@@ -735,7 +917,6 @@ app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
         .from('tasks')
         .update(updates)
         .eq('id', id)
-        .eq('user_id', req.user.id)
         .select();
 
     if (error) return res.status(500).json({ error: error.message });
@@ -746,11 +927,22 @@ app.put('/api/tasks/:id', authenticateUser, async (req, res) => {
 app.delete('/api/tasks/:id', authenticateUser, async (req, res) => {
     const { id } = req.params;
 
+    const { data: task, error: fetchError } = await supabase
+        .from('tasks')
+        .select('planning_sheet_id')
+        .eq('id', id)
+        .single();
+
+    if (fetchError || !task) return res.status(404).json({ error: 'Task not found' });
+
+    if (!(await checkPlanningSheetAccess(task.planning_sheet_id, req.user.id))) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
     const { error } = await supabase
         .from('tasks')
         .delete()
-        .eq('id', id)
-        .eq('user_id', req.user.id);
+        .eq('id', id);
 
     if (error) return res.status(500).json({ error: error.message });
     res.json({ message: 'Task deleted' });

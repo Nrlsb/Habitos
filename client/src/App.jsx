@@ -5,6 +5,7 @@ import Expenses from './features/expenses/Expenses'
 import DailyExpenses from './features/expenses/DailyExpenses'
 import Planning from './features/planning/Planning'
 import { ExpensesProvider } from './features/expenses/ExpensesContext'
+import { PlanningProvider } from './features/planning/PlanningContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 
@@ -177,7 +178,9 @@ function AppContent() {
         </header>
 
         {view === 'planning' ? (
-          <Planning />
+          <PlanningProvider>
+            <Planning />
+          </PlanningProvider>
         ) : view === 'expenses' || view === 'daily-expenses' ? (
           <ExpensesProvider>
             {view === 'expenses' ? <Expenses /> : <DailyExpenses />}
