@@ -408,7 +408,8 @@ app.post('/api/planillas/:id/share', authenticateUser, async (req, res) => {
         }
 
         // 3. Insert into planilla_shares
-        const { error: shareError } = await supabase
+        // Use supabaseAdmin to bypass RLS policies since we already verified ownership
+        const { error: shareError } = await supabaseAdmin
             .from('planilla_shares')
             .insert([{ planilla_id: id, user_id: targetUserId }]);
 
