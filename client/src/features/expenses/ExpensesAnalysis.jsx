@@ -332,7 +332,34 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
                         </div>
                     </div>
                 </div>
+
             </div>
+
+            {/* Proyección de Gastos Futuros (Base Variable + Cuotas) */}
+            {futureProjections && futureProjections.length > 0 && (
+                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
+                        <Calendar size={20} className="text-amber-500" />
+                        Proyección de Gastos Futuros
+                    </h3>
+
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                        {futureProjections.map((item, index) => (
+                            <div key={index} className="flex-shrink-0 bg-slate-900 border border-slate-700 rounded-xl p-4 w-48 text-center shadow-md hover:border-amber-500/50 transition-colors">
+                                <div className="bg-slate-800 text-slate-300 text-xs font-bold py-1 px-3 rounded-full mb-3 inline-block capitalize">
+                                    {item.label}
+                                </div>
+                                <div className="text-xl font-bold text-slate-200">
+                                    ${item.amount.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </div>
+                                <div className="text-[10px] text-slate-500 mt-1 flex flex-col gap-0.5">
+                                    <span>Base Variable + Cuotas</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
