@@ -113,7 +113,7 @@ function AppContent() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-900/10 rounded-full blur-[120px]"></div>
       </div>
 
-      <div className={`mx-auto px-4 py-8 md:py-12 relative z-10 transition-all duration-300 ${view === 'expenses' ? 'max-w-7xl' : 'max-w-2xl'}`}>
+      <div className={`mx-auto px-4 py-8 md:py-12 relative z-10 transition-all duration-300 ${view === 'expenses' ? 'max-w-7xl' : 'max-w-5xl'}`}>
         <header className="mb-6 md:mb-10 text-center relative">
           <div className="absolute top-0 right-0">
             <button
