@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 
 function AppContent() {
-  const { user, loading: authLoading, signOut } = useAuth()
+  const { user, session, loading: authLoading, signOut } = useAuth()
   const [view, setView] = useState('habits') // 'habits' | 'expenses'
   const [habits, setHabits] = useState([])
   const [loading, setLoading] = useState(true)
@@ -29,8 +29,13 @@ function AppContent() {
   }, [view, user])
 
   const fetchHabits = async () => {
+    if (!session) return
     try {
-      const response = await fetch(`${API_URL}/api/habits`)
+      const response = await fetch(`${API_URL}/api/habits`, {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      })
       const data = await response.json()
       setHabits(data)
     } catch (error) {
@@ -49,6 +54,7 @@ function AppContent() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           title: newHabitTitle,
@@ -76,6 +82,9 @@ function AppContent() {
     try {
       await fetch(`${API_URL}/api/habits/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
       })
       setHabits(habits.filter(h => h.id !== id))
       if (selectedHabitId === id) setSelectedHabitId(null)

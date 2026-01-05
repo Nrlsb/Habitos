@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../../context/AuthContext';
 
 const ExpensesContext = createContext();
 
@@ -7,6 +8,7 @@ export const useExpenses = () => {
 };
 
 export const ExpensesProvider = ({ children }) => {
+    const { session } = useAuth();
     const [planillas, setPlanillas] = useState([]);
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -16,9 +18,12 @@ export const ExpensesProvider = ({ children }) => {
 
     // Fetch planillas
     const fetchPlanillas = useCallback(async () => {
+        if (!session) return;
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/planillas`);
+            const response = await fetch(`${API_URL}/api/planillas`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
             if (!response.ok) throw new Error('Failed to fetch planillas');
             const data = await response.json();
             setPlanillas(data);
@@ -28,7 +33,7 @@ export const ExpensesProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [API_URL]);
+    }, [API_URL, session]);
 
     useEffect(() => {
         fetchPlanillas();
@@ -39,7 +44,10 @@ export const ExpensesProvider = ({ children }) => {
         try {
             const response = await fetch(`${API_URL}/api/planillas`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify({ nombre }),
             });
             if (!response.ok) throw new Error('Failed to add planilla');
@@ -54,6 +62,7 @@ export const ExpensesProvider = ({ children }) => {
         try {
             const response = await fetch(`${API_URL}/api/planillas/${id}`, {
                 method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (!response.ok) throw new Error('Failed to delete planilla');
             await fetchPlanillas();
@@ -65,22 +74,27 @@ export const ExpensesProvider = ({ children }) => {
 
     // CRUD operations for Expenses
     const getExpenses = useCallback(async (planillaId) => {
-        if (!planillaId) return;
+        if (!planillaId || !session) return;
         try {
-            const response = await fetch(`${API_URL}/api/planillas/${planillaId}/expenses`);
+            const response = await fetch(`${API_URL}/api/planillas/${planillaId}/expenses`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
             if (!response.ok) throw new Error('Failed to fetch expenses');
             const data = await response.json();
             setExpenses(data);
         } catch (err) {
             setError(err.message);
         }
-    }, [API_URL]);
+    }, [API_URL, session]);
 
     const addExpense = useCallback(async (planillaId, newExpense) => {
         try {
             const response = await fetch(`${API_URL}/api/planillas/${planillaId}/expenses`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify(newExpense),
             });
             if (!response.ok) throw new Error('Failed to add expense');
@@ -95,7 +109,10 @@ export const ExpensesProvider = ({ children }) => {
         try {
             const response = await fetch(`${API_URL}/api/expenses/${expenseId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
                 body: JSON.stringify(updatedExpense),
             });
             if (!response.ok) throw new Error('Failed to update expense');
@@ -110,6 +127,7 @@ export const ExpensesProvider = ({ children }) => {
         try {
             const response = await fetch(`${API_URL}/api/expenses/${expenseId}`, {
                 method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (!response.ok) throw new Error('Failed to delete expense');
             await getExpenses(planillaId);
