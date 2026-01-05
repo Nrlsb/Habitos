@@ -32,12 +32,17 @@ app.use(express.json());
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // New Env Var
 
 if (!supabaseUrl || !supabaseKey) {
     console.error('CRITICAL ERROR: Supabase URL or Key is missing in environment variables!');
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Admin client for privileged operations (like listing users)
+// Fallback to supabaseKey if service key is missing, but it might fail for admin tasks.
+const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey || supabaseKey);
 
 // --- MIDDLEWARE DE AUTENTICACIÓN ---
 const authenticateUser = async (req, res, next) => {
