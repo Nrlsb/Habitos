@@ -1,9 +1,12 @@
+
 import React, { useMemo } from 'react';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Wallet, TrendingUp, Calendar, AlertCircle, Users, ArrowUpRight } from 'lucide-react';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard } from 'lucide-react';
 
 const COLORS = ['#6366f1', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444', '#64748b'];
 const SHARED_COLORS = ['#3f46e4', '#06b6d4']; // Personal (Indigo), Shared (Cyan)
+const INSTALLMENT_COLORS = ['#f59e0b', '#10b981']; // Installments (Amber), Current (Emerald)
+const CURRENCY_COLORS = ['#6366f1', '#22c55e']; // ARS (Indigo), USD (Green)
 
 const ExpensesAnalysis = ({ expenses, dolarRate }) => {
 
@@ -12,20 +15,29 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
         dailyData,
         monthlyData,
         sharedVsPersonalData,
+        installmentVsCurrentData,
+        dayOfWeekData,
+        currencyData,
         topExpenses,
         totalSpent,
         topCategory,
-        dailyAverage
+        dailyAverage,
+        projectedTotal
     } = useMemo(() => {
         if (!expenses || expenses.length === 0) {
-            return { categoryData: [], dailyData: [], monthlyData: [], sharedVsPersonalData: [], topExpenses: [], totalSpent: 0, topCategory: null, dailyAverage: 0 };
+            return { categoryData: [], dailyData: [], monthlyData: [], sharedVsPersonalData: [], installmentVsCurrentData: [], dayOfWeekData: [], currencyData: [], topExpenses: [], totalSpent: 0, topCategory: null, dailyAverage: 0, projectedTotal: 0 };
         }
 
         const catMap = {};
         const dayMap = {};
         const monthMap = {};
+        const dayOfWeekMap = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }; // Sun-Sat
+        const currencyMap = { ARS: 0, USD: 0 };
+
         let personalTotal = 0;
         let sharedTotal = 0;
+        let installmentTotal = 0;
+        let currentTotal = 0;
         let total = 0;
 
         // Process Expenses
@@ -35,25 +47,31 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
 
             // Totals
             total += finalAmount;
-            if (expense.is_shared) {
-                sharedTotal += finalAmount;
-            } else {
-                personalTotal += finalAmount;
-            }
+            if (expense.is_shared) sharedTotal += finalAmount;
+            else personalTotal += finalAmount;
+
+            if (expense.is_installment) installmentTotal += finalAmount;
+            else currentTotal += finalAmount;
+
+            if (expense.currency === 'USD') currencyMap.USD += finalAmount;
+            else currencyMap.ARS += finalAmount;
 
             // Category Aggregation
             const cat = expense.category || 'General';
             catMap[cat] = (catMap[cat] || 0) + finalAmount;
 
-            // Daily Aggregation (Last 7 Days Focus usually, but we map all for average)
+            // Daily Aggregation (Last 7 Days Focus)
             const dateObj = new Date(expense.created_at);
             const dateStr = dateObj.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
             dayMap[dateStr] = (dayMap[dateStr] || 0) + finalAmount;
 
+            // Day of Week Aggregation
+            const dayOfWeek = dateObj.getDay();
+            dayOfWeekMap[dayOfWeek] += finalAmount;
+
             // Monthly Aggregation
-            const monthStr = dateObj.toLocaleDateString('es-AR', { month: 'short', year: 'numeric' }); // E.g., "ene. 2026"
-            // Use Sortable Key YYYY-MM
-            const monthKey = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}`;
+            const monthStr = dateObj.toLocaleDateString('es-AR', { month: 'short', year: 'numeric' });
+            const monthKey = `${dateObj.getFullYear()} -${String(dateObj.getMonth() + 1).padStart(2, '0')} `;
 
             if (!monthMap[monthKey]) {
                 monthMap[monthKey] = { name: monthStr, value: 0 };
@@ -70,18 +88,12 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
         })).sort((a, b) => b.value - a.value);
 
         // 2. Daily Trend (Last 7 Days)
-        // Sort dates correctly? dateStr is DD/MM, distinct.
-        // Let's filter distinct dates from expenses to sort them chronologically
         const uniqueDates = [...new Set(expenses.map(e => new Date(e.created_at).setHours(0, 0, 0, 0)))].sort((a, b) => a - b);
         const last7Days = uniqueDates.slice(-7);
-
         const dailyData = last7Days.map(time => {
             const d = new Date(time);
             const dateStr = d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' });
-            return {
-                date: dateStr,
-                amount: dayMap[dateStr] || 0
-            };
+            return { date: dateStr, amount: dayMap[dateStr] || 0 };
         });
 
         // 3. Monthly Evolution
@@ -96,36 +108,62 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
             { name: 'Compartido', value: sharedTotal }
         ];
 
-        // 5. Top 5 Expenses
+        // 5. Installment vs Current
+        const installmentVsCurrentData = [
+            { name: 'Cuotas', value: installmentTotal },
+            { name: 'Al Día', value: currentTotal }
+        ];
+
+        // 6. Day of Week
+        const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        const dayOfWeekData = Object.keys(dayOfWeekMap).map(key => ({
+            subject: days[key],
+            A: dayOfWeekMap[key],
+            fullMark: Math.max(...Object.values(dayOfWeekMap)) * 1.1 // Scaling
+        }));
+
+        // 7. Currency Breakdown
+        const currencyData = [
+            { name: 'ARS', value: currencyMap.ARS },
+            { name: 'USD', value: currencyMap.USD }
+        ];
+
+        // 8. Top 5 Expenses
         const topExpenses = [...processedExpenses]
             .sort((a, b) => b.finalAmount - a.finalAmount)
             .slice(0, 5);
 
-        // 6. Metrics
+        // Metrics
         const topCategory = categoryData.length > 0 ? categoryData[0] : null;
 
-        // Daily Average (Total / Days Range or Distinct Days?)
-        // Let's use Span of Days (First expense to Last expense)
+        // Daily Average & Projection
         const sortedExpenses = [...expenses].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
         let daysSpan = 1;
         if (sortedExpenses.length > 1) {
             const first = new Date(sortedExpenses[0].created_at);
             const last = new Date(sortedExpenses[sortedExpenses.length - 1].created_at);
             const diffTime = Math.abs(last - first);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            daysSpan = diffDays || 1;
+            daysSpan = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
         }
         const dailyAverage = total / daysSpan;
+
+        // Better metric: Monthly Projection for Current Month.
+        const projectedMonthly = dailyAverage * 30;
+
 
         return {
             categoryData,
             dailyData,
             monthlyData,
             sharedVsPersonalData,
+            installmentVsCurrentData,
+            dayOfWeekData,
+            currencyData,
             topExpenses,
             totalSpent: total,
             topCategory,
-            dailyAverage
+            dailyAverage,
+            projectedTotal: projectedMonthly
         };
     }, [expenses, dolarRate]);
 
@@ -142,7 +180,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-xl">
+                <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-xl z-50">
                     <p className="text-slate-300 font-medium mb-1">{label || payload[0].name}</p>
                     <p className="text-indigo-400 font-bold">
                         ${payload[0].value.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
@@ -156,7 +194,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
 
-            {/* KPI Cards */}
+            {/* KPI Cards Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl">
                     <div className="flex items-center gap-4">
@@ -178,10 +216,11 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
                             <TrendingUp size={24} />
                         </div>
                         <div>
-                            <p className="text-slate-500 text-sm font-medium">Categoría Top</p>
-                            <h3 className="text-xl font-bold text-slate-200 truncate max-w-[120px]">
-                                {topCategory ? topCategory.name : '-'}
+                            <p className="text-slate-500 text-sm font-medium">Proyección Mensual</p>
+                            <h3 className="text-xl font-bold text-slate-200">
+                                ${projectedTotal.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                             </h3>
+                            <p className="text-[10px] text-slate-500 mt-1">Estimado base 30 días</p>
                         </div>
                     </div>
                 </div>
@@ -202,15 +241,16 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
 
                 <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
-                            <Users size={24} />
+                        <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
+                            <CreditCard size={24} />
                         </div>
                         <div>
-                            <p className="text-slate-500 text-sm font-medium">Compartido</p>
+                            <p className="text-slate-500 text-sm font-medium">Cuotas vs. Al día</p>
                             <h3 className="text-xl font-bold text-slate-200">
-                                {sharedVsPersonalData[1]?.value > 0
-                                    ? `${Math.round((sharedVsPersonalData[1].value / totalSpent) * 100)}%`
+                                {installmentVsCurrentData[0]?.value > 0
+                                    ? `${Math.round((installmentVsCurrentData[0].value / totalSpent) * 100)}% `
                                     : '0%'}
+                                <span className="text-xs text-slate-500 font-normal ml-1">en cuotas</span>
                             </h3>
                         </div>
                     </div>
@@ -219,120 +259,122 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-                {/* 1. Categorías (Pie Chart) */}
+                {/* 1. Categorías (Pie) */}
                 <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
                     <h3 className="text-lg font-semibold text-slate-200 mb-6">Distribución por Categorías</h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie
-                                    data={categoryData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={100}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {categoryData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0)" />
-                                    ))}
+                                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                                    {categoryData.map((entry, index) => <Cell key={`cell - ${index} `} fill={COLORS[index % COLORS.length]} stroke="rgba(0,0,0,0)" />)}
                                 </Pie>
                                 <Tooltip content={<CustomTooltip />} />
-                                <Legend
-                                    verticalAlign="bottom"
-                                    height={36}
-                                    iconType="circle"
-                                    formatter={(value) => <span className="text-slate-400 text-sm ml-1">{value}</span>}
-                                />
+                                <Legend verticalAlign="bottom" height={36} iconType="circle" formatter={(value) => <span className="text-slate-400 text-sm ml-1">{value}</span>} />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* 2. Evolución Mensual (Bar Chart) - Replaces/Compliments Daily */}
+                {/* 2. Monthly Evolution (Bar) */}
                 <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
                     <h3 className="text-lg font-semibold text-slate-200 mb-6">Evolución Mensual</h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={monthlyData}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                                <XAxis
-                                    dataKey="name"
-                                    stroke="#94a3b8"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    dy={10}
-                                />
-                                <YAxis
-                                    stroke="#94a3b8"
-                                    fontSize={12}
-                                    tickLine={false}
-                                    axisLine={false}
-                                    tickFormatter={(value) => `$${value / 1000}k`}
-                                />
+                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value / 1000} k`} />
                                 <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.05)' }} />
                                 <Bar dataKey="amount" radius={[6, 6, 0, 0]}>
-                                    {monthlyData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill="#6366f1" />
-                                    ))}
+                                    {monthlyData.map((entry, index) => <Cell key={`cell - ${index} `} fill="#6366f1" />)}
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* 3. Shared vs Personal (Donut Chart) */}
+                {/* 3. Weekday Radar */}
                 <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
-                    <h3 className="text-lg font-semibold text-slate-200 mb-6">Personal vs. Compartido</h3>
-                    <div className="h-[300px] w-full flex items-center justify-center">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-6">Gasto por Día de Semana</h3>
+                    <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={sharedVsPersonalData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={100}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {sharedVsPersonalData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={SHARED_COLORS[index]} stroke="rgba(0,0,0,0)" />
-                                    ))}
-                                </Pie>
+                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={dayOfWeekData}>
+                                <PolarGrid stroke="#334155" />
+                                <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                                <PolarRadiusAxis angle={30} domain={[0, 'auto']} tick={false} axisLine={false} />
+                                <Radar name="Gasto" dataKey="A" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.5} />
                                 <Tooltip content={<CustomTooltip />} />
-                                <Legend
-                                    verticalAlign="bottom"
-                                    height={36}
-                                    iconType="circle"
-                                    formatter={(value) => <span className="text-slate-400 text-sm ml-1">{value}</span>}
-                                />
-                            </PieChart>
+                            </RadarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* 4. Top 5 Gastos (List) */}
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+                {/* 4. Currency + Share Breakdown (Composite) */}
+                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg flex flex-col">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-4">Composición</h3>
+                    <div className="flex-1 grid grid-cols-2 gap-4">
+                        {/* Currency */}
+                        <div className="flex flex-col items-center justify-center">
+                            <h4 className="text-sm text-slate-400 mb-2">Moneda</h4>
+                            <div className="h-[120px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie data={currencyData} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={5} dataKey="value">
+                                            {currencyData.map((entry, index) => <Cell key={`cell - ${index} `} fill={CURRENCY_COLORS[index]} stroke="rgba(0,0,0,0)" />)}
+                                        </Pie>
+                                        <Tooltip content={<CustomTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="flex gap-4 text-xs mt-2">
+                                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-indigo-500"></div>ARS</div>
+                                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500"></div>USD</div>
+                            </div>
+                        </div>
+
+                        {/* Personal vs Shared */}
+                        <div className="flex flex-col items-center justify-center border-l border-slate-700/50">
+                            <h4 className="text-sm text-slate-400 mb-2">Tipo</h4>
+                            <div className="h-[120px] w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie data={sharedVsPersonalData} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={5} dataKey="value">
+                                            {sharedVsPersonalData.map((entry, index) => <Cell key={`cell - ${index} `} fill={SHARED_COLORS[index]} stroke="rgba(0,0,0,0)" />)}
+                                        </Pie>
+                                        <Tooltip content={<CustomTooltip />} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="flex gap-4 text-xs mt-2">
+                                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-indigo-700"></div>Pers.</div>
+                                <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-cyan-500"></div>Comp.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 5. Top 5 Gastos */}
+                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg lg:col-span-2">
                     <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
                         <ArrowUpRight size={20} className="text-red-400" />
                         Mayores Gastos del Periodo
                     </h3>
-                    <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {topExpenses.map((expense, index) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-colors">
+                            <div key={expense.id || index} className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/50 hover:border-slate-600 transition-colors">
                                 <div className="flex items-center gap-3">
-                                    <div className="text-slate-500 font-mono text-sm">#{index + 1}</div>
+                                    <div className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 font-mono text-xs">#{index + 1}</div>
                                     <div>
-                                        <div className="font-medium text-slate-200">{expense.description}</div>
+                                        <div className="font-medium text-slate-200 truncate max-w-[150px]">{expense.description}</div>
                                         <div className="text-xs text-slate-500">{new Date(expense.created_at).toLocaleDateString()}</div>
                                     </div>
                                 </div>
                                 <div className="text-right">
                                     <div className="font-bold text-slate-200">${expense.finalAmount.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</div>
-                                    <div className="text-xs text-slate-500">{expense.category || 'General'}</div>
+                                    <div className="flex items-center justify-end gap-1 text-[10px] text-slate-500">
+                                        <span>{expense.category || 'General'}</span>
+                                        {expense.is_installment && <span className="text-amber-500 font-medium">(Cuotas)</span>}
+                                    </div>
                                 </div>
                             </div>
                         ))}
