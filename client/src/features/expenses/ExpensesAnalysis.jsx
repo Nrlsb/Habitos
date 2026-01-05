@@ -24,7 +24,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
         dailyAverage,
         projectedTotal,
         futureProjections,
-        activeInstallmentSum
+        activeInstallmentSum,
+        daysSpan
     } = useMemo(() => {
         if (!expenses || expenses.length === 0) {
             return { categoryData: [], dailyData: [], monthlyData: [], sharedVsPersonalData: [], installmentVsCurrentData: [], dayOfWeekData: [], currencyData: [], topExpenses: [], totalSpent: 0, topCategory: null, dailyAverage: 0, projectedTotal: 0 };
@@ -242,7 +243,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
             dailyAverage,
             projectedTotal: projectedMonthly, // Current Month Projection
             activeInstallmentSum,
-            futureProjections // List for "Proyecciones Futuras"
+            futureProjections, // List for "Proyecciones Futuras"
+            daysSpan // Export for usage in UI info text
         };
     }, [expenses, dolarRate]);
 
