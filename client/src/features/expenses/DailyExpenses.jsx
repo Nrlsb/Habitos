@@ -14,6 +14,8 @@ const DailyExpenses = () => {
         loading
     } = useExpenses();
 
+    console.log("DailyExpenses Render - Data:", dailyExpenses?.length, "Loading:", loading);
+
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [dolarRate, setDolarRate] = useState(null);
 
