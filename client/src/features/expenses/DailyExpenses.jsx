@@ -57,22 +57,55 @@ const DailyExpenses = () => {
         });
     };
 
+    const groupedExpenses = useMemo(() => {
+        if (!dailyExpenses || dailyExpenses.length === 0) return [];
+
+        // Sort by creation time desc
+        const sorted = [...dailyExpenses].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        const groups = [];
+
+        sorted.forEach(expense => {
+            // Find a candidate group: same desc, amount, currency, and time diff < 5000ms (generous buffer for network delays)
+            // We check only the last group added or scan recently added groups? 
+            // Better to scan recent groups.
+            const existingGroup = groups.find(g =>
+                g.description === expense.description &&
+                g.amount === expense.amount &&
+                g.currency === expense.currency &&
+                Math.abs(new Date(g.primary_created_at) - new Date(expense.created_at)) < 5000
+            );
+
+            if (existingGroup) {
+                existingGroup.planillas.push(expense.planillas?.nombre || 'Unknown');
+                existingGroup.ids.push(expense.id);
+            } else {
+                groups.push({
+                    ...expense,
+                    primary_created_at: expense.created_at,
+                    planillas: [expense.planillas?.nombre || 'Unknown'],
+                    ids: [expense.id]
+                });
+            }
+        });
+
+        return groups;
+
+    }, [dailyExpenses]);
+
     const totalDayAmount = useMemo(() => {
-        return dailyExpenses.reduce((acc, expense) => {
+        return groupedExpenses.reduce((acc, expense) => {
             let amount = expense.amount;
             if (expense.currency === 'USD') {
                 if (dolarRate) {
                     amount = amount * dolarRate;
                 } else {
-                    // Fallback: If no rate, ideally show separate USD total, but for now 
-                    // we can't convert. We'll ignore or add 0 to ARS total? 
-                    // Let's add 0 to avoid inflating ARS total falsely.
                     amount = 0;
                 }
             }
             return acc + amount;
         }, 0);
-    }, [dailyExpenses, dolarRate]);
+    }, [groupedExpenses, dolarRate]);
 
     const handleAddExpense = async (e) => {
         e.preventDefault();
@@ -299,7 +332,7 @@ const DailyExpenses = () => {
                         <div className="p-4 border-b border-slate-700/50 flex justify-between items-center">
                             <h3 className="text-slate-300 font-medium">Movimientos</h3>
                             <span className="text-xs bg-slate-700/50 text-slate-400 px-2 py-1 rounded-lg">
-                                {dailyExpenses.length} reg.
+                                {groupedExpenses.length} reg.
                             </span>
                         </div>
 
@@ -308,14 +341,14 @@ const DailyExpenses = () => {
                                 <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-3"></div>
                                 <p className="text-sm">Cargando...</p>
                             </div>
-                        ) : dailyExpenses.length === 0 ? (
+                        ) : groupedExpenses.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 text-slate-500">
                                 <CalendarIcon size={48} className="mb-4 opacity-20" />
                                 <p className="text-sm">No hay gastos registrados en esta fecha.</p>
                             </div>
                         ) : (
                             <div className="divide-y divide-slate-700/30">
-                                {dailyExpenses.map((expense) => (
+                                {groupedExpenses.map((expense) => (
                                     <div key={expense.id} className="p-4 hover:bg-slate-700/20 transition-colors flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400">
@@ -323,12 +356,14 @@ const DailyExpenses = () => {
                                             </div>
                                             <div>
                                                 <h4 className="text-slate-200 font-medium">{expense.description}</h4>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded border border-slate-600">
-                                                        {expense.planillas?.nombre}
-                                                    </span>
-                                                    <span className="text-xs text-slate-500">
-                                                        {format(parseISO(expense.created_at), 'HH:mm')} hs
+                                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                    {expense.planillas.map((pName, idx) => (
+                                                        <span key={idx} className="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded border border-slate-600">
+                                                            {pName}
+                                                        </span>
+                                                    ))}
+                                                    <span className="text-xs text-slate-500 ml-1">
+                                                        {format(parseISO(expense.primary_created_at), 'HH:mm')} hs
                                                     </span>
                                                 </div>
                                             </div>
