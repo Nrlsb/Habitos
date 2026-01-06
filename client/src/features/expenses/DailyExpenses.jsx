@@ -27,12 +27,15 @@ const DailyExpenses = () => {
     // Categories list (can be moved to a config file later)
     const categories = ["General", "Comida", "Transporte", "Servicios", "Ocio", "Salud", "Educación", "Ropa", "Regalos", "Varios"];
 
-    // Update default selection when planillas load
+    // Set default planilla if available
     useEffect(() => {
         if (planillas.length > 0 && selectedPlanillaIds.length === 0) {
             setSelectedPlanillaIds([planillas[0].id]);
         }
     }, [planillas]); // Removed selectedPlanillaIds dep to avoid loop, though logic needs care
+
+    const handlePrevDay = () => setSelectedDate(prev => subDays(prev, 1));
+    const handleNextDay = () => setSelectedDate(prev => addDays(prev, 1));
 
     const togglePlanillaSelection = (id) => {
         setSelectedPlanillaIds(prev => {
