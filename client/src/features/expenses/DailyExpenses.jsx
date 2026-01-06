@@ -23,6 +23,8 @@ const DailyExpenses = () => {
     const [selectedPlanillaIds, setSelectedPlanillaIds] = useState([]);
     const [category, setCategory] = useState("General");
     const [showPlanillaDropdown, setShowPlanillaDropdown] = useState(false);
+    const [currency, setCurrency] = useState('ARS');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Categories list (can be moved to a config file later)
     const categories = ["General", "Comida", "Transporte", "Servicios", "Ocio", "Salud", "Educación", "Ropa", "Regalos", "Varios"];
