@@ -611,10 +611,11 @@ app.delete('/api/expenses/:id', authenticateUser, async (req, res) => {
 
 // Get daily expenses (aggregated from all owned/shared planillas)
 app.get('/api/expenses/daily', authenticateUser, async (req, res) => {
-    const { date } = req.query;
+    const { date, from, to } = req.query;
 
-    if (!date) {
-        return res.status(400).json({ error: 'Date query parameter is required (YYYY-MM-DD)' });
+    // We need either 'date' OR ('from' & 'to')
+    if (!date && (!from || !to)) {
+        return res.status(400).json({ error: 'Date query parameter (YYYY-MM-DD) or numeric/ISO dates range (from, to) is required' });
     }
 
     try {
@@ -640,13 +641,17 @@ app.get('/api/expenses/daily', authenticateUser, async (req, res) => {
         }
 
         // 2. Query expenses
-        // Note: 'created_at' is timestamptz. We need to filter by date.
-        // Supabase/PostgREST allows filtering by date directly implicitly if casting or using proper range, 
-        // but simple string matching might fail if time is included.
-        // Using gte/lt for the day range is safer.
+        let startDate, endDate;
 
-        const startDate = `${date}T00:00:00`;
-        const endDate = `${date}T23:59:59.999`;
+        if (from && to) {
+            // Priority: Explicit range (ISO strings or timestamps)
+            startDate = from;
+            endDate = to;
+        } else {
+            // Fallback: Date string
+            startDate = `${date}T00:00:00`;
+            endDate = `${date}T23:59:59.999`;
+        }
 
         const { data: expenses, error } = await supabase
             .from('expenses')

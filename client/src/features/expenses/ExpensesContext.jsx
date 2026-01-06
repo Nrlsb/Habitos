@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { startOfDay, endOfDay } from 'date-fns';
 import { useAuth } from '../../context/AuthContext';
 
 const ExpensesContext = createContext();
@@ -161,11 +162,26 @@ export const ExpensesProvider = ({ children }) => {
     // Daily Expenses
     const [dailyExpenses, setDailyExpenses] = useState([]);
 
-    const getDailyExpenses = useCallback(async (dateString) => {
+    const getDailyExpenses = useCallback(async (dateOrString) => {
         if (!session) return;
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/expenses/daily?date=${dateString}`, {
+            let from, to;
+
+            if (typeof dateOrString === 'string') {
+                // Fallback for string (YYYY-MM-DD) - though we try to move away from this
+                // Treat strings as local date start
+                const [year, month, day] = dateOrString.split('-').map(Number);
+                const date = new Date(year, month - 1, day);
+                from = startOfDay(date).toISOString();
+                to = endOfDay(date).toISOString();
+            } else {
+                // It's a Date object
+                from = startOfDay(dateOrString).toISOString();
+                to = endOfDay(dateOrString).toISOString();
+            }
+
+            const response = await fetch(`${API_URL}/api/expenses/daily?from=${from}&to=${to}`, {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (!response.ok) throw new Error('Failed to fetch daily expenses');

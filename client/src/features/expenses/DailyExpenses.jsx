@@ -34,8 +34,7 @@ const DailyExpenses = () => {
 
     useEffect(() => {
         // Fetch expenses when date changes
-        const dateString = format(selectedDate, 'yyyy-MM-dd');
-        getDailyExpenses(dateString);
+        getDailyExpenses(selectedDate);
     }, [selectedDate, getDailyExpenses]);
 
     // Set default planilla if available
@@ -76,8 +75,7 @@ const DailyExpenses = () => {
             setAmount('');
 
             // Refresh list
-            const dateString = format(selectedDate, 'yyyy-MM-dd');
-            getDailyExpenses(dateString);
+            getDailyExpenses(selectedDate);
 
         } catch (error) {
             console.error("Error adding expense:", error);
