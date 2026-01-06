@@ -36,7 +36,12 @@ const DailyExpenses = () => {
         if (planillas.length > 0 && selectedPlanillaIds.length === 0) {
             setSelectedPlanillaIds([planillas[0].id]);
         }
-    }, [planillas]); // Removed selectedPlanillaIds dep to avoid loop, though logic needs care
+    }, [planillas]); // Removed selectedPlanillaIds dep to avoid loop
+
+    // Fetch expenses when date changes
+    useEffect(() => {
+        getDailyExpenses(selectedDate);
+    }, [selectedDate, getDailyExpenses]);
 
     const handlePrevDay = () => setSelectedDate(prev => subDays(prev, 1));
     const handleNextDay = () => setSelectedDate(prev => addDays(prev, 1));
