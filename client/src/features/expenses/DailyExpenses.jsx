@@ -51,10 +51,19 @@ const DailyExpenses = () => {
     };
 
     const totalDayAmount = useMemo(() => {
-        if (!dolarRate) return 0;
         return dailyExpenses.reduce((acc, expense) => {
-            const amountInARS = expense.currency === 'USD' ? expense.amount * dolarRate : expense.amount;
-            return acc + amountInARS;
+            let amount = expense.amount;
+            if (expense.currency === 'USD') {
+                if (dolarRate) {
+                    amount = amount * dolarRate;
+                } else {
+                    // Fallback: If no rate, ideally show separate USD total, but for now 
+                    // we can't convert. We'll ignore or add 0 to ARS total? 
+                    // Let's add 0 to avoid inflating ARS total falsely.
+                    amount = 0;
+                }
+            }
+            return acc + amount;
         }, 0);
     }, [dailyExpenses, dolarRate]);
 
