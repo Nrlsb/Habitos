@@ -48,6 +48,14 @@ const DailyExpenses = () => {
         });
     };
 
+    const totalDayAmount = useMemo(() => {
+        if (!dolarRate) return 0;
+        return dailyExpenses.reduce((acc, expense) => {
+            const amountInARS = expense.currency === 'USD' ? expense.amount * dolarRate : expense.amount;
+            return acc + amountInARS;
+        }, 0);
+    }, [dailyExpenses, dolarRate]);
+
     const handleAddExpense = async (e) => {
         e.preventDefault();
         if (!description || !amount || selectedPlanillaIds.length === 0) return;
