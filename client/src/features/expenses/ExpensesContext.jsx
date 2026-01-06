@@ -181,7 +181,11 @@ export const ExpensesProvider = ({ children }) => {
                 to = endOfDay(dateOrString).toISOString();
             }
 
-            const url = `${API_URL}/api/expenses/daily?from=${from}&to=${to}`;
+            const queryParams = new URLSearchParams({
+                from: from,
+                to: to
+            });
+            const url = `${API_URL}/api/expenses/daily?${queryParams.toString()}`;
             console.log("Fetching Daily Expenses URL:", url);
 
             const response = await fetch(url, {
