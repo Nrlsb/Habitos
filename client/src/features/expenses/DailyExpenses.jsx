@@ -20,59 +20,57 @@ const DailyExpenses = () => {
     // Form State
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
-    const [selectedPlanillaId, setSelectedPlanillaId] = useState('');
-    const [currency, setCurrency] = useState('ARS');
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedPlanillaIds, setSelectedPlanillaIds] = useState([]);
+    const [category, setCategory] = useState("General");
+    const [showPlanillaDropdown, setShowPlanillaDropdown] = useState(false);
 
-    useEffect(() => {
-        const fetchDolar = async () => {
-            const rate = await getDolarRate();
-            setDolarRate(rate);
-        };
-        fetchDolar();
-    }, []);
+    // Categories list (can be moved to a config file later)
+    const categories = ["General", "Comida", "Transporte", "Servicios", "Ocio", "Salud", "Educación", "Ropa", "Regalos", "Varios"];
 
+    // Update default selection when planillas load
     useEffect(() => {
-        // Fetch expenses when date changes
-        getDailyExpenses(selectedDate);
-    }, [selectedDate, getDailyExpenses]);
-
-    // Set default planilla if available
-    useEffect(() => {
-        if (planillas.length > 0 && !selectedPlanillaId) {
-            setSelectedPlanillaId(planillas[0].id);
+        if (planillas.length > 0 && selectedPlanillaIds.length === 0) {
+            setSelectedPlanillaIds([planillas[0].id]);
         }
-    }, [planillas, selectedPlanillaId]);
+    }, [planillas]); // Removed selectedPlanillaIds dep to avoid loop, though logic needs care
 
-    const handlePrevDay = () => setSelectedDate(prev => subDays(prev, 1));
-    const handleNextDay = () => setSelectedDate(prev => addDays(prev, 1));
-
-    const totalDayAmount = useMemo(() => {
-        if (!dolarRate) return 0;
-        return dailyExpenses.reduce((acc, expense) => {
-            const amountInARS = expense.currency === 'USD' ? expense.amount * dolarRate : expense.amount;
-            return acc + amountInARS;
-        }, 0);
-    }, [dailyExpenses, dolarRate]);
+    const togglePlanillaSelection = (id) => {
+        setSelectedPlanillaIds(prev => {
+            if (prev.includes(id)) {
+                // Prevent deselecting all if desired, or allow empty (but disable submit)
+                return prev.filter(pId => pId !== id);
+            } else {
+                return [...prev, id];
+            }
+        });
+    };
 
     const handleAddExpense = async (e) => {
         e.preventDefault();
-        if (!description || !amount || !selectedPlanillaId) return;
+        if (!description || !amount || selectedPlanillaIds.length === 0) return;
 
         setIsSubmitting(true);
         try {
-            await addExpense(selectedPlanillaId, {
-                description,
-                amount: parseFloat(amount),
-                currency,
-                // Defaults for quick add
-                is_shared: false,
-                is_installment: false
-            });
+            // Create expense for each selected planilla
+            const promises = selectedPlanillaIds.map(id =>
+                addExpense(id, {
+                    description,
+                    amount: parseFloat(amount),
+                    currency,
+                    category, // New field
+                    // Defaults for quick add
+                    is_shared: false,
+                    is_installment: false
+                })
+            );
+
+            await Promise.all(promises);
 
             // Clear form
             setDescription('');
             setAmount('');
+            // Keep planillas and category selected for convenience? Or reset?
+            // Let's keep them.
 
             // Refresh list
             getDailyExpenses(selectedDate);
@@ -117,7 +115,7 @@ const DailyExpenses = () => {
                     )}
                     <button
                         onClick={handleNextDay}
-                        disabled={isToday} // Optional: block future dates if desired, but user might want to plan ahead? Keeping enabled for now unless strictly 'expenses made'.
+                        disabled={isToday}
                         className={`p-2 rounded-xl transition-colors ${isToday ? 'text-slate-700 cursor-not-allowed' : 'hover:bg-slate-700 text-slate-400 hover:text-white'}`}
                     >
                         <ChevronRight size={24} />
@@ -161,18 +159,48 @@ const DailyExpenses = () => {
                             </div>
                         ) : (
                             <form onSubmit={handleAddExpense} className="space-y-3">
-                                <div>
-                                    <select
-                                        value={selectedPlanillaId}
-                                        onChange={(e) => setSelectedPlanillaId(e.target.value)}
-                                        className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
+                                {/* Multi-Planilla Selector */}
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPlanillaDropdown(!showPlanillaDropdown)}
+                                        className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 text-left flex justify-between items-center"
                                     >
-                                        {planillas.map(p => (
-                                            <option key={p.id} value={p.id}>{p.nombre}</option>
-                                        ))}
-                                    </select>
+                                        <span className="truncate">
+                                            {selectedPlanillaIds.length === 0
+                                                ? "Seleccionar Planillas"
+                                                : selectedPlanillaIds.length === 1
+                                                    ? planillas.find(p => p.id === selectedPlanillaIds[0])?.nombre
+                                                    : `${selectedPlanillaIds.length} planillas seleccionadas`
+                                            }
+                                        </span>
+                                        <ChevronRight size={16} className={`transition-transform ${showPlanillaDropdown ? 'rotate-90' : ''}`} />
+                                    </button>
+
+                                    {showPlanillaDropdown && (
+                                        <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-600 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                                            {planillas.map(p => (
+                                                <div
+                                                    key={p.id}
+                                                    onClick={() => togglePlanillaSelection(p.id)}
+                                                    className="flex items-center gap-2 px-3 py-2 hover:bg-slate-700 cursor-pointer"
+                                                >
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedPlanillaIds.includes(p.id) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500'}`}>
+                                                        {selectedPlanillaIds.includes(p.id) && <Plus size={12} className="text-white" />}
+                                                    </div>
+                                                    <span className="text-sm text-slate-200">{p.nombre}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
+                                {/* Overlay to close dropdown */}
+                                {showPlanillaDropdown && (
+                                    <div className="fixed inset-0 z-0" onClick={() => setShowPlanillaDropdown(false)}></div>
+                                )}
+
+                                {/* Description */}
                                 <div>
                                     <input
                                         type="text"
@@ -183,6 +211,7 @@ const DailyExpenses = () => {
                                     />
                                 </div>
 
+                                {/* Amount & Currency */}
                                 <div className="flex gap-2">
                                     <div className="flex-1">
                                         <input
@@ -204,9 +233,22 @@ const DailyExpenses = () => {
                                     </select>
                                 </div>
 
+                                {/* Category Selection */}
+                                <div>
+                                    <select
+                                        value={category}
+                                        onChange={(e) => setCategory(e.target.value)}
+                                        className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
+                                    >
+                                        {categories.map(cat => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
                                 <button
                                     type="submit"
-                                    disabled={isSubmitting || !description || !amount}
+                                    disabled={isSubmitting || !description || !amount || selectedPlanillaIds.length === 0}
                                     className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
                                 >
                                     {isSubmitting ? (
