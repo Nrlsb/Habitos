@@ -181,7 +181,10 @@ export const ExpensesProvider = ({ children }) => {
                 to = endOfDay(dateOrString).toISOString();
             }
 
-            const response = await fetch(`${API_URL}/api/expenses/daily?from=${from}&to=${to}`, {
+            const url = `${API_URL}/api/expenses/daily?from=${from}&to=${to}`;
+            console.log("Fetching Daily Expenses URL:", url);
+
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (!response.ok) throw new Error('Failed to fetch daily expenses');
