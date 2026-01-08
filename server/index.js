@@ -653,7 +653,7 @@ app.post('/api/planillas/:targetId/expenses/copy', authenticateUser, async (req,
 // Rollover Month: Copy recurring/installments from Previous Month to Current Month
 app.post('/api/planillas/:id/rollover', authenticateUser, async (req, res) => {
     const { id } = req.params;
-    const { targetDate } = req.body; // Expecting ISO string or YYYY-MM-DD for the 1st of the new month
+    const { targetDate, selectedExpenseIds } = req.body; // selectedExpenseIds is optional array of strings
 
     if (!targetDate) return res.status(400).json({ error: 'Target date is required' });
 
@@ -676,48 +676,78 @@ app.post('/api/planillas/:id/rollover', authenticateUser, async (req, res) => {
     }
 
     try {
-        // 2. Fetch Active Installments from Previous Month
-        // We look for expenses in the previous month that are installments AND not finished.
+        // 2. Fetch Expenses from Previous Month
+        // If IDs provided, we can fetch just those (optimization), or fetch all and filter.
+        // Let's fetch all from prev month to validate they are indeed from prev month.
 
         const { data: previousExpenses, error: fetchError } = await supabase
             .from('expenses')
             .select('*')
             .eq('planilla_id', id)
             .gte('created_at', startPrev)
-            .lt('created_at', endPrev)
-            .eq('is_installment', true);
+            .lt('created_at', endPrev);
 
         if (fetchError) throw fetchError;
 
         if (!previousExpenses || previousExpenses.length === 0) {
-            return res.json({ message: 'No active installments found in previous month', count: 0 });
+            return res.json({ message: 'No expenses found in previous month', count: 0 });
         }
 
-        // Filter for those that still have installments left
-        // Note: 'total_installments' 0 or null means infinite? Assuming standard fixed count.
-        const activeInstallments = previousExpenses.filter(e => {
-            if (!e.total_installments) return false;
-            return e.current_installment < e.total_installments;
-        });
+        let expensesToProcess = previousExpenses;
 
-        if (activeInstallments.length === 0) {
-            return res.json({ message: 'All installments in previous month were finished', count: 0 });
+        // 2.1 Filter by Selection if provided
+        if (selectedExpenseIds && Array.isArray(selectedExpenseIds) && selectedExpenseIds.length > 0) {
+            expensesToProcess = previousExpenses.filter(e => selectedExpenseIds.includes(e.id));
+        } else {
+            // Default behavior (Legacy Support / Auto-Rollover without selection):
+            // Only take Active Installments
+            expensesToProcess = previousExpenses.filter(e => e.is_installment && (!e.total_installments || e.current_installment < e.total_installments));
+        }
+
+        if (expensesToProcess.length === 0) {
+            return res.json({ message: 'No expenses selected or found to rollover', count: 0 });
         }
 
         // 3. Prepare New Expenses for Target Month
-        const expensesToInsert = activeInstallments.map(e => ({
-            planilla_id: id,
-            description: e.description, // Keep description
-            amount: e.amount, // Keep amount (assuming fixed installments)
-            currency: e.currency,
-            category: e.category,
-            is_shared: e.is_shared,
-            payer_name: e.payer_name,
-            is_installment: true,
-            current_installment: e.current_installment + 1, // INCREMENT
-            total_installments: e.total_installments,
-            created_at: targetDate // Set to 1st of the new month
-        }));
+        const expensesToInsert = expensesToProcess.map(e => {
+            let newCurrentInstallment = e.current_installment;
+            let isInstallment = e.is_installment;
+
+            // Logic:
+            // - If it WAS an installment, we increment. 
+            // - If it was NOT, it's a fixed expense we are copying, so it stays as is (not installment? or keep flags?)
+            //   Usually fixed expenses are just repeated.
+
+            if (e.is_installment) {
+                // Verify it hasn't finished (double check for safety if manually selected completed ones)
+                if (e.total_installments && e.current_installment >= e.total_installments) {
+                    // It's finished. Should we rollover? valid use case: extended quotas?
+                    // For now, let's assume if user selected it, they want it. But usually we increment.
+                    newCurrentInstallment = e.current_installment + 1;
+                } else {
+                    newCurrentInstallment = e.current_installment + 1;
+                }
+            } else {
+                // It is a fixed expense. Just copy.
+                // Reset installment fields just in case
+                newCurrentInstallment = null;
+                isInstallment = false;
+            }
+
+            return {
+                planilla_id: id,
+                description: e.description,
+                amount: e.amount,
+                currency: e.currency,
+                category: e.category,
+                is_shared: e.is_shared,
+                payer_name: e.payer_name,
+                is_installment: isInstallment,
+                current_installment: newCurrentInstallment,
+                total_installments: e.total_installments,
+                created_at: targetDate // Set to 1st of the new month
+            };
+        });
 
         // 4. Bulk Insert
         const { data: inserted, error: insertError } = await supabase

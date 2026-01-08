@@ -147,7 +147,7 @@ export const ExpensesProvider = ({ children }) => {
     }, [API_URL, getExpenses]);
 
     // Perform Rollover (Start Month)
-    const performMonthRollover = useCallback(async (planillaId, targetDate) => {
+    const performMonthRollover = useCallback(async (planillaId, targetDate, selectedExpenseIds = []) => {
         try {
             const response = await fetch(`${API_URL}/api/planillas/${planillaId}/rollover`, {
                 method: 'POST',
@@ -155,7 +155,7 @@ export const ExpensesProvider = ({ children }) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
-                body: JSON.stringify({ targetDate }),
+                body: JSON.stringify({ targetDate, selectedExpenseIds }),
             });
 
             if (!response.ok) {

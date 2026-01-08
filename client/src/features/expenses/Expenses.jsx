@@ -35,6 +35,12 @@ function Expenses() {
     // Export State
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportTargetId, setExportTargetId] = useState('');
+
+    // Rollover State
+    const [isRolloverModalOpen, setIsRolloverModalOpen] = useState(false);
+    const [rolloverCandidates, setRolloverCandidates] = useState([]);
+    const [selectedRolloverIds, setSelectedRolloverIds] = useState(new Set());
+    const [isLoadingRollover, setIsLoadingRollover] = useState(false);
     const [exportMessage, setExportMessage] = useState('');
 
     // Expense Form State
@@ -98,17 +104,64 @@ function Expenses() {
         });
     };
 
-    const handleMonthRollover = async () => {
-        if (!selectedPlanillaId) return;
-        if (window.confirm(`¿Importar cuotas activas del mes anterior a ${currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}?`)) {
-            try {
-                // Determine target date as 1st of CURRENT viewed month
-                const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
-                const result = await performMonthRollover(selectedPlanillaId, targetDate);
-                alert(`Se importaron ${result.count} gastos recurrentes.`);
-            } catch (err) {
-                alert('Error al importar gastos: ' + err.message);
+    const handleMonthRollover = () => {
+        if (!selectedPlanillaId || !expenses) return;
+
+        // 1. Calculate Previous Month
+        const prevMonthDate = new Date(currentDate);
+        prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+
+        // 2. Filter Candidates from EXISTING expenses list
+        const candidates = expenses.filter(e => {
+            const eDate = new Date(e.created_at);
+            return eDate.getMonth() === prevMonthDate.getMonth() &&
+                eDate.getFullYear() === prevMonthDate.getFullYear();
+        });
+
+        if (candidates.length === 0) {
+            alert('No se encontraron gastos en el mes anterior.');
+            return;
+        }
+
+        // 3. Pre-select active installments
+        const initialSelection = new Set();
+        candidates.forEach(e => {
+            if (e.is_installment) {
+                // If it's an installment, select it only if not finished
+                if (!e.total_installments || e.current_installment < e.total_installments) {
+                    initialSelection.add(e.id);
+                }
             }
+        });
+
+        setRolloverCandidates(candidates);
+        setSelectedRolloverIds(initialSelection);
+        setIsRolloverModalOpen(true);
+    };
+
+    const toggleRolloverSelection = (id) => {
+        const newSet = new Set(selectedRolloverIds);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setSelectedRolloverIds(newSet);
+    };
+
+    const confirmRollover = async () => {
+        if (selectedRolloverIds.size === 0) return;
+
+        setIsLoadingRollover(true);
+        try {
+            const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
+            const result = await performMonthRollover(selectedPlanillaId, targetDate, Array.from(selectedRolloverIds));
+            setIsRolloverModalOpen(false);
+            alert(`Se importaron ${result.count} gastos exitosamente.`);
+        } catch (err) {
+            alert('Error al importar: ' + err.message);
+        } finally {
+            setIsLoadingRollover(false);
         }
     };
 
@@ -497,6 +550,146 @@ function Expenses() {
 
 
 
+
+                {/* ROLLOVER MODAL */}
+                {isRolloverModalOpen && (
+                    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+                        <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
+                            <div className="p-6 border-b border-slate-700/50 flex justify-between items-center">
+                                <div>
+                                    <h3 className="text-xl font-bold text-white">Importar Gastos del Mes Anterior</h3>
+                                    <p className="text-slate-400 text-sm mt-1">
+                                        Selecciona los gastos de {new Date(new Date(currentDate).setMonth(currentDate.getMonth() - 1)).toLocaleString('es-AR', { month: 'long' })} que deseas copiar a {currentDate.toLocaleString('es-AR', { month: 'long' })}.
+                                    </p>
+                                </div>
+                                <button onClick={() => setIsRolloverModalOpen(false)} className="text-slate-400 hover:text-white p-2 hover:bg-slate-800 rounded-full transition-colors">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="flex-1 overflow-y-auto p-2">
+                                {rolloverCandidates.length === 0 ? (
+                                    <div className="p-8 text-center text-slate-500">No hay gastos disponibles para importar.</div>
+                                ) : (
+                                    <table className="w-full text-sm text-left text-slate-400">
+                                        <thead className="text-xs text-slate-500 uppercase bg-slate-800/50 sticky top-0">
+                                            <tr>
+                                                <th className="px-4 py-3 text-center w-10">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedRolloverIds.size === rolloverCandidates.length}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedRolloverIds(new Set(rolloverCandidates.map(c => c.id)));
+                                                            } else {
+                                                                setSelectedRolloverIds(new Set());
+                                                            }
+                                                        }}
+                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500"
+                                                    />
+                                                </th>
+                                                <th className="px-4 py-3">Descripción</th>
+                                                <th className="px-4 py-3 text-right">Monto</th>
+                                                <th className="px-4 py-3 text-center">Tipo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800">
+                                            {rolloverCandidates.map(expense => {
+                                                const isSelected = selectedRolloverIds.has(expense.id);
+                                                return (
+                                                    <tr key={expense.id} className={`hover:bg-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-900/10' : ''}`} onClick={() => toggleRolloverSelection(expense.id)}>
+                                                        <td className="px-4 py-3 text-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={isSelected}
+                                                                onChange={() => { }} // Handle click on row
+                                                                className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500 pointer-events-none"
+                                                            />
+                                                        </td>
+                                                        <td className="px-4 py-3 font-medium text-slate-200">
+                                                            {expense.description}
+                                                            <div className="text-xs text-slate-500">{expense.category}</div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right font-mono text-slate-300">
+                                                            {expense.currency === 'USD' ? 'USD ' : '$'}
+                                                            {expense.amount}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-center">
+                                                            {expense.is_installment ? (
+                                                                <span className="bg-indigo-500/10 text-indigo-400 text-xs px-2 py-0.5 rounded-full border border-indigo-500/20">
+                                                                    Cuota {expense.current_installment}/{expense.total_installments}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="bg-slate-700/30 text-slate-400 text-xs px-2 py-0.5 rounded-full border border-slate-600/30">
+                                                                    Fijo/Único
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
+
+                            <div className="p-6 border-t border-slate-700/50 flex justify-between items-center bg-slate-900/50 rounded-b-3xl">
+                                <div className="text-sm text-slate-400">
+                                    <span className="font-bold text-white">{selectedRolloverIds.size}</span> seleccionados
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setIsRolloverModalOpen(false)}
+                                        className="px-5 py-2.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl transition-colors font-medium"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={confirmRollover}
+                                        disabled={selectedRolloverIds.size === 0 || isLoadingRollover}
+                                        className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl shadow-lg shadow-indigo-900/20 font-medium transition-all"
+                                    >
+                                        {isLoadingRollover ? 'Importando...' : 'Importar Seleccionados'}
+                                        <ArrowRightCircle size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* HEADER & CONTROLS */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200">
+                            {currentPlanilla?.nombre}
+                        </h2>
+                        {currentPlanilla?.is_shared_with_me && (
+                            <span className="bg-cyan-500/20 text-cyan-400 text-xs px-2 py-0.5 rounded-full border border-cyan-500/30">
+                                Compartido
+                            </span>
+                        )}
+                    </div>
+
+                    {!currentPlanilla?.is_shared_with_me && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setIsExportModalOpen(true)}
+                                className="flex items-center gap-2 bg-emerald-900/30 hover:bg-emerald-900/50 text-emerald-300 px-4 py-2 rounded-xl border border-emerald-500/20 transition-all font-medium"
+                            >
+                                <ArrowRightCircle size={18} />
+                                Copiar
+                            </button>
+                            <button
+                                onClick={() => setIsShareModalOpen(true)}
+                                className="flex items-center gap-2 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 px-4 py-2 rounded-xl border border-indigo-500/20 transition-all font-medium"
+                            >
+                                <Share2 size={18} />
+                                Compartir
+                            </button>
+                        </div>
+                    )}
+                </div>
 
                 {/* MONTH SELECTOR & ROLLOVER */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 bg-slate-800/30 p-4 rounded-2xl border border-slate-700/30">
