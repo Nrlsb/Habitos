@@ -120,7 +120,10 @@ export const ExpensesProvider = ({ children }) => {
                 },
                 body: JSON.stringify(newExpense),
             });
-            if (!response.ok) throw new Error('Failed to add expense');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to add expense');
+            }
             await getExpenses(planillaId);
         } catch (err) {
             setError(err.message);
@@ -138,7 +141,10 @@ export const ExpensesProvider = ({ children }) => {
                 },
                 body: JSON.stringify(updatedExpense),
             });
-            if (!response.ok) throw new Error('Failed to update expense');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update expense');
+            }
             await getExpenses(planillaId);
         } catch (err) {
             setError(err.message);
