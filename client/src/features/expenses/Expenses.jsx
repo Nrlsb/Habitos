@@ -3,6 +3,7 @@ import { useExpenses } from './ExpensesContext';
 import { getDolarRate } from '../../services/dolarApi';
 import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import ExpensesAnalysis from './ExpensesAnalysis';
+import NotificationModal from '../../components/NotificationModal';
 
 function Expenses() {
     const {
@@ -55,6 +56,13 @@ function Expenses() {
     const [category, setCategory] = useState('General'); // New Category State
     const [paidBy, setPaidBy] = useState(''); // New Paid By State
     const [editingId, setEditingId] = useState(null);
+
+    const [notification, setNotification] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        type: 'info'
+    });
 
     const [activeTab, setActiveTab] = useState('list'); // 'list' or 'analysis'
 
@@ -124,7 +132,12 @@ function Expenses() {
         });
 
         if (candidates.length === 0) {
-            alert('No se encontraron gastos en el mes anterior.');
+            setNotification({
+                isOpen: true,
+                title: 'Información',
+                message: 'No se encontraron gastos en el mes anterior.',
+                type: 'info'
+            });
             return;
         }
 
@@ -162,9 +175,19 @@ function Expenses() {
             const targetDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
             const result = await performMonthRollover(selectedPlanillaId, targetDate, Array.from(selectedRolloverIds));
             setIsRolloverModalOpen(false);
-            alert(`Se importaron ${result.count} gastos exitosamente.`);
+            setNotification({
+                isOpen: true,
+                title: '¡Éxito!',
+                message: `Se importaron ${result.count} gastos exitosamente.`,
+                type: 'success'
+            });
         } catch (err) {
-            alert('Error al importar: ' + err.message);
+            setNotification({
+                isOpen: true,
+                title: 'Error',
+                message: 'Error al importar: ' + err.message,
+                type: 'error'
+            });
         } finally {
             setIsLoadingRollover(false);
         }
@@ -290,10 +313,21 @@ function Expenses() {
                 };
                 return updateExpense(selectedPlanillaId, expense.id, updatedExpense);
             }));
-            alert('¡Deuda saldada! Los gastos se han actualizado.');
+
+            setNotification({
+                isOpen: true,
+                title: '¡Deuda Saldada!',
+                message: 'Los gastos se han actualizado correctamente.',
+                type: 'success'
+            });
         } catch (err) {
             console.error('Error settling debt:', err);
-            alert('Error al saldar deuda: ' + err.message);
+            setNotification({
+                isOpen: true,
+                title: 'Error',
+                message: 'Error al saldar deuda: ' + err.message,
+                type: 'error'
+            });
         }
     };
 
@@ -389,6 +423,13 @@ function Expenses() {
     // VIEW: EXPENSE SHEET
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen relative">
+            <NotificationModal
+                isOpen={notification.isOpen}
+                onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+                title={notification.title}
+                message={notification.message}
+                type={notification.type}
+            />
             {/* Share Modal */}
             {isShareModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
