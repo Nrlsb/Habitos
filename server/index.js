@@ -517,7 +517,7 @@ app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, re
         current_installment: cuotaActual || null,
         total_installments: totalCuotas || null,
         payer_name: esCompartido ? payer_name : null, // Only save if shared
-        created_at: req.body.date || undefined // Use provided date
+        created_at: req.body.date || new Date().toISOString() // Use provided date or now
     };
 
     const { data, error } = await supabase
