@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard } from 'lucide-react';
+import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard, Users, ArrowRightLeft, CheckCircle } from 'lucide-react';
 
 const COLORS = ['#6366f1', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444', '#64748b'];
 const SHARED_COLORS = ['#3f46e4', '#06b6d4']; // Personal (Indigo), Shared (Cyan)
@@ -10,6 +10,8 @@ const CURRENCY_COLORS = ['#6366f1', '#22c55e']; // ARS (Indigo), USD (Green)
 
 const ExpensesAnalysis = ({ expenses, dolarRate }) => {
     const [showProjection, setShowProjection] = useState(true);
+    const [payerA, setPayerA] = useState('');
+    const [payerB, setPayerB] = useState('');
 
     const {
         categoryData,
@@ -230,6 +232,11 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
             // We capped generation at 6, but installments might go further. That's fine.
             ;
 
+        // Debt Calculator Logic
+        const payers = [...new Set(expenses.filter(e => e.is_shared && e.payer_name).map(e => e.payer_name))].sort();
+
+        // Ensure default selection if specific payers exist and likely just 2 people
+        // (can be handled in useEffect but useMemo derived is safer for read-only)
 
         return {
             categoryData,
@@ -246,9 +253,54 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
             projectedTotal: projectedMonthly, // Current Month Projection
             activeInstallmentSum,
             futureProjections, // List for "Proyecciones Futuras"
-            daysSpan // Export for usage in UI info text
+            daysSpan, // Export for usage in UI info text
+            payers
         };
     }, [expenses, dolarRate]);
+
+    const debtCalculation = useMemo(() => {
+        if (!payerA || !payerB || payerA === payerB) return null;
+
+        let paidA = 0;
+        let paidB = 0;
+        let totalSharedBetween = 0;
+
+        expenses.forEach(e => {
+            if (!e.is_shared) return;
+
+            // Normalize amounts to ARS for calculation
+            const amount = e.currency === 'USD' && dolarRate ? e.amount * dolarRate : e.amount;
+
+            if (e.payer_name === payerA) {
+                paidA += amount;
+                totalSharedBetween += amount;
+            } else if (e.payer_name === payerB) {
+                paidB += amount;
+                totalSharedBetween += amount;
+            }
+        });
+
+        const fairShare = totalSharedBetween / 2;
+        const diff = paidA - paidB;
+        // If diff > 0, A paid more, so B owes A.
+        // Amount owed = (PaidA - PaidB) / 2  OR  PaidA - FairShare
+        const amountOwed = Math.abs(diff) / 2;
+
+        const debtor = diff > 0 ? payerB : payerA;
+        const creditor = diff > 0 ? payerA : payerB;
+
+        return {
+            paidA,
+            paidB,
+            totalShared: totalSharedBetween,
+            fairShare,
+            amountOwed,
+            debtor,
+            creditor,
+            isEven: Math.abs(diff) < 1 // tolerance
+        };
+
+    }, [expenses, dolarRate, payerA, payerB]);
 
     if (!expenses || expenses.length === 0) {
         return (
@@ -258,6 +310,13 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
                 <p className="text-slate-500">Añade gastos para ver el análisis.</p>
             </div>
         );
+    }
+
+    // Auto-select payers if only 2 distinct ones exist and haven't selected yet
+    // This is a bit side-effecty for render but convenient
+    if (activeInstallmentSum && !payerA && !payerB) {
+        // Placeholder logic if we wanted auto-selection, but controlled inputs are safer.
+        // Let's rely on user selection.
     }
 
     const CustomTooltip = ({ active, payload, label }) => {
@@ -408,6 +467,105 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
                     </div>
                 </div>
             )}
+
+            {/* DEBT CALCULATOR */}
+            <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+                <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+                        <Users size={20} />
+                    </div>
+                    <h3 className="text-lg font-semibold text-slate-200">Calculadora de Divisiones</h3>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-6">
+                    {/* Controls */}
+                    <div className="flex-1 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs text-slate-500 mb-1.5 ml-1">Persona A</label>
+                                <select
+                                    value={payerA}
+                                    onChange={(e) => setPayerA(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    {/** Access 'payers' from useMemo logic? We didn't destructure it outside. Let's fix that context logic or duplicate simple extraction. 
+                                         Ideally we return 'payers' from the big useMemo. I added it in the ReplacementChunk above. 
+                                         So we need to destructure it here. */}
+                                    {/* Wait, I cannot change the destructuring line 30 easily without re-writing the whole block. 
+                                        Actually, I can just recalculate it simply here, it's cheap. */}
+                                    {[...new Set(expenses.filter(e => e.is_shared && e.payer_name).map(e => e.payer_name))].sort().map(p => (
+                                        <option key={p} value={p}>{p}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs text-slate-500 mb-1.5 ml-1">Persona B</label>
+                                <select
+                                    value={payerB}
+                                    onChange={(e) => setPayerB(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                                >
+                                    <option value="">Seleccionar...</option>
+                                    {[...new Set(expenses.filter(e => e.is_shared && e.payer_name).map(e => e.payer_name))].sort().map(p => (
+                                        <option key={p} value={p}>{p}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {(!payerA || !payerB) && (
+                            <div className="text-center p-4 bg-slate-900/30 rounded-xl border border-dashed border-slate-700 text-slate-500 text-sm">
+                                Selecciona dos personas para calcular balances.
+                            </div>
+                        )}
+
+                        {(payerA && payerB && payerA === payerB) && (
+                            <div className="text-center p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-400 text-sm">
+                                Selecciona dos personas distintas.
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Results */}
+                    {debtCalculation && (
+                        <div className="flex-1 bg-slate-900/50 rounded-xl border border-slate-700/50 p-4">
+                            <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-slate-700/50">
+                                <div>
+                                    <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerA}</span>
+                                    <span className="text-slate-200 font-bold">${debtCalculation.paidA.toLocaleString()}</span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerB}</span>
+                                    <span className="text-slate-200 font-bold">${debtCalculation.paidB.toLocaleString()}</span>
+                                </div>
+                            </div>
+
+                            <div className="text-center">
+                                {debtCalculation.isEven ? (
+                                    <div className="text-emerald-400 font-medium flex items-center justify-center gap-2">
+                                        <CheckCircle size={20} />
+                                        <span>¡Están a mano!</span>
+                                    </div>
+                                ) : (
+                                    <div className="animate-in zoom-in duration-300">
+                                        <span className="text-slate-500 text-sm mb-1 block">Balance</span>
+                                        <div className="flex items-center justify-center gap-3 text-lg">
+                                            <span className="font-bold text-indigo-300">{debtCalculation.debtor}</span>
+                                            <span className="text-slate-500 text-sm">le debe a</span>
+                                            <span className="font-bold text-indigo-300">{debtCalculation.creditor}</span>
+                                        </div>
+                                        <div className="text-3xl font-bold text-white mt-2 flex items-center justify-center gap-2">
+                                            <ArrowRightLeft className="text-indigo-500" size={24} />
+                                            ${debtCalculation.amountOwed.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
