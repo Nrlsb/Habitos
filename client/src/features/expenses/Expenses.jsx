@@ -47,6 +47,7 @@ function Expenses() {
     const [description, setDescription] = useState('');
     const [amount, setAmount] = useState('');
     const [currency, setCurrency] = useState('ARS');
+    const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
     const [esCompartido, setEsCompartido] = useState(false);
     const [enCuotas, setEnCuotas] = useState(false);
     const [totalCuotas, setTotalCuotas] = useState('');
@@ -103,6 +104,14 @@ function Expenses() {
             return newDate;
         });
     };
+
+    // Sync expenseDate with currentDate when navigating (only if not editing)
+    useEffect(() => {
+        if (!editingId) {
+            setExpenseDate(currentDate.toISOString().split('T')[0]);
+        }
+    }, [currentDate, editingId]);
+
 
     const handleMonthRollover = () => {
         if (!selectedPlanillaId || !expenses) return;
@@ -201,11 +210,12 @@ function Expenses() {
         setDescription('');
         setAmount('');
         setCurrency('ARS');
+        setCategory('General');
+        setExpenseDate(currentDate.toISOString().split('T')[0]); // Reset to current view/today
         setEsCompartido(false);
         setEnCuotas(false);
         setCuotaActual('');
         setTotalCuotas('');
-        setCategory('General');
         setPaidBy('');
         setEditingId(null);
     };
@@ -224,7 +234,7 @@ function Expenses() {
             cuotaActual: enCuotas ? parseInt(cuotaActual) : null,
             totalCuotas: enCuotas ? parseInt(totalCuotas) : null,
             payer_name: esCompartido ? paidBy : null,
-            date: currentDate.toISOString() // Explicitly set date to currently viewed month
+            date: expenseDate ? new Date(expenseDate).toISOString() : currentDate.toISOString()
         };
 
         if (editingId) {
@@ -241,11 +251,19 @@ function Expenses() {
         setAmount(expense.amount);
         setCurrency(expense.currency || 'ARS');
         setCategory(expense.category || 'General');
+
+        // Ensure date is formatted for input date (YYYY-MM-DD)
+        const dateObj = new Date(expense.created_at);
+        setExpenseDate(dateObj.toISOString().split('T')[0]);
+
         setEsCompartido(expense.is_shared);
         setEnCuotas(expense.is_installment);
         setCuotaActual(expense.current_installment || '');
         setTotalCuotas(expense.total_installments || '');
         setPaidBy(expense.payer_name || '');
+
+        // Scroll to form only on mobile/desktop as needed
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     // Inline Editing Handlers
@@ -658,38 +676,8 @@ function Expenses() {
                     </div>
                 )}
 
-                {/* HEADER & CONTROLS */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <div className="flex items-center gap-3">
-                        <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200">
-                            {currentPlanilla?.nombre}
-                        </h2>
-                        {currentPlanilla?.is_shared_with_me && (
-                            <span className="bg-cyan-500/20 text-cyan-400 text-xs px-2 py-0.5 rounded-full border border-cyan-500/30">
-                                Compartido
-                            </span>
-                        )}
-                    </div>
 
-                    {!currentPlanilla?.is_shared_with_me && (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setIsExportModalOpen(true)}
-                                className="flex items-center gap-2 bg-emerald-900/30 hover:bg-emerald-900/50 text-emerald-300 px-4 py-2 rounded-xl border border-emerald-500/20 transition-all font-medium"
-                            >
-                                <ArrowRightCircle size={18} />
-                                Copiar
-                            </button>
-                            <button
-                                onClick={() => setIsShareModalOpen(true)}
-                                className="flex items-center gap-2 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 px-4 py-2 rounded-xl border border-indigo-500/20 transition-all font-medium"
-                            >
-                                <Share2 size={18} />
-                                Compartir
-                            </button>
-                        </div>
-                    )}
-                </div>
+
 
                 {/* MONTH SELECTOR & ROLLOVER */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 bg-slate-800/30 p-4 rounded-2xl border border-slate-700/30">
@@ -842,6 +830,15 @@ function Expenses() {
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
                                             </div>
                                         </div>
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Fecha</label>
+                                        <input
+                                            type="date"
+                                            value={expenseDate}
+                                            onChange={(e) => setExpenseDate(e.target.value)}
+                                            className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600 [color-scheme:dark]"
+                                        />
                                     </div>
                                 </div>
 
