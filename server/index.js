@@ -516,7 +516,8 @@ app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, re
         is_installment: enCuotas || false,
         current_installment: cuotaActual || null,
         total_installments: totalCuotas || null,
-        payer_name: esCompartido ? payer_name : null // Only save if shared
+        payer_name: esCompartido ? payer_name : null, // Only save if shared
+        created_at: req.body.date || undefined // Use provided date
     };
 
     const { data, error } = await supabase
@@ -570,7 +571,8 @@ app.put('/api/expenses/:id', authenticateUser, async (req, res) => {
         is_installment: enCuotas,
         current_installment: cuotaActual,
         total_installments: totalCuotas,
-        payer_name: esCompartido ? payer_name : null
+        payer_name: esCompartido ? payer_name : null,
+        created_at: req.body.date // Allow updating date
     };
 
     const { data, error } = await supabase
@@ -644,6 +646,91 @@ app.post('/api/planillas/:targetId/expenses/copy', authenticateUser, async (req,
 
     } catch (err) {
         console.error("Error copying expenses:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Rollover Month: Copy recurring/installments from Previous Month to Current Month
+app.post('/api/planillas/:id/rollover', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { targetDate } = req.body; // Expecting ISO string or YYYY-MM-DD for the 1st of the new month
+
+    if (!targetDate) return res.status(400).json({ error: 'Target date is required' });
+
+    // 1. Calculate Previous Month Range
+    const target = new Date(targetDate);
+    // Be careful with timezones. Best to assume targetDate is YYYY-MM-01 and treat as UTC or consistent local.
+    // Let's assume targetDate is set to the 1st of the month.
+
+    // Previous month calculation
+    const prevMonthDate = new Date(target);
+    prevMonthDate.setMonth(prevMonthDate.getMonth() - 1);
+
+    // Start of previous month
+    const startPrev = new Date(prevMonthDate.getFullYear(), prevMonthDate.getMonth(), 1).toISOString();
+    // End of previous month (start of current target month)
+    const endPrev = new Date(target.getFullYear(), target.getMonth(), 1).toISOString();
+
+    if (!(await checkPlanillaAccess(id, req.user.id))) {
+        return res.status(403).json({ error: 'Unauthorized or planilla not found' });
+    }
+
+    try {
+        // 2. Fetch Active Installments from Previous Month
+        // We look for expenses in the previous month that are installments AND not finished.
+
+        const { data: previousExpenses, error: fetchError } = await supabase
+            .from('expenses')
+            .select('*')
+            .eq('planilla_id', id)
+            .gte('created_at', startPrev)
+            .lt('created_at', endPrev)
+            .eq('is_installment', true);
+
+        if (fetchError) throw fetchError;
+
+        if (!previousExpenses || previousExpenses.length === 0) {
+            return res.json({ message: 'No active installments found in previous month', count: 0 });
+        }
+
+        // Filter for those that still have installments left
+        // Note: 'total_installments' 0 or null means infinite? Assuming standard fixed count.
+        const activeInstallments = previousExpenses.filter(e => {
+            if (!e.total_installments) return false;
+            return e.current_installment < e.total_installments;
+        });
+
+        if (activeInstallments.length === 0) {
+            return res.json({ message: 'All installments in previous month were finished', count: 0 });
+        }
+
+        // 3. Prepare New Expenses for Target Month
+        const expensesToInsert = activeInstallments.map(e => ({
+            planilla_id: id,
+            description: e.description, // Keep description
+            amount: e.amount, // Keep amount (assuming fixed installments)
+            currency: e.currency,
+            category: e.category,
+            is_shared: e.is_shared,
+            payer_name: e.payer_name,
+            is_installment: true,
+            current_installment: e.current_installment + 1, // INCREMENT
+            total_installments: e.total_installments,
+            created_at: targetDate // Set to 1st of the new month
+        }));
+
+        // 4. Bulk Insert
+        const { data: inserted, error: insertError } = await supabase
+            .from('expenses')
+            .insert(expensesToInsert)
+            .select();
+
+        if (insertError) throw insertError;
+
+        res.json({ message: 'Month rollover successful', count: inserted.length, details: inserted });
+
+    } catch (err) {
+        console.error("Error during month rollover:", err);
         res.status(500).json({ error: err.message });
     }
 });

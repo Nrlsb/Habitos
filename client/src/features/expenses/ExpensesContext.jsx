@@ -110,6 +110,7 @@ export const ExpensesProvider = ({ children }) => {
     }, [API_URL, session]);
 
     const addExpense = useCallback(async (planillaId, newExpense) => {
+        // newExpense now includes 'date' if provided by frontend
         try {
             const response = await fetch(`${API_URL}/api/planillas/${planillaId}/expenses`, {
                 method: 'POST',
@@ -144,6 +145,32 @@ export const ExpensesProvider = ({ children }) => {
             throw err;
         }
     }, [API_URL, getExpenses]);
+
+    // Perform Rollover (Start Month)
+    const performMonthRollover = useCallback(async (planillaId, targetDate) => {
+        try {
+            const response = await fetch(`${API_URL}/api/planillas/${planillaId}/rollover`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ targetDate }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to perform month rollover');
+            }
+
+            // Refresh expenses to show new ones
+            await getExpenses(planillaId);
+            return await response.json();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, getExpenses]);
 
     const deleteExpense = useCallback(async (planillaId, expenseId) => {
         try {
@@ -240,7 +267,8 @@ export const ExpensesProvider = ({ children }) => {
         updateExpense,
         deleteExpense,
         sharePlanilla,
-        copyExpensesToPlanilla
+        copyExpensesToPlanilla,
+        performMonthRollover
     };
 
     return (
