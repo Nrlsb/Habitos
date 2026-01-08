@@ -36,6 +36,7 @@ function Expenses() {
     const [totalCuotas, setTotalCuotas] = useState('');
     const [cuotaActual, setCuotaActual] = useState('');
     const [category, setCategory] = useState('General'); // New Category State
+    const [paidBy, setPaidBy] = useState(''); // New Paid By State
     const [editingId, setEditingId] = useState(null);
 
     // Inline Editing State
@@ -84,6 +85,7 @@ function Expenses() {
         setCuotaActual('');
         setTotalCuotas('');
         setCategory('General');
+        setPaidBy('');
         setEditingId(null);
     };
 
@@ -100,6 +102,7 @@ function Expenses() {
             enCuotas,
             cuotaActual: enCuotas ? parseInt(cuotaActual) : null,
             totalCuotas: enCuotas ? parseInt(totalCuotas) : null,
+            payer_name: esCompartido ? paidBy : null,
         };
 
         if (editingId) {
@@ -120,6 +123,7 @@ function Expenses() {
         setEnCuotas(expense.is_installment);
         setCuotaActual(expense.current_installment || '');
         setTotalCuotas(expense.total_installments || '');
+        setPaidBy(expense.payer_name || '');
     };
 
     // Inline Editing Handlers
@@ -503,6 +507,19 @@ function Expenses() {
                                     </label>
                                 </div>
 
+                                {esCompartido && (
+                                    <div className="mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Pagado por</label>
+                                        <input
+                                            type="text"
+                                            value={paidBy}
+                                            onChange={(e) => setPaidBy(e.target.value)}
+                                            placeholder="Nombre de quien pagó (ej. Yo, Juan)"
+                                            className="w-full md:w-1/2 bg-slate-900/50 border border-slate-600/50 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600"
+                                        />
+                                    </div>
+                                )}
+
                                 {enCuotas && (
                                     <div className="flex gap-4 mb-6 animate-in fade-in slide-in-from-top-2 duration-300 bg-slate-900/30 p-4 rounded-xl border border-slate-700/30">
                                         <div className="w-32">
@@ -619,7 +636,10 @@ function Expenses() {
 
                                             <div className="flex gap-2">
                                                 {expense.is_shared ? (
-                                                    <span className="bg-cyan-500/10 text-cyan-400 text-xs px-2.5 py-1 rounded-full font-medium border border-cyan-500/20">Compartido</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="bg-cyan-500/10 text-cyan-400 text-xs px-2.5 py-1 rounded-full font-medium border border-cyan-500/20">Compartido</span>
+                                                        {expense.payer_name && <span className="text-[10px] text-slate-500">Pagado por: <span className="text-slate-300">{expense.payer_name}</span></span>}
+                                                    </div>
                                                 ) : (
                                                     <span className="bg-slate-700 text-slate-400 text-xs px-2.5 py-1 rounded-full font-medium border border-slate-600">Personal</span>
                                                 )}
@@ -760,7 +780,10 @@ function Expenses() {
                                                         </td>
                                                         <td className="px-6 py-4 text-center">
                                                             {expense.is_shared ? (
-                                                                <span className="inline-flex items-center justify-center bg-cyan-500/10 text-cyan-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-cyan-500/20 tracking-wide">Shared</span>
+                                                                <div className="flex flex-col items-center gap-1">
+                                                                    <span className="inline-flex items-center justify-center bg-cyan-500/10 text-cyan-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-cyan-500/20 tracking-wide">Shared</span>
+                                                                    {expense.payer_name && <span className="text-[9px] text-slate-500 whitespace-nowrap">Por: {expense.payer_name}</span>}
+                                                                </div>
                                                             ) : (
                                                                 <span className="inline-flex items-center justify-center text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-slate-700 tracking-wide">Personal</span>
                                                             )}

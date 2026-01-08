@@ -502,7 +502,8 @@ app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, re
         esCompartido,
         enCuotas,
         cuotaActual,
-        totalCuotas
+        totalCuotas,
+        payer_name // New field
     } = req.body;
 
     const newExpense = {
@@ -514,7 +515,8 @@ app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, re
         is_shared: esCompartido || false,
         is_installment: enCuotas || false,
         current_installment: cuotaActual || null,
-        total_installments: totalCuotas || null
+        total_installments: totalCuotas || null,
+        payer_name: esCompartido ? payer_name : null // Only save if shared
     };
 
     const { data, error } = await supabase
@@ -555,7 +557,8 @@ app.put('/api/expenses/:id', authenticateUser, async (req, res) => {
         esCompartido,
         enCuotas,
         cuotaActual,
-        totalCuotas
+        totalCuotas,
+        payer_name // New field
     } = req.body;
 
     const updates = {
@@ -566,7 +569,8 @@ app.put('/api/expenses/:id', authenticateUser, async (req, res) => {
         is_shared: esCompartido,
         is_installment: enCuotas,
         current_installment: cuotaActual,
-        total_installments: totalCuotas
+        total_installments: totalCuotas,
+        payer_name: esCompartido ? payer_name : null
     };
 
     const { data, error } = await supabase
