@@ -166,18 +166,26 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
         const currentYear = today.getFullYear();
 
         // 1. First Pass: Separate totals and identify installment timelines
+        // NOTE: We now calculate variableTotal based ONLY on the CURRENT MONTH to avoid unrealistic daily averages.
         expenses.forEach(expense => {
             const amountInARS = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
             const finalAmount = expense.is_shared ? amountInARS / 2 : amountInARS;
+            const expenseDate = new Date(expense.created_at);
 
             if (expense.is_installment) {
                 const current = expense.current_installment || 0;
                 const totalInst = expense.total_installments || 1;
                 const remaining = totalInst - current;
 
-                if (remaining > 0) {
+                // Only count as "Active Installment Sum" if it applies to NEXT month? 
+                // Or if it's currently active in the current month? 
+                // User said "Gasto Total Actual" which usually includes current installments.
+                // So yes, sum it up.
+                if (remaining > 0 || (current < totalInst)) {
                     activeInstallmentSum += finalAmount;
+                }
 
+                if (remaining > 0) {
                     // Accumulate installment cost for relevant future months
                     for (let i = 1; i <= remaining; i++) {
                         const targetDate = new Date(currentYear, currentMonthIndex + i, 1);
@@ -192,19 +200,26 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
                     }
                 }
             } else {
-                variableTotal += finalAmount;
+                // Only add to variableTotal if it belongs to the CURRENT MONTH and YEAR
+                if (expenseDate.getMonth() === currentMonthIndex && expenseDate.getFullYear() === currentYear) {
+                    variableTotal += finalAmount;
+                }
             }
         });
 
         // 2. Calculate Base Variable Projection (The "Standard of Living" cost)
-        const dailyAverageVariable = variableTotal / daysSpan;
-        const projectedVariable = dailyAverageVariable * 30;
+        // OLD: const dailyAverageVariable = variableTotal / daysSpan;
+        // OLD: const projectedVariable = dailyAverageVariable * 30;
+
+        // NEW: We assume the user wants to see their CURRENT MONTH's variable spend projected forward.
+        // If they just started using the app today, this might be low, but it's "Actual".
+        const projectedVariable = variableTotal;
+
         const projectedMonthly = projectedVariable + activeInstallmentSum;
         const dailyAverage = total / daysSpan;
 
         // 3. Second Pass: Add Variable Base to Future Months & Fill Gaps
-        // Determine how far we want to show. At least 6 months, or up to max installment.
-        // If map is empty (no installments), create 6 months of just variable.
+        // Determine how far we want to show. At least 6 months.
         const maxMonths = 6;
         const existingKeys = Object.keys(futureInstallmentsMap);
 
