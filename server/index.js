@@ -583,6 +583,71 @@ app.put('/api/expenses/:id', authenticateUser, async (req, res) => {
     res.json(data[0]);
 });
 
+// Copy expenses from Source Planilla to Target Planilla
+app.post('/api/planillas/:targetId/expenses/copy', authenticateUser, async (req, res) => {
+    const { targetId } = req.params;
+    const { sourcePlanillaId } = req.body;
+
+    if (!sourcePlanillaId) {
+        return res.status(400).json({ error: 'Source Planilla ID is required' });
+    }
+
+    // 1. Verify access to TARGET
+    if (!(await checkPlanillaAccess(targetId, req.user.id))) {
+        return res.status(403).json({ error: 'Unauthorized access to target planilla' });
+    }
+
+    // 2. Verify access to SOURCE
+    if (!(await checkPlanillaAccess(sourcePlanillaId, req.user.id))) {
+        return res.status(403).json({ error: 'Unauthorized access to source planilla' });
+    }
+
+    try {
+        // 3. Fetch expenses from SOURCE
+        const { data: sourceExpenses, error: fetchError } = await supabase
+            .from('expenses')
+            .select('*')
+            .eq('planilla_id', sourcePlanillaId);
+
+        if (fetchError) throw fetchError;
+
+        if (!sourceExpenses || sourceExpenses.length === 0) {
+            return res.json({ message: 'No expenses to copy', count: 0 });
+        }
+
+        // 4. Prepare expenses for insertion into TARGET
+        // We omit 'id' to let DB generate new ones.
+        // We keep 'created_at' to preserve history/order.
+        const expensesToInsert = sourceExpenses.map(e => ({
+            planilla_id: targetId,
+            description: e.description,
+            amount: e.amount,
+            currency: e.currency,
+            category: e.category,
+            is_shared: e.is_shared,
+            payer_name: e.payer_name,
+            is_installment: e.is_installment,
+            current_installment: e.current_installment,
+            total_installments: e.total_installments,
+            created_at: e.created_at
+        }));
+
+        // 5. Bulk Insert
+        const { data: inserted, error: insertError } = await supabase
+            .from('expenses')
+            .insert(expensesToInsert)
+            .select();
+
+        if (insertError) throw insertError;
+
+        res.json({ message: 'Expenses copied successfully', count: inserted.length });
+
+    } catch (err) {
+        console.error("Error copying expenses:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Delete an expense
 app.delete('/api/expenses/:id', authenticateUser, async (req, res) => {
     const { id } = req.params;

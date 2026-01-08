@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from './ExpensesContext';
 import { getDolarRate } from '../../services/dolarApi';
-import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle } from 'lucide-react';
 import ExpensesAnalysis from './ExpensesAnalysis';
 
 function Expenses() {
@@ -15,7 +15,8 @@ function Expenses() {
         addExpense,
         updateExpense,
         deleteExpense,
-        sharePlanilla
+        sharePlanilla,
+        copyExpensesToPlanilla
     } = useExpenses();
 
     const [selectedPlanillaId, setSelectedPlanillaId] = useState(null);
@@ -26,6 +27,11 @@ function Expenses() {
     const [shareEmail, setShareEmail] = useState('');
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
+
+    // Export State
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+    const [exportTargetId, setExportTargetId] = useState('');
+    const [exportMessage, setExportMessage] = useState('');
 
     // Expense Form State
     const [description, setDescription] = useState('');
@@ -73,6 +79,22 @@ function Expenses() {
         if (window.confirm('¿Estás seguro de eliminar esta planilla?')) {
             await deletePlanilla(id);
             if (selectedPlanillaId === id) setSelectedPlanillaId(null);
+        }
+    };
+
+    const handleExportExpenses = async () => {
+        if (!selectedPlanillaId || !exportTargetId) return;
+
+        try {
+            await copyExpensesToPlanilla(selectedPlanillaId, exportTargetId);
+            setExportMessage('Gastos copiados exitosamente!');
+            setTimeout(() => {
+                setIsExportModalOpen(false);
+                setExportMessage('');
+                setExportTargetId('');
+            }, 1500);
+        } catch (err) {
+            setExportMessage('Error al copiar: ' + err.message);
         }
     };
 
@@ -325,6 +347,66 @@ function Expenses() {
                 </div>
             )}
 
+            {/* Export Modal */}
+            {isExportModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+                        <button
+                            onClick={() => setIsExportModalOpen(false)}
+                            className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                            <ArrowRightCircle className="text-emerald-400" size={24} />
+                            Copiar Gastos
+                        </h3>
+                        <p className="text-slate-400 text-sm mb-6">
+                            Copia todos los gastos de esta planilla a otra. Se duplicarán los gastos en el destino.
+                        </p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Planilla Destino</label>
+                                <select
+                                    value={exportTargetId}
+                                    onChange={(e) => setExportTargetId(e.target.value)}
+                                    className="w-full bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                >
+                                    <option value="">Seleccionar planilla...</option>
+                                    {planillas.filter(p => p.id !== selectedPlanillaId).map(p => (
+                                        <option key={p.id} value={p.id}>{p.nombre}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {exportMessage && (
+                                <div className={`text-sm p-3 rounded-lg border ${exportMessage.includes('Error') ? 'bg-red-400/10 text-red-400 border-red-400/20' : 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20'}`}>
+                                    {exportMessage}
+                                </div>
+                            )}
+
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    onClick={() => setIsExportModalOpen(false)}
+                                    className="text-slate-300 hover:text-white px-4 py-2"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleExportExpenses}
+                                    disabled={!exportTargetId}
+                                    className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-medium transition-all"
+                                >
+                                    Copiar Gastos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <button
                 onClick={() => setSelectedPlanillaId(null)}
                 className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 font-medium"
@@ -347,13 +429,22 @@ function Expenses() {
                     </div>
 
                     {!currentPlanilla?.is_shared_with_me && (
-                        <button
-                            onClick={() => setIsShareModalOpen(true)}
-                            className="flex items-center gap-2 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 px-4 py-2 rounded-xl border border-indigo-500/20 transition-all font-medium"
-                        >
-                            <Share2 size={18} />
-                            Compartir
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setIsExportModalOpen(true)}
+                                className="flex items-center gap-2 bg-emerald-900/30 hover:bg-emerald-900/50 text-emerald-300 px-4 py-2 rounded-xl border border-emerald-500/20 transition-all font-medium"
+                            >
+                                <ArrowRightCircle size={18} />
+                                Copiar
+                            </button>
+                            <button
+                                onClick={() => setIsShareModalOpen(true)}
+                                className="flex items-center gap-2 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 px-4 py-2 rounded-xl border border-indigo-500/20 transition-all font-medium"
+                            >
+                                <Share2 size={18} />
+                                Compartir
+                            </button>
+                        </div>
                     )}
                 </div>
 

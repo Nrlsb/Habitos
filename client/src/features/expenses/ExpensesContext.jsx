@@ -159,6 +159,31 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, getExpenses]);
 
+    const copyExpensesToPlanilla = useCallback(async (sourceId, targetId) => {
+        try {
+            const response = await fetch(`${API_URL}/api/planillas/${targetId}/expenses/copy`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ sourcePlanillaId: sourceId }),
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to copy expenses');
+            }
+            // No need to refresh current planilla unless we copied TO current planilla (unlikely use case but possible)
+            // If targetId === the currently viewed one, we should refresh.
+            // But usually we view source. 
+
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session]);
+
     // Daily Expenses
     const [dailyExpenses, setDailyExpenses] = useState([]);
 
@@ -214,7 +239,8 @@ export const ExpensesProvider = ({ children }) => {
         addExpense,
         updateExpense,
         deleteExpense,
-        sharePlanilla
+        sharePlanilla,
+        copyExpensesToPlanilla
     };
 
     return (
