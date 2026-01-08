@@ -8,7 +8,7 @@ const SHARED_COLORS = ['#3f46e4', '#06b6d4']; // Personal (Indigo), Shared (Cyan
 const INSTALLMENT_COLORS = ['#f59e0b', '#10b981']; // Installments (Amber), Current (Emerald)
 const CURRENCY_COLORS = ['#6366f1', '#22c55e']; // ARS (Indigo), USD (Green)
 
-const ExpensesAnalysis = ({ expenses, dolarRate }) => {
+const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
     const [showProjection, setShowProjection] = useState(true);
     const [payerA, setPayerA] = useState('');
     const [payerB, setPayerB] = useState('');
@@ -574,6 +574,23 @@ const ExpensesAnalysis = ({ expenses, dolarRate }) => {
                                             <ArrowRightLeft className="text-indigo-500" size={24} />
                                             ${debtCalculation.amountOwed.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                                         </div>
+                                        {onSettleDebt && (
+                                            <button
+                                                onClick={() => {
+                                                    // Find expenses shared between these two
+                                                    const expensesToSettle = expenses.filter(e =>
+                                                        e.is_shared &&
+                                                        (e.payer_name === payerA || e.payer_name === payerB)
+                                                    );
+                                                    const newPayerName = `${payerA} & ${payerB}`;
+                                                    onSettleDebt(expensesToSettle, newPayerName);
+                                                }}
+                                                className="mt-4 px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-sm font-medium rounded-lg border border-emerald-500/30 transition-colors flex items-center gap-2 mx-auto"
+                                            >
+                                                <CheckCircle size={16} />
+                                                Saldar Deuda (Cambiar a "{payerA} & {payerB}")
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>

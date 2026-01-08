@@ -271,6 +271,32 @@ function Expenses() {
         }
     };
 
+    const handleSettleDebt = async (expensesToSettle, newPayerName) => {
+        if (!expensesToSettle || expensesToSettle.length === 0) return;
+
+        if (!window.confirm(`¿Saldar deuda actualizando ${expensesToSettle.length} gastos a nombre de "${newPayerName}"?`)) return;
+
+        try {
+            await Promise.all(expensesToSettle.map(expense => {
+                const updatedExpense = {
+                    ...expense,
+                    payer_name: newPayerName,
+                    // Ensure backend required fields are present
+                    date: expense.created_at,
+                    cuotaActual: expense.current_installment,
+                    totalCuotas: expense.total_installments,
+                    enCuotas: expense.is_installment,
+                    esCompartido: true // Should still be shared
+                };
+                return updateExpense(updatedExpense);
+            }));
+            alert('¡Deuda saldada! Los gastos se han actualizado.');
+        } catch (err) {
+            console.error('Error settling debt:', err);
+            alert('Error al saldar deuda: ' + err.message);
+        }
+    };
+
     const handleShareSubmit = async (e) => {
         e.preventDefault();
         setShareError('');
@@ -707,7 +733,11 @@ function Expenses() {
                 </div>
 
                 {activeTab === 'analysis' ? (
-                    <ExpensesAnalysis expenses={filteredExpenses} dolarRate={dolarRate} />
+                    <ExpensesAnalysis
+                        expenses={filteredExpenses}
+                        dolarRate={dolarRate}
+                        onSettleDebt={handleSettleDebt}
+                    />
                 ) : (
                     <>
                         {/* ADD NEW EXPENSE FORM */}
