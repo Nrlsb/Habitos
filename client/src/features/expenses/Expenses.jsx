@@ -288,7 +288,7 @@ function Expenses() {
                     enCuotas: expense.is_installment,
                     esCompartido: true // Should still be shared
                 };
-                return updateExpense(updatedExpense);
+                return updateExpense(selectedPlanillaId, expense.id, updatedExpense);
             }));
             alert('¡Deuda saldada! Los gastos se han actualizado.');
         } catch (err) {
