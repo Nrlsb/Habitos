@@ -6,12 +6,14 @@ import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard, Us
 const COLORS = ['#6366f1', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444', '#64748b'];
 const SHARED_COLORS = ['#3f46e4', '#06b6d4']; // Personal (Indigo), Shared (Cyan)
 const INSTALLMENT_COLORS = ['#f59e0b', '#10b981']; // Installments (Amber), Current (Emerald)
-const CURRENCY_COLORS = ['#6366f1', '#22c55e']; // ARS (Indigo), USD (Green)
+const CURRENCY_COLORS = ['#6366f1', '#22c5e']; // ARS (Indigo), USD (Green)
 
 const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
     const [showProjection, setShowProjection] = useState(true);
     const [payerA, setPayerA] = useState('');
     const [payerB, setPayerB] = useState('');
+    const [manualPayerA, setManualPayerA] = useState('');
+    const [manualPayerB, setManualPayerB] = useState('');
 
     const {
         categoryData,
@@ -28,10 +30,11 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
         projectedTotal,
         futureProjections,
         activeInstallmentSum,
-        daysSpan
+        daysSpan,
+        payers
     } = useMemo(() => {
         if (!expenses || expenses.length === 0) {
-            return { categoryData: [], dailyData: [], monthlyData: [], sharedVsPersonalData: [], installmentVsCurrentData: [], dayOfWeekData: [], currencyData: [], topExpenses: [], totalSpent: 0, topCategory: null, dailyAverage: 0, projectedTotal: 0 };
+            return { categoryData: [], dailyData: [], monthlyData: [], sharedVsPersonalData: [], installmentVsCurrentData: [], dayOfWeekData: [], currencyData: [], topExpenses: [], totalSpent: 0, topCategory: null, dailyAverage: 0, projectedTotal: 0, futureProjections: [], activeInstallmentSum: 0, daysSpan: 1, payers: [] };
         }
 
         const catMap = {};
@@ -274,7 +277,10 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
     }, [expenses, dolarRate]);
 
     const debtCalculation = useMemo(() => {
-        if (!payerA || !payerB || payerA === payerB) return null;
+        const effectivePayerA = payerA === 'OTHER' ? manualPayerA : payerA;
+        const effectivePayerB = payerB === 'OTHER' ? manualPayerB : payerB;
+
+        if (!effectivePayerA || !effectivePayerB || effectivePayerA === effectivePayerB) return null;
 
         let paidA = 0;
         let paidB = 0;
@@ -286,10 +292,10 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
             // Normalize amounts to ARS for calculation
             const amount = e.currency === 'USD' && dolarRate ? e.amount * dolarRate : e.amount;
 
-            if (e.payer_name === payerA) {
+            if (e.payer_name === effectivePayerA) {
                 paidA += amount;
                 totalSharedBetween += amount;
-            } else if (e.payer_name === payerB) {
+            } else if (e.payer_name === effectivePayerB) {
                 paidB += amount;
                 totalSharedBetween += amount;
             }
@@ -301,8 +307,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
         // Amount owed = (PaidA - PaidB) / 2  OR  PaidA - FairShare
         const amountOwed = Math.abs(diff) / 2;
 
-        const debtor = diff > 0 ? payerB : payerA;
-        const creditor = diff > 0 ? payerA : payerB;
+        const debtor = diff > 0 ? effectivePayerB : effectivePayerA;
+        const creditor = diff > 0 ? effectivePayerA : effectivePayerB;
 
         return {
             paidA,
@@ -315,7 +321,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
             isEven: Math.abs(diff) < 1 // tolerance
         };
 
-    }, [expenses, dolarRate, payerA, payerB]);
+    }, [expenses, dolarRate, payerA, payerB, manualPayerA, manualPayerB]);
 
     if (!expenses || expenses.length === 0) {
         return (
@@ -504,15 +510,20 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
                                     className="w-full bg-slate-900 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
                                 >
                                     <option value="">Seleccionar...</option>
-                                    {/** Access 'payers' from useMemo logic? We didn't destructure it outside. Let's fix that context logic or duplicate simple extraction. 
-                                         Ideally we return 'payers' from the big useMemo. I added it in the ReplacementChunk above. 
-                                         So we need to destructure it here. */}
-                                    {/* Wait, I cannot change the destructuring line 30 easily without re-writing the whole block. 
-                                        Actually, I can just recalculate it simply here, it's cheap. */}
-                                    {[...new Set(expenses.filter(e => e.is_shared && e.payer_name).map(e => e.payer_name))].sort().map(p => (
+                                    {payers.map(p => (
                                         <option key={p} value={p}>{p}</option>
                                     ))}
+                                    <option value="OTHER">+ Ingresar otro...</option>
                                 </select>
+                                {payerA === 'OTHER' && (
+                                    <input
+                                        type="text"
+                                        placeholder="Nombre..."
+                                        value={manualPayerA}
+                                        onChange={(e) => setManualPayerA(e.target.value)}
+                                        className="w-full mt-2 bg-slate-900/50 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 animate-in fade-in slide-in-from-top-1"
+                                    />
+                                )}
                             </div>
                             <div>
                                 <label className="block text-xs text-slate-500 mb-1.5 ml-1">Persona B</label>
@@ -522,10 +533,20 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
                                     className="w-full bg-slate-900 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
                                 >
                                     <option value="">Seleccionar...</option>
-                                    {[...new Set(expenses.filter(e => e.is_shared && e.payer_name).map(e => e.payer_name))].sort().map(p => (
+                                    {payers.map(p => (
                                         <option key={p} value={p}>{p}</option>
                                     ))}
+                                    <option value="OTHER">+ Ingresar otro...</option>
                                 </select>
+                                {payerB === 'OTHER' && (
+                                    <input
+                                        type="text"
+                                        placeholder="Nombre..."
+                                        value={manualPayerB}
+                                        onChange={(e) => setManualPayerB(e.target.value)}
+                                        className="w-full mt-2 bg-slate-900/50 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 animate-in fade-in slide-in-from-top-1"
+                                    />
+                                )}
                             </div>
                         </div>
 
@@ -535,7 +556,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
                             </div>
                         )}
 
-                        {(payerA && payerB && payerA === payerB) && (
+                        {(payerA && payerB && (payerA === payerB && (payerA !== 'OTHER' || manualPayerA === manualPayerB))) && (
                             <div className="text-center p-4 bg-amber-500/10 rounded-xl border border-amber-500/20 text-amber-400 text-sm">
                                 Selecciona dos personas distintas.
                             </div>
@@ -547,11 +568,11 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
                         <div className="flex-1 bg-slate-900/50 rounded-xl border border-slate-700/50 p-4">
                             <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-slate-700/50">
                                 <div>
-                                    <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerA}</span>
+                                    <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerA === 'OTHER' ? manualPayerA : payerA}</span>
                                     <span className="text-slate-200 font-bold">${debtCalculation.paidA.toLocaleString()}</span>
                                 </div>
                                 <div className="text-right">
-                                    <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerB}</span>
+                                    <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerB === 'OTHER' ? manualPayerB : payerB}</span>
                                     <span className="text-slate-200 font-bold">${debtCalculation.paidB.toLocaleString()}</span>
                                 </div>
                             </div>
