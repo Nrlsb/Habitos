@@ -207,6 +207,37 @@ function Expenses() {
         setNewPlanillaName('');
     };
 
+    // Participants Management Handlers
+    const openParticipantsModal = () => {
+        const currentPlanilla = planillas.find(p => p.id === selectedPlanillaId);
+        if (currentPlanilla) {
+            setTempParticipants(currentPlanilla.participants || ['Yo']);
+            setShowParticipantsModal(true);
+        }
+    };
+
+    const addParticipant = () => {
+        if (newParticipantName.trim() && !tempParticipants.includes(newParticipantName.trim())) {
+            setTempParticipants([...tempParticipants, newParticipantName.trim()]);
+            setNewParticipantName('');
+        }
+    };
+
+    const removeParticipant = (name) => {
+        setTempParticipants(tempParticipants.filter(p => p !== name));
+    };
+
+    const saveParticipants = async () => {
+        if (tempParticipants.length === 0) return alert("Debe haber al menos un participante");
+        try {
+            await updatePlanilla(selectedPlanillaId, { participants: tempParticipants });
+            setShowParticipantsModal(false);
+        } catch (error) {
+            console.error("Error updating participants:", error);
+            alert("Error al actualizar participantes");
+        }
+    };
+
     const handleDeletePlanilla = async (id, e) => {
         e.stopPropagation();
         if (window.confirm('¿Estás seguro de eliminar esta planilla?')) {
