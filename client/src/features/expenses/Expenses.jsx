@@ -940,11 +940,18 @@ function Expenses() {
 
                                             {splitDetails.length > 0 ? (
                                                 <div className="space-y-3">
+                                                    {/* Headers */}
+                                                    <div className="flex gap-2 px-1 mb-1">
+                                                        <span className="flex-1 text-xs text-slate-500 font-medium ml-1">Persona</span>
+                                                        <span className="w-24 text-xs text-slate-500 font-medium text-right pr-2">Monto</span>
+                                                        <span className="w-6"></span>
+                                                    </div>
+
                                                     {splitDetails.map((detail, index) => (
                                                         <div key={index} className="flex gap-2 items-center animate-in fade-in slide-in-from-left-2">
                                                             <input
                                                                 type="text"
-                                                                placeholder="Nombre"
+                                                                placeholder="Persona (ej. Lucas)"
                                                                 value={detail.name}
                                                                 onChange={(e) => updateSplitDetail(index, 'name', e.target.value)}
                                                                 className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"

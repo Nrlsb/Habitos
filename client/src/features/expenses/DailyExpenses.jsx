@@ -470,11 +470,18 @@ const DailyExpenses = () => {
 
                                             {splitDetails.length > 0 ? (
                                                 <div className="space-y-2">
+                                                    {/* Headers */}
+                                                    <div className="flex gap-2 px-1 mb-1">
+                                                        <span className="flex-1 text-[10px] text-slate-500 font-medium">Persona</span>
+                                                        <span className="w-20 text-[10px] text-slate-500 font-medium text-right pr-2">Monto</span>
+                                                        <span className="w-5"></span>
+                                                    </div>
+
                                                     {splitDetails.map((detail, index) => (
                                                         <div key={index} className="flex gap-2 items-center animate-in fade-in slide-in-from-left-2">
                                                             <input
                                                                 type="text"
-                                                                placeholder="Nombre"
+                                                                placeholder="Persona (ej. Lucas)"
                                                                 value={detail.name}
                                                                 onChange={(e) => updateSplitDetail(index, 'name', e.target.value)}
                                                                 className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 text-[10px] rounded p-1.5 focus:border-indigo-500 focus:outline-none"
