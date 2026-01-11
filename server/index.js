@@ -503,7 +503,8 @@ app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, re
         enCuotas,
         cuotaActual,
         totalCuotas,
-        payer_name // New field
+        payer_name, // New field
+        split_details // New field for partial splits
     } = req.body;
 
     const newExpense = {
@@ -517,7 +518,8 @@ app.post('/api/planillas/:planillaId/expenses', authenticateUser, async (req, re
         current_installment: cuotaActual || null,
         total_installments: totalCuotas || null,
         payer_name: esCompartido ? payer_name : null, // Only save if shared
-        created_at: req.body.date || new Date().toISOString() // Use provided date or now
+        created_at: req.body.date || new Date().toISOString(), // Use provided date or now
+        split_details: split_details || null
     };
 
     const { data, error } = await supabase
@@ -559,7 +561,8 @@ app.put('/api/expenses/:id', authenticateUser, async (req, res) => {
         enCuotas,
         cuotaActual,
         totalCuotas,
-        payer_name // New field
+        payer_name, // New field
+        split_details // New field
     } = req.body;
 
     const updates = {
@@ -572,7 +575,8 @@ app.put('/api/expenses/:id', authenticateUser, async (req, res) => {
         current_installment: cuotaActual,
         total_installments: totalCuotas,
         payer_name: esCompartido ? payer_name : null,
-        created_at: req.body.date // Allow updating date
+        created_at: req.body.date, // Allow updating date
+        split_details: split_details || null
     };
 
     const { data, error } = await supabase
@@ -631,7 +635,8 @@ app.post('/api/planillas/:targetId/expenses/copy', authenticateUser, async (req,
             is_installment: e.is_installment,
             current_installment: e.current_installment,
             total_installments: e.total_installments,
-            created_at: e.created_at
+            created_at: e.created_at,
+            split_details: e.split_details
         }));
 
         // 5. Bulk Insert

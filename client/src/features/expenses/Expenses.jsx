@@ -55,6 +55,7 @@ function Expenses() {
     const [cuotaActual, setCuotaActual] = useState('');
     const [category, setCategory] = useState('General'); // New Category State
     const [paidBy, setPaidBy] = useState(''); // New Paid By State
+    const [splitDetails, setSplitDetails] = useState([]); // [{ name: 'Lucas', amount: 0 }, { name: 'Gise', amount: 0 }]
     const [editingId, setEditingId] = useState(null);
 
     const [notification, setNotification] = useState({
@@ -236,7 +237,24 @@ function Expenses() {
         setCuotaActual('');
         setTotalCuotas('');
         setPaidBy('');
+        setSplitDetails([]);
         setEditingId(null);
+    };
+
+    const addSplitDetail = () => {
+        setSplitDetails([...splitDetails, { name: '', amount: '' }]);
+    };
+
+    const updateSplitDetail = (index, field, value) => {
+        const newDetails = [...splitDetails];
+        newDetails[index][field] = value;
+        setSplitDetails(newDetails);
+    };
+
+    const removeSplitDetail = (index) => {
+        const newDetails = [...splitDetails];
+        newDetails.splice(index, 1);
+        setSplitDetails(newDetails);
     };
 
     const handleSubmitExpense = async (e) => {
@@ -253,7 +271,8 @@ function Expenses() {
             cuotaActual: enCuotas ? parseInt(cuotaActual) : null,
             totalCuotas: enCuotas ? parseInt(totalCuotas) : null,
             payer_name: esCompartido ? paidBy : null,
-            date: expenseDate ? new Date(expenseDate).toISOString() : currentDate.toISOString()
+            date: expenseDate ? new Date(expenseDate).toISOString() : currentDate.toISOString(),
+            split_details: (esCompartido && splitDetails.length > 0) ? splitDetails : null
         };
 
         if (editingId) {
@@ -280,6 +299,7 @@ function Expenses() {
         setCuotaActual(expense.current_installment || '');
         setTotalCuotas(expense.total_installments || '');
         setPaidBy(expense.payer_name || '');
+        setSplitDetails(expense.split_details || []);
 
         // Scroll to form only on mobile/desktop as needed
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -904,6 +924,63 @@ function Expenses() {
                                             placeholder="Nombre de quien pagó (ej. Yo, Juan)"
                                             className="w-full md:w-1/2 bg-slate-900/50 border border-slate-600/50 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600"
                                         />
+
+                                        {/* Division Personalizada */}
+                                        <div className="mt-6 p-4 bg-slate-900/30 rounded-xl border border-slate-700/30">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <h4 className="text-sm font-medium text-slate-300">División Personalizada</h4>
+                                                <button
+                                                    type="button"
+                                                    onClick={addSplitDetail}
+                                                    className="text-xs flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors"
+                                                >
+                                                    <Plus size={14} /> Añadir Persona
+                                                </button>
+                                            </div>
+
+                                            {splitDetails.length > 0 ? (
+                                                <div className="space-y-3">
+                                                    {splitDetails.map((detail, index) => (
+                                                        <div key={index} className="flex gap-2 items-center animate-in fade-in slide-in-from-left-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Nombre"
+                                                                value={detail.name}
+                                                                onChange={(e) => updateSplitDetail(index, 'name', e.target.value)}
+                                                                className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"
+                                                            />
+                                                            <div className="relative w-24">
+                                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="0"
+                                                                    value={detail.amount}
+                                                                    onChange={(e) => updateSplitDetail(index, 'amount', parseFloat(e.target.value) || 0)}
+                                                                    className="w-full bg-slate-800 border border-slate-600 text-slate-200 text-xs rounded-lg pl-5 pr-2 py-2 focus:border-indigo-500 focus:outline-none text-right"
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeSplitDetail(index)}
+                                                                className="text-slate-500 hover:text-red-400 p-1"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                    <div className="pt-2 border-t border-slate-700/50 text-right text-xs text-slate-500">
+                                                        Total asignado: <span className="text-slate-300">${splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0).toFixed(2)}</span>
+                                                        {amount && (
+                                                            <span className="ml-3">
+                                                                Resto a dividir: <span className="text-emerald-400">${(parseFloat(amount) - splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0)).toFixed(2)}</span>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-slate-500 italic">No hay asignaciones específicas. El monto total se dividirá en partes iguales.</p>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 

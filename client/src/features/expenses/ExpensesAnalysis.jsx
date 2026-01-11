@@ -283,15 +283,20 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
         if (!effectivePayerA || !effectivePayerB || effectivePayerA === effectivePayerB) return null;
 
         let paidA = 0;
+        let consumedA = 0;
         let paidB = 0;
+        let consumedB = 0;
         let totalSharedBetween = 0;
 
         expenses.forEach(e => {
             if (!e.is_shared) return;
+            // Only consider expenses where one of the two paid (simplification, but standard for 2-person split)
+            if (e.payer_name !== effectivePayerA && e.payer_name !== effectivePayerB) return;
 
             // Normalize amounts to ARS for calculation
             const amount = e.currency === 'USD' && dolarRate ? e.amount * dolarRate : e.amount;
 
+            // Track who paid
             if (e.payer_name === effectivePayerA) {
                 paidA += amount;
                 totalSharedBetween += amount;
@@ -299,26 +304,66 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
                 paidB += amount;
                 totalSharedBetween += amount;
             }
+
+            // Track who consumed (Split Logic)
+            if (e.split_details && Array.isArray(e.split_details) && e.split_details.length > 0) {
+                // 1. Calculate assigned amounts
+                const assignedA = e.split_details.find(d => d.name === effectivePayerA)?.amount || 0;
+                const assignedB = e.split_details.find(d => d.name === effectivePayerB)?.amount || 0;
+
+                // Normalization for specific amounts (if they were entered in original currency, we assume they are)
+                // If the expense is USD, the split details are likely numbers in USD. 
+                // We should convert them to ARS if needed.
+                const assignedA_ARS = e.currency === 'USD' && dolarRate ? assignedA * dolarRate : assignedA;
+                const assignedB_ARS = e.currency === 'USD' && dolarRate ? assignedB * dolarRate : assignedB;
+
+                // 2. Sum of ALL assigned (to check remainder)
+                // Note: There might be other people in split_details, we subtract ALL assigned from total.
+                const totalAssignedOriginalCurrency = e.split_details.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+                const totalAssignedARS = e.currency === 'USD' && dolarRate ? totalAssignedOriginalCurrency * dolarRate : totalAssignedOriginalCurrency;
+
+                const remainderARS = Math.max(0, amount - totalAssignedARS);
+
+                // 3. Remainder is split equally between the two (or all? User said "el resto se divide por 2")
+                // We assume the context is a 2-person ledger.
+                const splitRemainder = remainderARS / 2;
+
+                consumedA += assignedA_ARS + splitRemainder;
+                consumedB += assignedB_ARS + splitRemainder;
+
+            } else {
+                // Standard 50/50 Split
+                const half = amount / 2;
+                consumedA += half;
+                consumedB += half;
+            }
         });
 
-        const fairShare = totalSharedBetween / 2;
-        const diff = paidA - paidB;
-        // If diff > 0, A paid more, so B owes A.
-        // Amount owed = (PaidA - PaidB) / 2  OR  PaidA - FairShare
-        const amountOwed = Math.abs(diff) / 2;
+        // Balance Calculation
+        // Net Balance A = PaidA - ConsumedA
+        // If > 0, A paid more than they consumed -> B owes A.
+        // If < 0, A paid less than they consumed -> A owes B.
+        const balanceA = paidA - consumedA;
 
-        const debtor = diff > 0 ? effectivePayerB : effectivePayerA;
-        const creditor = diff > 0 ? effectivePayerA : effectivePayerB;
+        // Similarly for B (should be symmetric in a closed 2-person system, but good to check)
+        // balanceB = paidB - consumedB; 
+        // Logic: B owes A if balanceA > 0. Amount = balanceA.
+
+        const amountOwed = Math.abs(balanceA);
+        const debtor = balanceA > 0 ? effectivePayerB : effectivePayerA;
+        const creditor = balanceA > 0 ? effectivePayerA : effectivePayerB;
 
         return {
             paidA,
             paidB,
+            consumedA,
+            consumedB,
             totalShared: totalSharedBetween,
-            fairShare,
+            fairShare: totalSharedBetween / 2, // Technically "Average Consumption"
             amountOwed,
             debtor,
             creditor,
-            isEven: Math.abs(diff) < 1 // tolerance
+            isEven: amountOwed < 1 // tolerance
         };
 
     }, [expenses, dolarRate, payerA, payerB, manualPayerA, manualPayerB]);
