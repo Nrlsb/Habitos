@@ -350,16 +350,44 @@ app.get('/api/planillas', authenticateUser, async (req, res) => {
 
 // Create a new planilla
 app.post('/api/planillas', authenticateUser, async (req, res) => {
-    const { nombre } = req.body;
+    const { nombre, participants } = req.body;
     if (!nombre) return res.status(400).json({ error: 'Name is required' });
+
+    const newPlanilla = {
+        user_id: req.user.id,
+        nombre,
+        participants: participants || ['Yo']
+    };
 
     const { data, error } = await supabase
         .from('planillas')
-        .insert([{ nombre, user_id: req.user.id }])
+        .insert([newPlanilla])
         .select();
 
     if (error) return res.status(500).json({ error: error.message });
     res.status(201).json(data[0]);
+});
+
+// Update a planilla (Name or Participants)
+app.put('/api/planillas/:id', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { nombre, participants } = req.body;
+
+    const updates = {};
+    if (nombre) updates.nombre = nombre;
+    if (participants) updates.participants = participants;
+
+    const { data, error } = await supabase
+        .from('planillas')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', req.user.id) // Only owner can update
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+    if (data.length === 0) return res.status(404).json({ error: 'Planilla not found or permission denied' });
+
+    res.json(data[0]);
 });
 
 // Share a planilla
