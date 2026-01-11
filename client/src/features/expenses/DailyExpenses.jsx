@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useExpenses } from './ExpensesContext';
 import { format, addDays, subDays, isSameDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus, Wallet, Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Wallet, Calendar as CalendarIcon, ArrowRight, Trash2, Edit2 } from 'lucide-react';
 import { getDolarRate } from '../../services/dolarApi';
 
 const DailyExpenses = () => {
@@ -11,6 +11,7 @@ const DailyExpenses = () => {
         getDailyExpenses,
         planillas,
         addExpense,
+        deleteExpense, // Added for editing/deletion
         loading
     } = useExpenses();
 
@@ -28,9 +29,13 @@ const DailyExpenses = () => {
     const [currency, setCurrency] = useState('ARS');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Editing State
+    const [editingGroup, setEditingGroup] = useState(null); // Stores the group being edited { ids: [], ... }
+
     // New State for Advanced Options
     const [esCompartido, setEsCompartido] = useState(false);
     const [paidBy, setPaidBy] = useState('');
+    const [splitDetails, setSplitDetails] = useState([]); // [{ name: 'Lucas', amount: 0 }]
     const [enCuotas, setEnCuotas] = useState(false);
     const [cuotaActual, setCuotaActual] = useState('1');
     const [totalCuotas, setTotalCuotas] = useState('');
@@ -72,7 +77,6 @@ const DailyExpenses = () => {
     const togglePlanillaSelection = (id) => {
         setSelectedPlanillaIds(prev => {
             if (prev.includes(id)) {
-                // Prevent deselecting all if desired, or allow empty (but disable submit)
                 return prev.filter(pId => pId !== id);
             } else {
                 return [...prev, id];
@@ -83,55 +87,112 @@ const DailyExpenses = () => {
     const groupedExpenses = useMemo(() => {
         if (!dailyExpenses || dailyExpenses.length === 0) return [];
 
-        // Sort by creation time desc
         const sorted = [...dailyExpenses].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
         const groups = [];
 
         sorted.forEach(expense => {
-            // Find a candidate group: same desc, amount, currency, and time diff < 5000ms (generous buffer for network delays)
-            // We check only the last group added or scan recently added groups? 
-            // Better to scan recent groups.
             const existingGroup = groups.find(g =>
                 g.description === expense.description &&
                 g.amount === expense.amount &&
                 g.currency === expense.currency &&
-                g.category === expense.category && // Check category
-                g.is_shared === expense.is_shared && // Check shared
-                g.is_installment === expense.is_installment && // Check installment
+                g.category === expense.category &&
+                g.is_shared === expense.is_shared &&
+                g.is_installment === expense.is_installment &&
+                // Check split details deep equality? simpler to check length or payer
+                g.payer_name === expense.payer_name &&
                 Math.abs(new Date(g.primary_created_at) - new Date(expense.created_at)) < 5000
             );
 
+            const idObj = { id: expense.id, planilla_id: expense.planilla_id };
+
             if (existingGroup) {
                 existingGroup.planillas.push(expense.planillas?.nombre || 'Unknown');
-                existingGroup.ids.push(expense.id);
+                existingGroup.ids.push(idObj);
             } else {
                 groups.push({
                     ...expense,
                     primary_created_at: expense.created_at,
                     planillas: [expense.planillas?.nombre || 'Unknown'],
-                    ids: [expense.id]
+                    ids: [idObj]
                 });
             }
         });
 
         return groups;
-
     }, [dailyExpenses]);
 
     const totalDayAmount = useMemo(() => {
         return groupedExpenses.reduce((acc, expense) => {
             let amount = expense.amount;
             if (expense.currency === 'USD') {
-                if (dolarRate) {
-                    amount = amount * dolarRate;
-                } else {
-                    amount = 0;
-                }
+                amount = dolarRate ? amount * dolarRate : 0;
             }
             return acc + amount;
         }, 0);
     }, [groupedExpenses, dolarRate]);
+
+    // --- Helpers for Splits ---
+    const addSplitDetail = () => setSplitDetails([...splitDetails, { name: '', amount: '' }]);
+
+    const updateSplitDetail = (index, field, value) => {
+        const newDetails = [...splitDetails];
+        newDetails[index][field] = value;
+        setSplitDetails(newDetails);
+    };
+
+    const removeSplitDetail = (index) => {
+        const newDetails = [...splitDetails];
+        newDetails.splice(index, 1);
+        setSplitDetails(newDetails);
+    };
+
+    const resetForm = () => {
+        setDescription('');
+        setAmount('');
+        setCategory("General");
+        setCurrency('ARS');
+        setEsCompartido(false);
+        setEnCuotas(false);
+        setPaidBy('');
+        setSplitDetails([]);
+        setCuotaActual('1');
+        setTotalCuotas('');
+        setEditingGroup(null);
+        // Reset planillas to default? Keep current selection as it's often repeated.
+    };
+
+    const handleEditGroup = (group) => {
+        setEditingGroup(group);
+        setDescription(group.description);
+        setAmount(group.amount);
+        setCurrency(group.currency || 'ARS');
+        setCategory(group.category || 'General');
+        setEsCompartido(group.is_shared);
+        setPaidBy(group.payer_name || '');
+        setSplitDetails(group.split_details || []);
+        setEnCuotas(group.is_installment);
+        setCuotaActual(group.current_installment || '1');
+        setTotalCuotas(group.total_installments || '');
+
+        // Extract planilla IDs from the group's items
+        const groupPlanillaIds = group.ids.map(item => item.planilla_id);
+        setSelectedPlanillaIds(groupPlanillaIds);
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handleDeleteGroup = async (group) => {
+        if (!window.confirm('¿Eliminar este gasto (y sus copias en otras planillas)?')) return;
+
+        try {
+            await Promise.all(group.ids.map(item => deleteExpense(item.planilla_id, item.id)));
+            getDailyExpenses(selectedDate);
+        } catch (err) {
+            console.error("Error deleting group:", err);
+            alert("Error al eliminar");
+        }
+    };
 
     const handleAddExpense = async (e) => {
         e.preventDefault();
@@ -139,38 +200,37 @@ const DailyExpenses = () => {
 
         setIsSubmitting(true);
         try {
+            // IF EDITING: Delete old entries first
+            if (editingGroup) {
+                await Promise.all(editingGroup.ids.map(item => deleteExpense(item.planilla_id, item.id)));
+            }
+
             // Create expense for each selected planilla
             const promises = selectedPlanillaIds.map(id =>
                 addExpense(id, {
                     description,
                     amount: parseFloat(amount),
                     currency,
-                    category, // New field
-                    esCompartido: esCompartido,
+                    category,
+                    esCompartido,
                     payer_name: esCompartido ? paidBy : null,
-                    enCuotas: enCuotas,
+                    split_details: (esCompartido && splitDetails.length > 0) ? splitDetails : null,
+                    enCuotas,
                     cuotaActual: enCuotas ? parseInt(cuotaActual) : null,
-                    totalCuotas: enCuotas ? parseInt(totalCuotas) : null
+                    totalCuotas: enCuotas ? parseInt(totalCuotas) : null,
+                    // Use selectedDate for creation to ensure it appears in the right day
+                    date: selectedDate.toISOString()
                 })
             );
 
             await Promise.all(promises);
 
-            // Clear form (keep some selections for convenience)
-            setDescription('');
-            setAmount('');
-            // Reset complex fields
-            setEsCompartido(false);
-            setEnCuotas(false);
-            setPaidBy('');
-            setCuotaActual('1');
-            setTotalCuotas('');
-
-            // Refresh list
+            resetForm();
             getDailyExpenses(selectedDate);
 
         } catch (error) {
-            console.error("Error adding expense:", error);
+            console.error("Error adding/editing expense:", error);
+            alert("Error al guardar gasto");
         } finally {
             setIsSubmitting(false);
         }
@@ -240,10 +300,26 @@ const DailyExpenses = () => {
                     </div>
 
                     {/* Quick Add Form */}
-                    <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-5 backdrop-blur-sm">
-                        <h3 className="text-slate-200 font-semibold mb-4 flex items-center gap-2">
-                            <Plus size={18} className="text-emerald-400" />
-                            Agregar Gasto Rápido
+                    <div className={`bg-slate-800/50 border ${editingGroup ? 'border-amber-500/30 shadow-amber-500/10' : 'border-slate-700/50'} border-slate-700/50 rounded-2xl p-5 backdrop-blur-sm transition-colors`}>
+                        <h3 className="text-slate-200 font-semibold mb-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                {editingGroup ? (
+                                    <>
+                                        <Edit2 size={18} className="text-amber-400" />
+                                        <span className="text-amber-400">Editar Gasto</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Plus size={18} className="text-emerald-400" />
+                                        <span>Agregar Gasto Rápido</span>
+                                    </>
+                                )}
+                            </div>
+                            {editingGroup && (
+                                <button onClick={resetForm} className="text-xs text-slate-500 hover:text-white underline">
+                                    Cancelar
+                                </button>
+                            )}
                         </h3>
 
                         {planillas.length === 0 ? (
@@ -378,6 +454,63 @@ const DailyExpenses = () => {
                                             placeholder="Pagado por (opcional)"
                                             className="w-full bg-slate-900/50 border border-slate-600 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 placeholder:text-slate-600"
                                         />
+
+                                        {/* Division Personalizada */}
+                                        <div className="mt-3 p-3 bg-slate-900/30 rounded-xl border border-slate-700/30">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <h4 className="text-xs font-medium text-slate-300">División Personalizada</h4>
+                                                <button
+                                                    type="button"
+                                                    onClick={addSplitDetail}
+                                                    className="text-[10px] flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 px-2 py-1 rounded"
+                                                >
+                                                    <Plus size={10} /> Añadir
+                                                </button>
+                                            </div>
+
+                                            {splitDetails.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    {splitDetails.map((detail, index) => (
+                                                        <div key={index} className="flex gap-2 items-center animate-in fade-in slide-in-from-left-2">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Nombre"
+                                                                value={detail.name}
+                                                                onChange={(e) => updateSplitDetail(index, 'name', e.target.value)}
+                                                                className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 text-[10px] rounded p-1.5 focus:border-indigo-500 focus:outline-none"
+                                                            />
+                                                            <div className="relative w-20">
+                                                                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]">$</span>
+                                                                <input
+                                                                    type="number"
+                                                                    placeholder="0"
+                                                                    value={detail.amount}
+                                                                    onChange={(e) => updateSplitDetail(index, 'amount', parseFloat(e.target.value) || 0)}
+                                                                    className="w-full bg-slate-800 border border-slate-600 text-slate-200 text-[10px] rounded pl-3 pr-1 py-1.5 focus:border-indigo-500 focus:outline-none text-right"
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeSplitDetail(index)}
+                                                                className="text-slate-500 hover:text-red-400 p-1"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                    <div className="pt-2 border-t border-slate-700/50 text-right text-[10px] text-slate-500">
+                                                        Asignado: <span className="text-slate-300">${splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0).toFixed(2)}</span>
+                                                        {amount && (
+                                                            <span className="ml-2">
+                                                                Resto: <span className="text-emerald-400">${(parseFloat(amount) - splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0)).toFixed(2)}</span>
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-[10px] text-slate-500 italic">Automático (50/50)</p>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
@@ -409,13 +542,14 @@ const DailyExpenses = () => {
                                 <button
                                     type="submit"
                                     disabled={isSubmitting || !description || !amount || selectedPlanillaIds.length === 0}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-2"
+                                    className={`w-full ${editingGroup ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/20' : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'} text-white font-medium py-2.5 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-2`}
                                 >
                                     {isSubmitting ? (
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                                     ) : (
                                         <>
-                                            <Plus size={18} /> Agregar
+                                            {editingGroup ? <Edit2 size={18} /> : <Plus size={18} />}
+                                            {editingGroup ? 'Guardar Cambios' : 'Agregar'}
                                         </>
                                     )}
                                 </button>
@@ -479,12 +613,36 @@ const DailyExpenses = () => {
                                                         {format(parseISO(expense.primary_created_at), 'HH:mm')} hs
                                                     </span>
                                                 </div>
+                                                {/* Split Details Indicator */}
+                                                {expense.split_details && expense.split_details.length > 0 && (
+                                                    <div className="text-[10px] text-slate-500 mt-1">
+                                                        División: {expense.split_details.map(d => `${d.name} $${d.amount}`).join(', ')}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-right flex items-center gap-4">
                                             <div className="text-slate-200 font-semibold tabular-nums">
                                                 {expense.currency === 'USD' ? 'USD ' : '$ '}
                                                 {expense.amount.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                            </div>
+
+                                            {/* Action Buttons */}
+                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={() => handleEditGroup(expense)}
+                                                    className="p-1.5 bg-slate-700 hover:bg-amber-600 text-slate-300 hover:text-white rounded-lg transition-colors"
+                                                    title="Editar"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteGroup(expense)}
+                                                    className="p-1.5 bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white rounded-lg transition-colors"
+                                                    title="Eliminar"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
