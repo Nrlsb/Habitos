@@ -1028,13 +1028,19 @@ function Expenses() {
                                 {esCompartido && (
                                     <div className="mb-6 animate-in fade-in slide-in-from-top-2 duration-300">
                                         <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Pagado por</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             value={paidBy}
                                             onChange={(e) => setPaidBy(e.target.value)}
-                                            placeholder="Nombre de quien pagó (ej. Yo, Juan)"
-                                            className="w-full md:w-1/2 bg-slate-900/50 border border-slate-600/50 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600"
-                                        />
+                                            className="w-full md:w-1/2 bg-slate-900/50 border border-slate-600/50 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none"
+                                        >
+                                            <option value="" disabled>Seleccionar Persona</option>
+                                            {(planillas.find(p => p.id === selectedPlanillaId)?.participants || ['Yo']).map(name => (
+                                                <option key={name} value={name}>{name}</option>
+                                            ))}
+                                            {!((planillas.find(p => p.id === selectedPlanillaId)?.participants || ['Yo']).includes(paidBy)) && paidBy && (
+                                                <option value={paidBy}>{paidBy}</option>
+                                            )}
+                                        </select>
 
                                         {/* Division Personalizada */}
                                         <div className="mt-6 p-4 bg-slate-900/30 rounded-xl border border-slate-700/30">
