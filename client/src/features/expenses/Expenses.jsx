@@ -11,6 +11,7 @@ function Expenses() {
         expenses,
         loading,
         addPlanilla,
+        updatePlanilla, // Added this
         deletePlanilla,
         getExpenses,
         addExpense,
