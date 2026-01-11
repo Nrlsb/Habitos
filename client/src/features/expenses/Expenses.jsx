@@ -24,6 +24,11 @@ function Expenses() {
     const [selectedPlanillaId, setSelectedPlanillaId] = useState(null);
     const [newPlanillaName, setNewPlanillaName] = useState('');
 
+    // Participants Modal State
+    const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+    const [tempParticipants, setTempParticipants] = useState([]);
+    const [newParticipantName, setNewParticipantName] = useState('');
+
     // Share Modal State
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     const [shareEmail, setShareEmail] = useState('');
