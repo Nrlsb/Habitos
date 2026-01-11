@@ -565,6 +565,73 @@ function Expenses() {
                 </div>
             )}
 
+            {/* Participants Modal (Detail View) */}
+            {showParticipantsModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+                        <button
+                            onClick={() => setShowParticipantsModal(false)}
+                            className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <Users className="text-emerald-400" size={24} />
+                            Configurar Personas
+                        </h3>
+                        <p className="text-slate-400 text-sm mb-4">
+                            Define quiénes participan en esta planilla.
+                        </p>
+
+                        <div className="flex gap-2 mb-4">
+                            <input
+                                type="text"
+                                value={newParticipantName}
+                                onChange={(e) => setNewParticipantName(e.target.value)}
+                                placeholder="Nombre (ej. Lucas)"
+                                className="flex-1 bg-slate-800 border border-slate-600 text-white rounded-lg px-4 py-2 focus:border-emerald-500 focus:outline-none"
+                            />
+                            <button
+                                onClick={addParticipant}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-lg"
+                            >
+                                <Plus size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-2 mb-6 max-h-60 overflow-y-auto">
+                            {tempParticipants.map((name, idx) => (
+                                <div key={idx} className="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700">
+                                    <span className="text-slate-200">{name}</span>
+                                    <button
+                                        onClick={() => removeParticipant(name)}
+                                        className="text-slate-500 hover:text-red-400"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowParticipantsModal(false)}
+                                className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={saveParticipants}
+                                className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                            >
+                                Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <button
                 onClick={() => setSelectedPlanillaId(null)}
                 className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 font-medium"
@@ -594,6 +661,13 @@ function Expenses() {
                             >
                                 <ArrowRightCircle size={18} />
                                 Copiar
+                            </button>
+                            <button
+                                onClick={openParticipantsModal}
+                                className="flex items-center gap-2 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 px-4 py-2 rounded-xl border border-indigo-500/20 transition-all font-medium"
+                            >
+                                <Users size={18} />
+                                Personas
                             </button>
                             <button
                                 onClick={() => setIsShareModalOpen(true)}
