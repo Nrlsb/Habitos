@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './context/AuthContext'
-import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle, Settings } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import Calendar from './Calendar'
 
@@ -10,7 +10,14 @@ function HabitStats({ habitId, onBack }) {
     const [selectedDate, setSelectedDate] = useState(null)
     const [inputValue, setInputValue] = useState('')
     const [mounted, setMounted] = useState(false)
+
+    const [userHeight, setUserHeight] = useState(() => localStorage.getItem('userHeight') || '170')
+    const [showHeightSettings, setShowHeightSettings] = useState(false)
     const { session } = useAuth()
+
+    useEffect(() => {
+        if (userHeight) localStorage.setItem('userHeight', userHeight)
+    }, [userHeight])
 
     useEffect(() => {
         const timer = setTimeout(() => setMounted(true), 500) // Delay chart render to avoid width(-1) warning
@@ -106,6 +113,16 @@ function HabitStats({ habitId, onBack }) {
         return { currentStreak, longestStreak }
     }
 
+    const isStepHabit = habit?.unit?.toLowerCase().includes('paso') || habit?.unit?.toLowerCase().includes('step')
+
+    const calculateKm = (steps) => {
+        if (!steps || !userHeight) return 0
+        // Formula: Steps * (Height(cm) * 0.414) = Distance(cm)
+        const strideCm = parseInt(userHeight) * 0.414
+        const distanceKm = (steps * strideCm) / 100000
+        return distanceKm.toFixed(2)
+    }
+
     if (loading) return (
         <div className="flex justify-center items-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
@@ -185,14 +202,44 @@ function HabitStats({ habitId, onBack }) {
             </button>
 
             <header className="mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">{habit.title}</h2>
-                <div className="flex items-center gap-2 mb-2">
-                    {habit.category && habit.category !== 'General' && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                            {habit.category}
-                        </span>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <h2 className="text-3xl font-bold text-white mb-2">{habit.title}</h2>
+                        <div className="flex items-center gap-2 mb-2">
+                            {habit.category && habit.category !== 'General' && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                    {habit.category}
+                                </span>
+                            )}
+                            <p className="text-slate-400">{habit.description || 'Sin descripción'}</p>
+                        </div>
+                    </div>
+                    {isStepHabit && (
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowHeightSettings(!showHeightSettings)}
+                                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors border border-transparent hover:border-slate-700"
+                                title="Configurar altura para cálculo de Km"
+                            >
+                                <Settings size={20} />
+                            </button>
+                            {showHeightSettings && (
+                                <div className="absolute right-0 top-full mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl p-4 z-20 animate-in fade-in zoom-in-50 duration-200">
+                                    <label className="block text-xs text-slate-400 mb-2">Tu altura (cm)</label>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            value={userHeight}
+                                            onChange={(e) => setUserHeight(e.target.value)}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            placeholder="170"
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 mt-2">Usado para estimar Km</p>
+                                </div>
+                            )}
+                        </div>
                     )}
-                    <p className="text-slate-400">{habit.description || 'Sin descripción'}</p>
                 </div>
                 {habit.type === 'counter' && (
                     <div className="inline-block bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-sm font-medium border border-slate-700">
@@ -209,6 +256,14 @@ function HabitStats({ habitId, onBack }) {
                     </div>
                     <span className="text-3xl font-bold text-white mb-1">{habit.completions.length}</span>
                     <span className="text-sm text-slate-400">Total Completado</span>
+                    {isStepHabit && (
+                        <div className="mt-2 pt-2 border-t border-slate-700/50 w-full text-center">
+                            <span className="text-indigo-400 font-medium text-lg">
+                                {calculateKm(habit.completions.reduce((acc, curr) => acc + (curr.value || 0), 0))}
+                            </span>
+                            <span className="text-xs text-slate-500 ml-1">Km Totales</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors md:col-span-2">
@@ -279,7 +334,9 @@ function HabitStats({ habitId, onBack }) {
                             <div key={completion.completed_date || completion} className="bg-indigo-500/10 text-indigo-300 px-3 py-1 rounded-lg text-sm border border-indigo-500/20">
                                 {new Date(completion.completed_date || completion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                 {habit.type === 'counter' && completion.value > 0 && (
-                                    <span className="ml-2 text-xs opacity-70">({completion.value})</span>
+                                    <span className="ml-2 text-xs opacity-70">
+                                        ({completion.value} {isStepHabit && `• ${calculateKm(completion.value)} km`})
+                                    </span>
                                 )}
                             </div>
                         ))}
