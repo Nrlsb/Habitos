@@ -41,7 +41,7 @@ export const ExpensesProvider = ({ children }) => {
     }, [fetchPlanillas]);
 
     // CRUD operations for Planillas
-    const addPlanilla = useCallback(async (nombre) => {
+    const addPlanilla = useCallback(async (nombre, participants = ['Yo']) => {
         try {
             const response = await fetch(`${API_URL}/api/planillas`, {
                 method: 'POST',
@@ -49,9 +49,27 @@ export const ExpensesProvider = ({ children }) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
-                body: JSON.stringify({ nombre }),
+                body: JSON.stringify({ nombre, participants }),
             });
             if (!response.ok) throw new Error('Failed to add planilla');
+            await fetchPlanillas();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, fetchPlanillas]);
+
+    const updatePlanilla = useCallback(async (id, updates) => {
+        try {
+            const response = await fetch(`${API_URL}/api/planillas/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(updates),
+            });
+            if (!response.ok) throw new Error('Failed to update planilla');
             await fetchPlanillas();
         } catch (err) {
             setError(err.message);
@@ -266,6 +284,7 @@ export const ExpensesProvider = ({ children }) => {
         loading,
         error,
         addPlanilla,
+        updatePlanilla, // Added
         deletePlanilla,
         getExpenses,
         getDailyExpenses, // Add to context

@@ -951,6 +951,7 @@ function Expenses() {
                                                         <div key={index} className="flex gap-2 items-center animate-in fade-in slide-in-from-left-2">
                                                             <input
                                                                 type="text"
+                                                                list="participants-list" // Connect to datalist
                                                                 placeholder="Persona (ej. Lucas)"
                                                                 value={detail.name}
                                                                 onChange={(e) => updateSplitDetail(index, 'name', e.target.value)}
@@ -975,6 +976,11 @@ function Expenses() {
                                                             </button>
                                                         </div>
                                                     ))}
+                                                    <datalist id="participants-list">
+                                                        {(planillas.find(p => p.id === selectedPlanillaId)?.participants || []).map(name => (
+                                                            <option key={name} value={name} />
+                                                        ))}
+                                                    </datalist>
                                                     <div className="pt-2 border-t border-slate-700/50 text-right text-xs text-slate-500">
                                                         Total asignado: <span className="text-slate-300">${splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0).toFixed(2)}</span>
                                                         {amount && (
