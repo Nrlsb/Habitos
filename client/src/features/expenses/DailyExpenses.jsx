@@ -28,8 +28,31 @@ const DailyExpenses = () => {
     const [currency, setCurrency] = useState('ARS');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Categories list (can be moved to a config file later)
-    const categories = ["General", "Comida", "Transporte", "Servicios", "Ocio", "Salud", "Educación", "Ropa", "Regalos", "Varios"];
+    // New State for Advanced Options
+    const [esCompartido, setEsCompartido] = useState(false);
+    const [paidBy, setPaidBy] = useState('');
+    const [enCuotas, setEnCuotas] = useState(false);
+    const [cuotaActual, setCuotaActual] = useState('1');
+    const [totalCuotas, setTotalCuotas] = useState('');
+
+    // Categories list (Synced with Expenses.jsx)
+    const categories = [
+        { value: "General", label: "General" },
+        { value: "Comida", label: "Comida 🍔" },
+        { value: "Transporte", label: "Transporte 🚌" },
+        { value: "Servicios", label: "Servicios 💡" },
+        { value: "Alquiler", label: "Alquiler 🏠" },
+        { value: "Supermercado", label: "Supermercado 🛒" },
+        { value: "Mascota", label: "Mascota 🐶" },
+        { value: "Hogar", label: "Hogar 🛋️" },
+        { value: "Viandas", label: "Viandas 🍱" },
+        { value: "Alcohol", label: "Alcohol 🍺" },
+        { value: "Ocio", label: "Ocio 🎬" },
+        { value: "Salud", label: "Salud 💊" },
+        { value: "Ropa", label: "Ropa 👕" },
+        { value: "Educación", label: "Educación 📚" },
+        { value: "Otros", label: "Otros 📦" }
+    ];
 
     // Set default planilla if available
     useEffect(() => {
@@ -73,6 +96,9 @@ const DailyExpenses = () => {
                 g.description === expense.description &&
                 g.amount === expense.amount &&
                 g.currency === expense.currency &&
+                g.category === expense.category && // Check category
+                g.is_shared === expense.is_shared && // Check shared
+                g.is_installment === expense.is_installment && // Check installment
                 Math.abs(new Date(g.primary_created_at) - new Date(expense.created_at)) < 5000
             );
 
@@ -120,19 +146,25 @@ const DailyExpenses = () => {
                     amount: parseFloat(amount),
                     currency,
                     category, // New field
-                    // Defaults for quick add
-                    is_shared: false,
-                    is_installment: false
+                    esCompartido: esCompartido,
+                    payer_name: esCompartido ? paidBy : null,
+                    enCuotas: enCuotas,
+                    cuotaActual: enCuotas ? parseInt(cuotaActual) : null,
+                    totalCuotas: enCuotas ? parseInt(totalCuotas) : null
                 })
             );
 
             await Promise.all(promises);
 
-            // Clear form
+            // Clear form (keep some selections for convenience)
             setDescription('');
             setAmount('');
-            // Keep planillas and category selected for convenience? Or reset?
-            // Let's keep them.
+            // Reset complex fields
+            setEsCompartido(false);
+            setEnCuotas(false);
+            setPaidBy('');
+            setCuotaActual('1');
+            setTotalCuotas('');
 
             // Refresh list
             getDailyExpenses(selectedDate);
@@ -303,15 +335,81 @@ const DailyExpenses = () => {
                                         className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
                                     >
                                         {categories.map(cat => (
-                                            <option key={cat} value={cat}>{cat}</option>
+                                            <option key={cat.value} value={cat.value}>{cat.label}</option>
                                         ))}
                                     </select>
                                 </div>
 
+                                {/* Extra Options: Shared & Installments */}
+                                <div className="flex gap-3">
+                                    <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-slate-900/30 p-2 rounded-lg border border-slate-700/50 hover:border-slate-600">
+                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500 bg-slate-800'}`}>
+                                            {esCompartido && <Plus size={10} className="text-white" />}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={esCompartido}
+                                            onChange={(e) => setEsCompartido(e.target.checked)}
+                                            className="hidden"
+                                        />
+                                        <span className="text-xs text-slate-400 group-hover:text-slate-300">Compartido</span>
+                                    </label>
+
+                                    <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-slate-900/30 p-2 rounded-lg border border-slate-700/50 hover:border-slate-600">
+                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500 bg-slate-800'}`}>
+                                            {enCuotas && <Plus size={10} className="text-white" />}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={enCuotas}
+                                            onChange={(e) => setEnCuotas(e.target.checked)}
+                                            className="hidden"
+                                        />
+                                        <span className="text-xs text-slate-400 group-hover:text-slate-300">Cuotas</span>
+                                    </label>
+                                </div>
+
+                                {esCompartido && (
+                                    <div className="animate-in fade-in slide-in-from-top-1">
+                                        <input
+                                            type="text"
+                                            value={paidBy}
+                                            onChange={(e) => setPaidBy(e.target.value)}
+                                            placeholder="Pagado por (opcional)"
+                                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 placeholder:text-slate-600"
+                                        />
+                                    </div>
+                                )}
+
+                                {enCuotas && (
+                                    <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
+                                        <div className="flex-1">
+                                            <label className="text-[10px] text-slate-500 ml-1 mb-0.5 block">Actual</label>
+                                            <input
+                                                type="number"
+                                                value={cuotaActual}
+                                                onChange={(e) => setCuotaActual(e.target.value)}
+                                                placeholder="1"
+                                                className="w-full bg-slate-900/50 border border-slate-600 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] text-slate-500 ml-1 mb-0.5 block">Total</label>
+                                            <input
+                                                type="number"
+                                                value={totalCuotas}
+                                                onChange={(e) => setTotalCuotas(e.target.value)}
+                                                placeholder="Total"
+                                                className="w-full bg-slate-900/50 border border-slate-600 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
                                 <button
                                     type="submit"
                                     disabled={isSubmitting || !description || !amount || selectedPlanillaIds.length === 0}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-emerald-500/20 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-2"
                                 >
                                     {isSubmitting ? (
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -351,18 +449,33 @@ const DailyExpenses = () => {
                                 {groupedExpenses.map((expense) => (
                                     <div key={expense.id} className="p-4 hover:bg-slate-700/20 transition-colors flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400">
-                                                {expense.currency === 'USD' ? 'U$D' : '$'}
+                                            <div className="w-10 h-10 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 font-bold">
+                                                {expense.category ? expense.category.charAt(0) : (expense.currency === 'USD' ? 'U' : '$')}
                                             </div>
                                             <div>
-                                                <h4 className="text-slate-200 font-medium">{expense.description}</h4>
-                                                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-slate-200 font-medium">{expense.description}</h4>
+                                                    <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
+                                                        {categories.find(c => c.value === expense.category)?.label || expense.category}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1 flex-wrap">
                                                     {expense.planillas.map((pName, idx) => (
                                                         <span key={idx} className="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded border border-slate-600">
                                                             {pName}
                                                         </span>
                                                     ))}
-                                                    <span className="text-xs text-slate-500 ml-1">
+                                                    {expense.is_shared && (
+                                                        <span className="text-[10px] bg-emerald-900/30 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                                            Compartido
+                                                        </span>
+                                                    )}
+                                                    {expense.is_installment && (
+                                                        <span className="text-[10px] bg-indigo-900/30 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20">
+                                                            Cuotas
+                                                        </span>
+                                                    )}
+                                                    <span className="text-xs text-slate-500 ml-1 border-l border-slate-700 pl-2">
                                                         {format(parseISO(expense.primary_created_at), 'HH:mm')} hs
                                                     </span>
                                                 </div>
