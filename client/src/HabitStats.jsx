@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './context/AuthContext'
 import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle, Settings } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import Calendar from './Calendar'
 
 function HabitStats({ habitId, onBack }) {
@@ -111,6 +111,52 @@ function HabitStats({ habitId, onBack }) {
         }
 
         return { currentStreak, longestStreak }
+    }
+
+    const calculateCompletionRate = (completions, days) => {
+        if (!completions || completions.length === 0) return 0
+        const now = new Date()
+        const cutoff = new Date(now)
+        cutoff.setDate(cutoff.getDate() - days)
+
+        const count = completions.filter(c => {
+            const d = new Date(c.completed_date || c)
+            return d >= cutoff && d <= now
+        }).length
+
+        return Math.round((count / days) * 100)
+    }
+
+    const calculateDayOfWeekStats = (completions) => {
+        const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+        const stats = new Array(7).fill(0)
+
+        completions.forEach(c => {
+            const date = new Date(c.completed_date || c)
+            stats[date.getDay()]++
+        })
+
+        return days.map((day, index) => ({
+            name: day,
+            count: stats[index]
+        }))
+    }
+
+    const calculateMonthlyStats = (completions) => {
+        const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+        const currentYear = new Date().getFullYear()
+
+        // Initialize with all months
+        const stats = months.map(m => ({ name: m, count: 0 }))
+
+        completions.forEach(c => {
+            const date = new Date(c.completed_date || c)
+            if (date.getFullYear() === currentYear) {
+                stats[date.getMonth()].count++
+            }
+        })
+
+        return stats
     }
 
     const isStepHabit = habit?.unit?.toLowerCase().includes('paso') || habit?.unit?.toLowerCase().includes('step')
@@ -249,7 +295,7 @@ function HabitStats({ habitId, onBack }) {
                 <p className="text-sm text-slate-500 mt-2">Creado el {new Date(habit.created_at).toLocaleDateString('es-ES')}</p>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
                     <div className="h-12 w-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3">
                         <CheckCircle size={24} />
@@ -266,12 +312,69 @@ function HabitStats({ habitId, onBack }) {
                     )}
                 </div>
 
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors md:col-span-2">
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
                     <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 mb-3">
                         <Trophy size={24} />
                     </div>
                     <span className="text-3xl font-bold text-white mb-1">{longestStreak}</span>
                     <span className="text-sm text-slate-400">Mejor Racha (días)</span>
+                </div>
+
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
+                    <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mb-3">
+                        <Flame size={24} />
+                    </div>
+                    <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(habit.completions, 7)}%</span>
+                    <span className="text-sm text-slate-400">Últimos 7 días</span>
+                </div>
+
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
+                    <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mb-3">
+                        <CalendarIcon size={24} />
+                    </div>
+                    <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(habit.completions, 30)}%</span>
+                    <span className="text-sm text-slate-400">Últimos 30 días</span>
+                </div>
+            </div>
+
+            {/* Analytics Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Day of Week Chart */}
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-4">Día más Productivo</h3>
+                    <div className="h-64 w-full min-w-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={calculateDayOfWeekStats(habit.completions)}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                                    cursor={{ fill: '#334155', opacity: 0.4 }}
+                                />
+                                <Bar dataKey="count" fill="#818cf8" radius={[4, 4, 0, 0]} name="Completados" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Monthly Chart */}
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
+                    <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Mensual ({new Date().getFullYear()})</h3>
+                    <div className="h-64 w-full min-w-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={calculateMonthlyStats(habit.completions)}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
+                                <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                <Tooltip
+                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
+                                    cursor={{ fill: '#334155', opacity: 0.4 }}
+                                />
+                                <Bar dataKey="count" fill="#22d3ee" radius={[4, 4, 0, 0]} name="Completados" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
 
