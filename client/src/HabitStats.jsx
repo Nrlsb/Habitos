@@ -372,6 +372,7 @@ function HabitStats({ habitId, onBack }) {
     const stats30 = calculateComparison(habit.completions, 30)
     const personalRecord = calculatePersonalRecord(habit.completions)
     const projection = calculateProjection(habit.completions)
+    const heatmapData = calculateHeatmapData(habit.completions)
 
     const renderTrend = (stat) => {
         if (stat.trend === 'equal') return <div className="flex items-center text-slate-400 text-xs mt-1"><Minus size={12} className="mr-1" /> 0% vs prev</div>
