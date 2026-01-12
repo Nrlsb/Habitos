@@ -179,7 +179,18 @@ function HabitStats({ habitId, onBack }) {
     if (habit.error) return <div className="text-center text-red-400 py-12">Error: {habit.error}</div>
     if (!habit.completions) return <div className="text-center text-slate-400 py-12">No se pudieron cargar los datos</div>
 
-    const { currentStreak, longestStreak } = calculateStats(habit.completions)
+    const getSuccessfulCompletions = () => {
+        if (!habit || !habit.completions) return []
+        return habit.completions.filter(c => {
+            if (habit.type === 'counter') {
+                return (c.value || 0) >= (habit.goal || 0)
+            }
+            return (c.state || 'completed') === 'completed'
+        })
+    }
+
+    const successfulCompletions = getSuccessfulCompletions()
+    const { currentStreak, longestStreak } = calculateStats(successfulCompletions)
 
     const handleDateClick = (date) => {
         setSelectedDate(date)
@@ -300,7 +311,7 @@ function HabitStats({ habitId, onBack }) {
                     <div className="h-12 w-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3">
                         <CheckCircle size={24} />
                     </div>
-                    <span className="text-3xl font-bold text-white mb-1">{habit.completions.length}</span>
+                    <span className="text-3xl font-bold text-white mb-1">{successfulCompletions.length}</span>
                     <span className="text-sm text-slate-400">Total Completado</span>
                     {isStepHabit && (
                         <div className="mt-2 pt-2 border-t border-slate-700/50 w-full text-center">
@@ -324,7 +335,7 @@ function HabitStats({ habitId, onBack }) {
                     <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mb-3">
                         <Flame size={24} />
                     </div>
-                    <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(habit.completions, 7)}%</span>
+                    <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(successfulCompletions, 7)}%</span>
                     <span className="text-sm text-slate-400">Últimos 7 días</span>
                 </div>
 
@@ -332,7 +343,7 @@ function HabitStats({ habitId, onBack }) {
                     <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mb-3">
                         <CalendarIcon size={24} />
                     </div>
-                    <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(habit.completions, 30)}%</span>
+                    <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(successfulCompletions, 30)}%</span>
                     <span className="text-sm text-slate-400">Últimos 30 días</span>
                 </div>
             </div>
@@ -344,7 +355,7 @@ function HabitStats({ habitId, onBack }) {
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Día más Productivo</h3>
                     <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={calculateDayOfWeekStats(habit.completions)}>
+                            <BarChart data={calculateDayOfWeekStats(successfulCompletions)}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                 <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} />
@@ -363,7 +374,7 @@ function HabitStats({ habitId, onBack }) {
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Mensual ({new Date().getFullYear()})</h3>
                     <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={calculateMonthlyStats(habit.completions)}>
+                            <BarChart data={calculateMonthlyStats(successfulCompletions)}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                 <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} />
