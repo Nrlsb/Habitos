@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './context/AuthContext'
-import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle, Settings } from 'lucide-react'
+import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle, Settings, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import Calendar from './Calendar'
 
@@ -180,6 +180,75 @@ function HabitStats({ habitId, onBack }) {
         return stats
     }
 
+    const calculateComparison = (completions, days) => {
+        const now = new Date()
+        const currentStart = new Date(now)
+        currentStart.setDate(now.getDate() - days)
+
+        const previousStart = new Date(currentStart)
+        previousStart.setDate(previousStart.getDate() - days)
+
+        const currentPeriod = completions.filter(c => {
+            const d = new Date(c.completed_date || c)
+            return d >= currentStart && d <= now
+        })
+
+        const previousPeriod = completions.filter(c => {
+            const d = new Date(c.completed_date || c)
+            return d >= previousStart && d < currentStart
+        })
+
+        // Metric: Sum of values for counter, Count for boolean
+        const getMetric = (arr) => {
+            if (habit.type === 'counter') return arr.reduce((acc, curr) => acc + (curr.value || 0), 0)
+            return arr.length
+        }
+
+        const currentMetric = getMetric(currentPeriod)
+        const previousMetric = getMetric(previousPeriod)
+
+        if (previousMetric === 0) return { change: 100, trend: 'up', infinite: true }
+
+        const change = ((currentMetric - previousMetric) / previousMetric) * 100
+        return {
+            change: Math.abs(Math.round(change)),
+            trend: change > 0 ? 'up' : change < 0 ? 'down' : 'equal',
+            value: change
+        }
+    }
+
+    const calculatePersonalRecord = (completions) => {
+        if (habit.type !== 'counter' || !completions.length) return null
+        const max = completions.reduce((prev, current) => (prev.value || 0) > (current.value || 0) ? prev : current, { value: 0 })
+        return {
+            value: max.value,
+            date: max.completed_date
+        }
+    }
+
+    const calculateProjection = (completions) => {
+        const now = new Date()
+        const startOfYear = new Date(now.getFullYear(), 0, 1)
+        const daysPassed = Math.ceil((now - startOfYear) / (1000 * 60 * 60 * 24)) || 1
+
+        let currentTotal = 0
+        if (habit.type === 'counter') {
+            currentTotal = completions.filter(c => new Date(c.completed_date || c).getFullYear() === now.getFullYear())
+                .reduce((acc, curr) => acc + (curr.value || 0), 0)
+        } else {
+            currentTotal = completions.filter(c => new Date(c.completed_date || c).getFullYear() === now.getFullYear()).length
+        }
+
+        const dailyAvg = currentTotal / daysPassed
+        const daysRemaining = 365 - daysPassed
+        const projectedAdditional = dailyAvg * daysRemaining
+
+        return {
+            total: Math.round(currentTotal + projectedAdditional),
+            avg: dailyAvg.toFixed(1)
+        }
+    }
+
     const isStepHabit = habit?.unit?.toLowerCase().includes('paso') || habit?.unit?.toLowerCase().includes('step')
 
     const calculateKm = (steps) => {
@@ -188,6 +257,37 @@ function HabitStats({ habitId, onBack }) {
         const strideCm = parseInt(userHeight) * 0.414
         const distanceKm = (steps * strideCm) / 100000
         return distanceKm.toFixed(2)
+    }
+
+    const calculateHeatmapData = (completions) => {
+        const year = new Date().getFullYear()
+        const start = new Date(year, 0, 1)
+        const end = new Date(year, 11, 31)
+        const days = []
+        let current = new Date(start)
+
+        while (current <= end) {
+            const dateStr = current.toISOString().split('T')[0]
+            const completion = completions.find(c => (c.completed_date || c) === dateStr)
+
+            let level = 0
+            if (completion) {
+                if (habit.type === 'counter') {
+                    // Normalize intensity 1-4 based on goal
+                    const val = completion.value || 0
+                    if (val >= habit.goal) level = 4
+                    else if (val >= habit.goal * 0.75) level = 3
+                    else if (val >= habit.goal * 0.5) level = 2
+                    else if (val > 0) level = 1
+                } else {
+                    level = completion.state === 'completed' ? 4 : 0
+                }
+            }
+
+            days.push({ date: dateStr, level })
+            current.setDate(current.getDate() + 1)
+        }
+        return days
     }
 
     if (loading) return (
@@ -266,6 +366,26 @@ function HabitStats({ habitId, onBack }) {
         }))
         .sort((a, b) => new Date(a.fullDate) - new Date(b.fullDate))
         .slice(-30) // Last 30 entries
+
+    // Calculate Advanced Stats
+    const stats7 = calculateComparison(habit.completions, 7) // Use ALL completions for volume comparison
+    const stats30 = calculateComparison(habit.completions, 30)
+    const personalRecord = calculatePersonalRecord(habit.completions)
+    const projection = calculateProjection(habit.completions)
+
+    const renderTrend = (stat) => {
+        if (stat.trend === 'equal') return <div className="flex items-center text-slate-400 text-xs mt-1"><Minus size={12} className="mr-1" /> 0% vs prev</div>
+        const Color = stat.trend === 'up' ? 'text-green-400' : 'text-red-400'
+        const Icon = stat.trend === 'up' ? TrendingUp : TrendingDown
+        return (
+            <div className={`flex items-center ${Color} text-xs mt-1`}>
+                <Icon size={12} className="mr-1" />
+                {stat.infinite ? 'N/A' : `${stat.change}%`} vs prev
+            </div>
+        )
+    }
+
+
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -358,6 +478,7 @@ function HabitStats({ habitId, onBack }) {
                     </div>
                     <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(successfulCompletions, 7)}%</span>
                     <span className="text-sm text-slate-400">Últimos 7 días</span>
+                    {renderTrend(stats7)}
                 </div>
 
                 <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
@@ -366,6 +487,53 @@ function HabitStats({ habitId, onBack }) {
                     </div>
                     <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(successfulCompletions, 30)}%</span>
                     <span className="text-sm text-slate-400">Últimos 30 días</span>
+                    {renderTrend(stats30)}
+                </div>
+
+                {habit.type === 'counter' && personalRecord && (
+                    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
+                        <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 mb-3">
+                            <Trophy size={24} />
+                        </div>
+                        <span className="text-2xl font-bold text-white mb-1">{personalRecord.value}</span>
+                        <div className="flex flex-col">
+                            <span className="text-sm text-slate-400">Récord Personal</span>
+                            <span className="text-[10px] text-slate-500">{new Date(personalRecord.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+                        </div>
+                    </div>
+                )}
+
+                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
+                    <div className="h-12 w-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 mb-3">
+                        <TrendingUp size={24} />
+                    </div>
+                    <span className="text-2xl font-bold text-white mb-1">{projection.total}</span>
+                    <span className="text-sm text-slate-400">Proyección {new Date().getFullYear()}</span>
+                    <span className="text-[10px] text-slate-500">Basado en prom. {projection.avg}/día</span>
+                </div>
+            </div>
+
+            {/* Heatmap Section */}
+            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl overflow-x-auto">
+                <h3 className="text-lg font-semibold text-slate-200 mb-4">Consistencia Anual</h3>
+                <div className="flex gap-1 min-w-max pb-2">
+                    <div className="grid grid-rows-7 grid-flow-col gap-1">
+                        {heatmapData.map((day) => {
+                            let color = 'bg-slate-800'
+                            if (day.level === 1) color = 'bg-green-900/40' // very low
+                            if (day.level === 2) color = 'bg-green-700/60' // low
+                            if (day.level === 3) color = 'bg-green-500/80' // medium
+                            if (day.level === 4) color = 'bg-green-400'    // high
+
+                            return (
+                                <div
+                                    key={day.date}
+                                    className={`w-3 h-3 rounded-sm ${color}`}
+                                    title={`${day.date}: ${day.level > 0 ? 'Activo' : 'Sin actividad'}`}
+                                ></div>
+                            )
+                        })}
+                    </div>
                 </div>
             </div>
 
