@@ -127,18 +127,39 @@ function HabitStats({ habitId, onBack }) {
         return Math.round((count / days) * 100)
     }
 
-    const calculateDayOfWeekStats = (completions) => {
+    const calculateDayOfWeekStats = (successfulComps, allComps, type) => {
         const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
-        const stats = new Array(7).fill(0)
 
-        completions.forEach(c => {
+        // If Counter: Use ALL completions (effort) to calculate Average Value
+        if (type === 'counter') {
+            const totals = new Array(7).fill(0)
+            const counts = new Array(7).fill(0)
+
+            allComps.forEach(c => {
+                const date = new Date(c.completed_date || c)
+                const dayIndex = date.getDay()
+                totals[dayIndex] += (c.value || 0)
+                counts[dayIndex]++
+            })
+
+            return days.map((day, index) => ({
+                name: day,
+                value: counts[index] > 0 ? Math.round(totals[index] / counts[index]) : 0,
+                tooltip: 'Promedio'
+            }))
+        }
+
+        // If Boolean: Use SUCCESSFUL completions to calculate Frequency
+        const stats = new Array(7).fill(0)
+        successfulComps.forEach(c => {
             const date = new Date(c.completed_date || c)
             stats[date.getDay()]++
         })
 
         return days.map((day, index) => ({
             name: day,
-            count: stats[index]
+            value: stats[index],
+            tooltip: 'Completados'
         }))
     }
 
@@ -355,15 +376,16 @@ function HabitStats({ habitId, onBack }) {
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Día más Productivo</h3>
                     <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={calculateDayOfWeekStats(successfulCompletions)}>
+                            <BarChart data={calculateDayOfWeekStats(successfulCompletions, habit.completions, habit.type)}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                 <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} />
                                 <Tooltip
                                     contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
                                     cursor={{ fill: '#334155', opacity: 0.4 }}
+                                    formatter={(value, name, props) => [value, props.payload.tooltip]}
                                 />
-                                <Bar dataKey="count" fill="#818cf8" radius={[4, 4, 0, 0]} name="Completados" />
+                                <Bar dataKey="value" fill="#818cf8" radius={[4, 4, 0, 0]} name={habit.type === 'counter' ? 'Promedio' : 'Completados'} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
