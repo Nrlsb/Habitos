@@ -319,16 +319,15 @@ function HabitStats({ habitId, onBack }) {
     const handleSaveCompletion = async (date, state, value) => {
         if (!date) return
 
-        let method = 'POST'
         let body = { date: date }
 
         if (habit.type === 'counter') {
             body.value = parseInt(value)
-            body.state = 'completed' // Always active entry for counter, unless logic changes
+            body.state = 'completed'
         } else {
             // For boolean
             body.state = state // 'completed' or 'failed'
-            if (value) body.value = value // Save value if provided (even for boolean failed)
+            if (value) body.value = parseInt(value) // Ensure int
         }
 
         try {
@@ -341,15 +340,17 @@ function HabitStats({ habitId, onBack }) {
                 body: JSON.stringify(body)
             })
 
-            if (response.ok) {
+            if (!response.ok) {
+                const errData = await response.json()
+                console.error('Failed to save completion:', errData)
+                alert(`Error al guardar: ${errData.error || 'Server Error'}`)
+            } else {
                 fetchHabitDetails()
                 setSelectedDate(null)
-                // inputValue local state is no longer used for this, cleaned up by modal unmount
-            } else {
-                console.error('Failed to save completion')
             }
         } catch (error) {
             console.error('Error saving completion:', error)
+            alert('Error de conexión al guardar')
         }
     }
 
@@ -540,7 +541,7 @@ function HabitStats({ habitId, onBack }) {
                 <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Día más Productivo</h3>
                     <div className="h-64 w-full min-w-0">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={calculateDayOfWeekStats(successfulCompletions, habit.completions, habit.type)}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                 <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
@@ -560,7 +561,7 @@ function HabitStats({ habitId, onBack }) {
                 <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Mensual ({new Date().getFullYear()})</h3>
                     <div className="h-64 w-full min-w-0">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={calculateMonthlyStats(successfulCompletions)}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                                 <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
