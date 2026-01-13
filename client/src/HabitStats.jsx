@@ -8,7 +8,6 @@ function HabitStats({ habitId, onBack }) {
     const [habit, setHabit] = useState(null)
     const [loading, setLoading] = useState(true)
     const [selectedDate, setSelectedDate] = useState(null)
-    const [inputValue, setInputValue] = useState('')
     const [mounted, setMounted] = useState(false)
 
     const [userHeight, setUserHeight] = useState(() => localStorage.getItem('userHeight') || '170')
@@ -315,24 +314,21 @@ function HabitStats({ habitId, onBack }) {
 
     const handleDateClick = (date) => {
         setSelectedDate(date)
-        const existingCompletion = habit.completions.find(c => (c.completed_date || c) === date)
-        if (habit.type === 'counter') {
-            setInputValue(existingCompletion ? existingCompletion.value : '')
-        }
     }
 
-    const handleSaveCompletion = async () => {
-        if (!selectedDate) return
+    const handleSaveCompletion = async (date, state, value) => {
+        if (!date) return
 
         let method = 'POST'
-        let body = { date: selectedDate }
-
-        // Ensure completion endpoints are correct based on backend implementation
-        // Assuming POST /api/habits/:id/completion to toggle/add
-        // For 'counter' type, we need to send the value
+        let body = { date: date }
 
         if (habit.type === 'counter') {
-            body.value = parseInt(inputValue)
+            body.value = parseInt(value)
+            body.state = 'completed' // Always active entry for counter, unless logic changes
+        } else {
+            // For boolean
+            body.state = state // 'completed' or 'failed'
+            if (value) body.value = value // Save value if provided (even for boolean failed)
         }
 
         try {
@@ -348,7 +344,7 @@ function HabitStats({ habitId, onBack }) {
             if (response.ok) {
                 fetchHabitDetails()
                 setSelectedDate(null)
-                setInputValue('')
+                // inputValue local state is no longer used for this, cleaned up by modal unmount
             } else {
                 console.error('Failed to save completion')
             }
@@ -635,64 +631,155 @@ function HabitStats({ habitId, onBack }) {
                     <p className="text-slate-500 italic">No hay actividad registrada aún.</p>
                 ) : (
                     <div className="flex flex-wrap gap-2">
-                        {habit.completions.slice(0, 30).map(completion => (
-                            <div key={completion.completed_date || completion} className="bg-indigo-500/10 text-indigo-300 px-3 py-1 rounded-lg text-sm border border-indigo-500/20">
-                                {new Date(completion.completed_date || completion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                                {habit.type === 'counter' && completion.value > 0 && (
-                                    <span className="ml-2 text-xs opacity-70">
-                                        ({completion.value} {isStepHabit && `• ${calculateKm(completion.value)} km`})
-                                    </span>
-                                )}
-                            </div>
-                        ))}
+                        {habit.completions.slice(0, 30).map(completion => {
+                            const isFailed = completion.state === 'failed'
+                            const colorClass = isFailed
+                                ? 'bg-red-500/10 text-red-300 border-red-500/20'
+                                : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'
+
+                            return (
+                                <div key={completion.completed_date || completion} className={`${colorClass} px-3 py-1 rounded-lg text-sm border`}>
+                                    {new Date(completion.completed_date || completion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                                    {completion.value > 0 && (
+                                        <span className="ml-2 text-xs opacity-70 border-l pl-2 border-white/20">
+                                            {completion.value} {habit.unit || ''}
+                                            {isStepHabit && ` • ${calculateKm(completion.value)} km`}
+                                        </span>
+                                    )}
+                                </div>
+                            )
+                        })}
                     </div>
                 )}
             </div>
             {/* Modal for adding/editing completion */}
             {selectedDate && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
-                        <h3 className="text-xl font-bold text-white mb-4">
-                            {new Date(selectedDate).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
-                        </h3>
+                <CompletionModal
+                    date={selectedDate}
+                    habit={habit}
+                    initialValue={
+                        habit.completions.find(c => (c.completed_date || c) === selectedDate)?.value || ''
+                    }
+                    initialState={
+                        habit.completions.find(c => (c.completed_date || c) === selectedDate)?.state || 'completed'
+                    }
+                    onClose={() => setSelectedDate(null)}
+                    onSave={handleSaveCompletion}
+                />
+            )}
+        </div>
+    )
+}
 
-                        {habit.type === 'counter' ? (
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-slate-400 mb-2">
-                                    Cantidad ({habit.unit})
+function CompletionModal({ date, habit, initialValue, initialState, onClose, onSave }) {
+    const [status, setStatus] = useState(initialState === 'failed' ? 'failed' : 'completed')
+    const [val, setVal] = useState(initialValue)
+
+    // For boolean habits, we might want to toggle between "Success" and "Failure"
+    // For counter habits, it's mostly about the number, but could also imply failure if 0? 
+    // The requirement is specifically for boolean habits to record "how much alcohol".
+
+    const handleSave = () => {
+        // If boolean and status is failed, we send state='failed' and the value
+        // If boolean and status is completed, we send state='completed' (value ignored or 0)
+        // If counter, we just send the value (state implies completed depending on goal, or just present)
+
+        let finalState = status
+        let finalValue = val
+
+        if (habit.type === 'counter') {
+            // For counter, distinct failure isn't the primary mode, usually it's just value < goal.
+            // But we can keep it simple: just save the value. Status is derived or 'completed' (active).
+            finalState = 'completed'
+        }
+
+        onSave(date, finalState, finalValue)
+    }
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
+                <h3 className="text-xl font-bold text-white mb-4">
+                    {new Date(date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </h3>
+
+                {habit.type === 'counter' ? (
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-slate-400 mb-2">
+                            Cantidad ({habit.unit})
+                        </label>
+                        <input
+                            type="number"
+                            value={val}
+                            onChange={(e) => setVal(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                            placeholder={`Meta: ${habit.goal}`}
+                            autoFocus
+                        />
+                    </div>
+                ) : (
+                    <div className="mb-6 space-y-4">
+                        <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-700">
+                            <button
+                                onClick={() => setStatus('completed')}
+                                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${status === 'completed'
+                                    ? 'bg-green-600 text-white shadow-lg'
+                                    : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <CheckCircle size={16} /> Cumplido
+                                </span>
+                            </button>
+                            <button
+                                onClick={() => setStatus('failed')}
+                                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${status === 'failed'
+                                    ? 'bg-red-600 text-white shadow-lg'
+                                    : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                            >
+                                <span className="flex items-center justify-center gap-2">
+                                    <TrendingDown size={16} /> No Cumplido
+                                </span>
+                            </button>
+                        </div>
+
+                        {status === 'failed' && (
+                            <div className="animate-in fade-in slide-in-from-top-2">
+                                <label className="block text-xs text-slate-400 mb-2">
+                                    Registrar consumo/fallo (Opcional)
                                 </label>
                                 <input
                                     type="number"
-                                    value={inputValue}
-                                    onChange={(e) => setInputValue(e.target.value)}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                    placeholder={`Meta: ${habit.goal}`}
+                                    value={val}
+                                    onChange={(e) => setVal(e.target.value)}
+                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none placeholder:text-slate-600"
+                                    placeholder="Ej. Cantidad consumida..."
                                     autoFocus
                                 />
                             </div>
-                        ) : (
-                            <p className="text-slate-300 mb-6">
-                                ¿Marcaste este hábito como completado?
-                            </p>
                         )}
-
-                        <div className="flex justify-end gap-3">
-                            <button
-                                onClick={() => setSelectedDate(null)}
-                                className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleSaveCompletion}
-                                className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/25"
-                            >
-                                Guardar
-                            </button>
-                        </div>
                     </div>
+                )}
+
+                <div className="flex justify-end gap-3">
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        className={`px-4 py-2 rounded-lg text-white font-medium transition-colors shadow-lg ${status === 'failed' && habit.type !== 'counter'
+                            ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
+                            : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/25'
+                            }`}
+                    >
+                        Guardar
+                    </button>
                 </div>
-            )}
+            </div>
         </div>
     )
 }

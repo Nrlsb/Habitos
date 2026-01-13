@@ -94,7 +94,7 @@ function Calendar({ completions, onDateClick, habitType, habitGoal }) {
                 bgColor = 'bg-green-500/20'
                 borderColor = 'border-green-500/50'
                 textColor = 'text-green-400'
-            } else if (state === 'missed') {
+            } else if (state === 'missed' || state === 'failed') {
                 bgColor = 'bg-red-500/10'
                 borderColor = 'border-red-500/30'
                 textColor = 'text-red-400'
