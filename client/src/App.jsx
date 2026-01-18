@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut, Layout } from 'lucide-react'
+import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut, Layout, Utensils } from 'lucide-react'
 import HabitStats from './HabitStats'
 import Expenses from './features/expenses/Expenses'
 import DailyExpenses from './features/expenses/DailyExpenses'
 import Planning from './features/planning/Planning'
+import Meals from './features/meals/Meals'
 import { ExpensesProvider } from './features/expenses/ExpensesContext'
 import { PlanningProvider } from './features/planning/PlanningContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -145,6 +146,16 @@ function AppContent() {
               Hábitos
             </button>
             <button
+              onClick={() => setView('meals')}
+              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'meals'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+            >
+              <Utensils size={18} />
+              Comidas
+            </button>
+            <button
               onClick={() => setView('expenses')}
               className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'expenses'
                 ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
@@ -181,6 +192,8 @@ function AppContent() {
           <PlanningProvider>
             <Planning />
           </PlanningProvider>
+        ) : view === 'meals' ? (
+          <Meals />
         ) : view === 'expenses' || view === 'daily-expenses' ? (
           <ExpensesProvider>
             {view === 'expenses' ? <Expenses /> : <DailyExpenses />}
