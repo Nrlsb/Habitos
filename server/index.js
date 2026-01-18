@@ -90,15 +90,52 @@ app.get('/test-supabase', async (req, res) => {
 // Habits Routes
 
 // Get all habits
+// Get all habits with today's completion status
 app.get('/api/habits', authenticateUser, async (req, res) => {
-    const { data, error } = await supabase
+    // Determine "today" based on server time or client param. 
+    // Ideally client sends timezone, but for now we default to UTC date part or similar.
+    // Better approach: Get ALL active habits, and left join completions for today.
+
+    // Since Supabase join filtering is tricky, we can fetch habits and THEN fetch today's completions.
+    // Or use the powerful select query.
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // 1. Get Habits
+    const { data: habits, error: habitsError } = await supabase
         .from('habits')
         .select('*')
         .eq('user_id', req.user.id)
         .order('created_at', { ascending: false });
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.json(data);
+    if (habitsError) return res.status(500).json({ error: habitsError.message });
+
+    // 2. Get Today's Completions for these habits
+    const habitIds = habits.map(h => h.id);
+    let completionsMap = {};
+
+    if (habitIds.length > 0) {
+        const { data: completions, error: completionsError } = await supabase
+            .from('habit_completions')
+            .select('*')
+            .in('habit_id', habitIds)
+            .eq('completed_date', today);
+
+        if (!completionsError && completions) {
+            completions.forEach(c => {
+                completionsMap[c.habit_id] = c;
+            });
+        }
+    }
+
+    // 3. Merge
+    const habitsWithStatus = habits.map(h => ({
+        ...h,
+        today_state: completionsMap[h.id]?.state || 'none',
+        today_value: completionsMap[h.id]?.value || 0
+    }));
+
+    res.json(habitsWithStatus);
 });
 
 // Get a single habit with completions

@@ -97,6 +97,58 @@ function AppContent() {
     }
   }
 
+  const toggleHabitDay = async (e, habit) => {
+    e.stopPropagation()
+    const today = new Date().toISOString().split('T')[0]
+
+    // Optimistic Update
+    const isCompleted = habit.today_state === 'completed'
+    const isCounter = habit.type === 'counter'
+
+    let newStatus = isCompleted ? 'none' : 'completed'
+    let newValue = habit.today_value || 0
+
+    if (isCounter) {
+      // Increment by one unit? Or filling goal? 
+      // Let's implement +1 logic for quick action
+      newValue = (habit.today_value || 0) + 1
+      newStatus = newValue >= habit.goal ? 'completed' : 'none' // Actually backend might handle 'completed' state, but relevant for UI color
+    }
+
+    // Update local state immediately
+    setHabits(habits.map(h =>
+      h.id === habit.id
+        ? { ...h, today_state: newStatus, today_value: newValue }
+        : h
+    ))
+
+    try {
+      const body = { date: today }
+      if (isCounter) {
+        body.value = newValue
+        body.state = 'completed' // Always mark active
+      } else {
+        body.state = newStatus
+      }
+
+      const response = await fetch(`${API_URL}/api/habits/${habit.id}/toggle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify(body)
+      })
+
+      if (!response.ok) throw new Error('Failed to toggle')
+
+    } catch (error) {
+      console.error('Error toggling habit:', error)
+      // Revert on error (could fetch fresh data)
+      fetchHabits()
+    }
+  }
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -305,22 +357,62 @@ function AppContent() {
                       onClick={() => setSelectedHabitId(habit.id)}
                       className="group bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl p-4 flex items-center justify-between transition-all duration-200 hover:shadow-lg hover:border-slate-600 hover:-translate-y-0.5 cursor-pointer"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-indigo-400 group-hover:bg-indigo-500/20 transition-colors">
-                          <Circle size={20} />
+                      <div className="flex items-center gap-4 flex-1">
+                        {/* Status Icon / Button */}
+                        <div onClick={(e) => toggleHabitDay(e, habit)}>
+                          {habit.type === 'counter' ? (
+                            <div className="flex flex-col items-center justify-center w-12 cursor-pointer group/counter">
+                              <div className="text-[10px] text-indigo-300 font-bold mb-0.5">
+                                {habit.today_value || 0}
+                              </div>
+                              <div className="h-8 w-8 rounded-full bg-slate-700/50 border border-slate-600 relative overflow-hidden group-hover/counter:border-indigo-500/50 transition-colors">
+                                <div
+                                  className="absolute bottom-0 left-0 w-full bg-indigo-500 transition-all duration-300"
+                                  style={{ height: `${Math.min(((habit.today_value || 0) / habit.goal) * 100, 100)}%` }}
+                                ></div>
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/counter:opacity-100 transition-opacity bg-black/20 text-white font-bold text-lg">
+                                  +
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              className={`h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 ${habit.today_state === 'completed'
+                                  ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-500/20 scale-105'
+                                  : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300 border border-slate-600 hover:border-slate-500'
+                                }`}
+                            >
+                              {habit.today_state === 'completed' ? <CheckCircle size={22} /> : <Circle size={22} />}
+                            </button>
+                          )}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-lg font-medium text-slate-200 group-hover:text-white transition-colors">
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className={`text-lg font-medium transition-colors truncate ${habit.today_state === 'completed' && habit.type !== 'counter' ? 'text-green-100/70 line-through decoration-green-500/30' : 'text-slate-200 group-hover:text-white'}`}>
                               {habit.title}
                             </h3>
                             {habit.category && habit.category !== 'General' && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 border border-slate-600">
+                              <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 border border-slate-600">
                                 {habit.category}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-500">Creado el {new Date(habit.created_at).toLocaleDateString('es-ES')}</p>
+                          {habit.type === 'counter' && (
+                            <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-indigo-500 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min(((habit.today_value || 0) / habit.goal) * 100, 100)}%` }}
+                              ></div>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center mt-1">
+                            <p className="text-xs text-slate-500">
+                              {habit.type === 'counter'
+                                ? `${habit.today_value || 0} / ${habit.goal} ${habit.unit}`
+                                : (habit.today_state === 'completed' ? '¡Completado hoy!' : 'Pendiente hoy')}
+                            </p>
+                          </div>
                         </div>
                       </div>
 
