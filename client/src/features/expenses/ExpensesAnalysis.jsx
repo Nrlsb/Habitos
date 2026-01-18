@@ -1,19 +1,45 @@
 
 import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard, Users, ArrowRightLeft, CheckCircle } from 'lucide-react';
+import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard, Users, ArrowRightLeft, CheckCircle, Target, Edit2, Save, X } from 'lucide-react';
+import { useExpenses } from './ExpensesContext';
 
 const COLORS = ['#6366f1', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444', '#64748b'];
 const SHARED_COLORS = ['#3f46e4', '#06b6d4']; // Personal (Indigo), Shared (Cyan)
 const INSTALLMENT_COLORS = ['#f59e0b', '#10b981']; // Installments (Amber), Current (Emerald)
 const CURRENCY_COLORS = ['#6366f1', '#22c5e']; // ARS (Indigo), USD (Green)
 
-const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
+const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate }) => {
     const [showProjection, setShowProjection] = useState(true);
     const [payerA, setPayerA] = useState('');
     const [payerB, setPayerB] = useState('');
     const [manualPayerA, setManualPayerA] = useState('');
     const [manualPayerB, setManualPayerB] = useState('');
+
+    const { getBudgets, upsertBudget, categories } = useExpenses();
+    const [budgets, setBudgets] = useState([]);
+    const [editingBudgetCategory, setEditingBudgetCategory] = useState(null);
+    const [newBudgetAmount, setNewBudgetAmount] = useState('');
+
+    React.useEffect(() => {
+        if (selectedDate) {
+            const month = selectedDate.toISOString().slice(0, 7); // YYYY-MM
+            getBudgets(month).then(setBudgets);
+        }
+    }, [selectedDate, getBudgets]);
+
+    const handleSaveBudget = async (categoryName) => {
+        if (!newBudgetAmount || !selectedDate) return;
+        const month = selectedDate.toISOString().slice(0, 7);
+        await upsertBudget({
+            category_name: categoryName,
+            amount: parseFloat(newBudgetAmount),
+            month
+        });
+        getBudgets(month).then(setBudgets);
+        setEditingBudgetCategory(null);
+        setNewBudgetAmount('');
+    };
 
     const {
         categoryData,
@@ -472,6 +498,104 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt }) => {
                     </div>
                 </div>
 
+            </div>
+
+            {/* BUDGETS SECTION */}
+            <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+                <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
+                    <Target size={20} className="text-emerald-500" />
+                    Presupuestos Mensuales
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {(categories.length > 0 ? categories : [{ name: 'General', icon: '📦' }]).map(cat => {
+                        const budget = budgets.find(b => b.category_name === cat.name);
+                        const spent = categoryData.find(c => c.name === cat.name)?.value || 0;
+                        const limit = budget ? budget.amount : 0;
+                        const percentage = limit > 0 ? (spent / limit) * 100 : 0;
+                        const isOverLimit = percentage > 100;
+
+                        // Si no hay gasto ni presupuesto definido, y no es una categoría principal, podemos ocultarla para ahorrar espacio?
+                        // Mejor mostrar todas para permitir definir presupuesto.
+
+                        return (
+                            <div key={cat.id || cat.name} className="bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 relative group">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xl">{cat.icon || '📦'}</span>
+                                        <span className="font-medium text-slate-200">{cat.name}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            setEditingBudgetCategory(cat.name);
+                                            setNewBudgetAmount(limit ? limit.toString() : '');
+                                        }}
+                                        className="text-slate-500 hover:text-indigo-400 p-1 opacity-0 group-hover:opacity-100 transition-all"
+                                    >
+                                        <Edit2 size={14} />
+                                    </button>
+                                </div>
+
+                                {editingBudgetCategory === cat.name ? (
+                                    <div className="flex gap-2 items-center mt-2 animate-in fade-in">
+                                        <input
+                                            type="number"
+                                            value={newBudgetAmount}
+                                            onChange={(e) => setNewBudgetAmount(e.target.value)}
+                                            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                            placeholder="Monto límite..."
+                                            autoFocus
+                                        />
+                                        <button
+                                            onClick={() => handleSaveBudget(cat.name)}
+                                            className="bg-indigo-600 hover:bg-indigo-500 text-white p-1 rounded"
+                                        >
+                                            <Save size={14} />
+                                        </button>
+                                        <button
+                                            onClick={() => setEditingBudgetCategory(null)}
+                                            className="bg-slate-700 hover:bg-slate-600 text-slate-300 p-1 rounded"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex justify-between items-end mb-1">
+                                            <span className="text-xs text-slate-400">Gasto: <span className="text-white font-medium">${spent.toLocaleString('es-AR')}</span></span>
+                                            {limit > 0 ? (
+                                                <span className="text-xs text-slate-400">Límite: <span className="text-slate-300">${limit.toLocaleString('es-AR')}</span></span>
+                                            ) : (
+                                                <span className="text-[10px] text-slate-600 italic">Sin límite</span>
+                                            )}
+                                        </div>
+
+                                        {limit > 0 ? (
+                                            <div className="h-2 w-full bg-slate-700 rounded-full overflow-hidden">
+                                                <div
+                                                    style={{ width: `${Math.min(percentage, 100)}%` }}
+                                                    className={`h-full rounded-full transition-all duration-500 ${isOverLimit ? 'bg-red-500' :
+                                                        percentage > 80 ? 'bg-amber-400' : 'bg-emerald-500'
+                                                        }`}
+                                                />
+                                            </div>
+                                        ) : (
+                                            <div className="h-2 w-full bg-slate-800 rounded-full"></div>
+                                        )}
+
+                                        {limit > 0 && (
+                                            <div className="mt-1 text-right">
+                                                <span className={`text-[10px] ${isOverLimit ? 'text-red-400' : 'text-emerald-400'}`}>
+                                                    {percentage.toFixed(1)}%
+                                                </span>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
 

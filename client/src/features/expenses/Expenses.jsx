@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from './ExpensesContext';
 import { getDolarRate } from '../../services/dolarApi';
-import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle, ChevronLeft, ChevronRight, Calendar, RefreshCcw } from 'lucide-react';
 import ExpensesAnalysis from './ExpensesAnalysis';
+import Subscriptions from './Subscriptions';
 import NotificationModal from '../../components/NotificationModal';
 
 function Expenses() {
@@ -19,7 +20,10 @@ function Expenses() {
         deleteExpense,
         sharePlanilla,
         copyExpensesToPlanilla,
-        performMonthRollover
+        performMonthRollover,
+        categories,
+        addCategory,
+        deleteCategory
     } = useExpenses();
 
     const [selectedPlanillaId, setSelectedPlanillaId] = useState(null);
@@ -42,6 +46,13 @@ function Expenses() {
     // Export State
     const [isExportModalOpen, setIsExportModalOpen] = useState(false);
     const [exportTargetId, setExportTargetId] = useState('');
+
+    // Categories Modal State
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [newCategoryIcon, setNewCategoryIcon] = useState('📦');
+
+    // Rollover State
 
     // Rollover State
     const [isRolloverModalOpen, setIsRolloverModalOpen] = useState(false);
@@ -542,6 +553,81 @@ function Expenses() {
                 </div>
             )}
 
+            {/* Category Manager Modal */}
+            {isCategoryModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+                        <button
+                            onClick={() => setIsCategoryModalOpen(false)}
+                            className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                            <List className="text-indigo-400" size={24} />
+                            Gestionar Categorías
+                        </h3>
+                        <p className="text-slate-400 text-sm mb-6">
+                            Añade o elimina categorías personalizadas.
+                        </p>
+
+                        <div className="flex gap-2 mb-6">
+                            <input
+                                type="text"
+                                value={newCategoryName}
+                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                placeholder="Nueva categoría..."
+                                className="flex-1 bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                            />
+                            <input
+                                type="text"
+                                value={newCategoryIcon}
+                                onChange={(e) => setNewCategoryIcon(e.target.value)}
+                                placeholder="emoji"
+                                className="w-20 bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-2 py-2 text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                            />
+                            <button
+                                onClick={async () => {
+                                    if (newCategoryName.trim()) {
+                                        await addCategory({ name: newCategoryName, icon: newCategoryIcon, color: '#6366f1' });
+                                        setNewCategoryName('');
+                                    }
+                                }}
+                                disabled={!newCategoryName.trim()}
+                                className="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-xl disabled:opacity-50"
+                            >
+                                <Plus size={24} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                            {categories.map(cat => (
+                                <div key={cat.id} className="flex justify-between items-center bg-slate-800/50 p-3 rounded-lg border border-slate-700 hover:border-slate-600 group">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xl">{cat.icon}</span>
+                                        <span className="text-slate-200 font-medium">{cat.name}</span>
+                                        {cat.is_default && <span className="text-[10px] bg-slate-700/50 text-slate-500 px-1.5 py-0.5 rounded border border-slate-600">Default</span>}
+                                    </div>
+                                    {!cat.is_default && (
+                                        <button
+                                            onClick={() => {
+                                                if (confirm(`¿Eliminar categoría ${cat.name}?`)) {
+                                                    deleteCategory(cat.id);
+                                                }
+                                            }}
+                                            className="text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-slate-700 rounded-lg"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Export Modal */}
             {isExportModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -902,6 +988,13 @@ function Expenses() {
                         <PieChart size={18} />
                         Análisis
                     </button>
+                    <button
+                        onClick={() => setActiveTab('subscriptions')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'subscriptions' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                    >
+                        <RefreshCcw size={18} />
+                        Suscripciones
+                    </button>
                 </div>
 
                 {activeTab === 'analysis' ? (
@@ -909,7 +1002,10 @@ function Expenses() {
                         expenses={filteredExpenses}
                         dolarRate={dolarRate}
                         onSettleDebt={handleSettleDebt}
+                        selectedDate={currentDate}
                     />
+                ) : activeTab === 'subscriptions' ? (
+                    <Subscriptions currentPlanillaId={selectedPlanillaId} />
                 ) : (
                     <>
                         {/* ADD NEW EXPENSE FORM */}
@@ -931,28 +1027,31 @@ function Expenses() {
                                         />
                                     </div>
                                     <div className="md:col-span-3">
-                                        <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Categoría</label>
+                                        <div className="flex justify-between mb-1.5 ml-1">
+                                            <label className="block text-xs text-slate-400 font-medium">Categoría</label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsCategoryModalOpen(true)}
+                                                className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                                            >
+                                                <Edit2 size={10} /> Gestionar
+                                            </button>
+                                        </div>
                                         <div className="relative">
                                             <select
                                                 value={category}
                                                 onChange={(e) => setCategory(e.target.value)}
                                                 className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
                                             >
-                                                <option value="General">General</option>
-                                                <option value="Comida">Comida 🍔</option>
-                                                <option value="Transporte">Transporte 🚌</option>
-                                                <option value="Servicios">Servicios 💡</option>
-                                                <option value="Alquiler">Alquiler 🏠</option>
-                                                <option value="Supermercado">Supermercado 🛒</option>
-                                                <option value="Mascota">Mascota 🐶</option>
-                                                <option value="Hogar">Hogar 🛋️</option>
-                                                <option value="Viandas">Viandas 🍱</option>
-                                                <option value="Alcohol">Alcohol 🍺</option>
-                                                <option value="Ocio">Ocio 🎬</option>
-                                                <option value="Salud">Salud 💊</option>
-                                                <option value="Ropa">Ropa 👕</option>
-                                                <option value="Educación">Educación 📚</option>
-                                                <option value="Otros">Otros 📦</option>
+                                                {categories.length > 0 ? (
+                                                    categories.map(cat => (
+                                                        <option key={cat.id} value={cat.name}>
+                                                            {cat.name} {cat.icon || ''}
+                                                        </option>
+                                                    ))
+                                                ) : (
+                                                    <option value="General">General</option>
+                                                )}
                                             </select>
                                             <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>

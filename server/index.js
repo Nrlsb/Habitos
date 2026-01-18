@@ -1256,6 +1256,159 @@ app.delete('/api/tasks/:id', authenticateUser, async (req, res) => {
     res.json({ message: 'Task deleted' });
 });
 
+// --- NEW ROUTES: CATEGORIES, BUDGETS, SUBSCRIPTIONS ---
+
+// 1. Categories Routes
+app.get('/api/categories', authenticateUser, async (req, res) => {
+    const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .or(`user_id.eq.${req.user.id},is_default.eq.true`)
+        .order('name');
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
+app.post('/api/categories', authenticateUser, async (req, res) => {
+    const { name, icon, color } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name is required' });
+
+    const { data, error } = await supabase
+        .from('categories')
+        .insert([{ user_id: req.user.id, name, icon, color }])
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data[0]);
+});
+
+app.delete('/api/categories/:id', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', req.user.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ message: 'Category deleted' });
+});
+
+// 2. Budgets Routes
+app.get('/api/budgets', authenticateUser, async (req, res) => {
+    const { month } = req.query; // YYYY-MM
+    if (!month) return res.status(400).json({ error: 'Month is required' });
+
+    const { data, error } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('user_id', req.user.id)
+        .eq('month', month);
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
+app.post('/api/budgets', authenticateUser, async (req, res) => {
+    const { category_name, amount, month } = req.body;
+    if (!category_name || !amount || !month) return res.status(400).json({ error: 'Missing fields' });
+
+    const { data, error } = await supabase
+        .from('budgets')
+        .upsert(
+            { user_id: req.user.id, category_name, amount, month },
+            { onConflict: 'user_id, category_name, month' }
+        )
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
+});
+
+// 3. Subscriptions Routes
+app.get('/api/subscriptions', authenticateUser, async (req, res) => {
+    const { data, error } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', req.user.id)
+        .eq('active', true)
+        .order('created_at');
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data);
+});
+
+app.post('/api/subscriptions', authenticateUser, async (req, res) => {
+    const { name, amount, currency, category_name, frequency } = req.body;
+    if (!name || !amount) return res.status(400).json({ error: 'Name and amount required' });
+
+    const { data, error } = await supabase
+        .from('subscriptions')
+        .insert([{
+            user_id: req.user.id,
+            name,
+            amount,
+            currency: currency || 'ARS',
+            category_name: category_name || 'General',
+            frequency: frequency || 'monthly'
+        }])
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.status(201).json(data[0]);
+});
+
+app.delete('/api/subscriptions/:id', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabase
+        .from('subscriptions')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', req.user.id);
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ message: 'Subscription deleted' });
+});
+
+app.post('/api/subscriptions/:id/generate', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { date, planilla_id } = req.body;
+
+    if (!date || !planilla_id) return res.status(400).json({ error: 'Date and Planilla ID required' });
+
+    // 1. Get Subscription
+    const { data: sub, error: subError } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', req.user.id)
+        .single();
+
+    if (subError || !sub) return res.status(404).json({ error: 'Subscription not found' });
+
+    // 2. Create Expense linked to Planilla
+    const expenseData = {
+        planilla_id: planilla_id,
+        description: sub.name,
+        amount: sub.amount,
+        currency: sub.currency,
+        category: sub.category_name,
+        created_at: date,
+        is_shared: false,
+        is_installment: false
+    };
+
+    const { data: expense, error: expError } = await supabase
+        .from('expenses')
+        .insert([expenseData])
+        .select();
+
+    if (expError) return res.status(500).json({ error: expError.message });
+
+    // 3. Update last_generated_date
+    await supabase.from('subscriptions').update({ last_generated_date: date }).eq('id', id);
+
+    res.json(expense[0]);
+});
+
 // 3. BNA Route (Dollar Rate)
 
 // URL ÚNICA de BNA

@@ -12,6 +12,8 @@ export const ExpensesProvider = ({ children }) => {
     const { session } = useAuth();
     const [planillas, setPlanillas] = useState([]);
     const [expenses, setExpenses] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [subscriptions, setSubscriptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -36,9 +38,41 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, session]);
 
+    const fetchCategories = useCallback(async () => {
+        if (!session) return;
+        try {
+            const response = await fetch(`${API_URL}/api/categories`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch categories');
+            const data = await response.json();
+            setCategories(data);
+        } catch (err) {
+            console.error("Error fetching categories:", err);
+        }
+    }, [API_URL, session]);
+
+    const fetchSubscriptions = useCallback(async () => {
+        if (!session) return;
+        try {
+            const response = await fetch(`${API_URL}/api/subscriptions`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch subscriptions');
+            const data = await response.json();
+            setSubscriptions(data);
+        } catch (err) {
+            console.error("Error fetching subscriptions:", err);
+        }
+    }, [API_URL, session]);
+
     useEffect(() => {
-        fetchPlanillas();
-    }, [fetchPlanillas]);
+        if (session) {
+            fetchPlanillas();
+            fetchCategories();
+            fetchSubscriptions();
+        }
+    }, [fetchPlanillas, fetchCategories, fetchSubscriptions, session]);
 
     // CRUD operations for Planillas
     const addPlanilla = useCallback(async (nombre, participants = ['Yo']) => {
@@ -111,6 +145,38 @@ export const ExpensesProvider = ({ children }) => {
             throw err;
         }
     }, [API_URL, session]);
+
+    const addCategory = useCallback(async (category) => {
+        try {
+            const response = await fetch(`${API_URL}/api/categories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(category),
+            });
+            if (!response.ok) throw new Error('Failed to add category');
+            await fetchCategories();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, fetchCategories]);
+
+    const deleteCategory = useCallback(async (id) => {
+        try {
+            const response = await fetch(`${API_URL}/api/categories/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error('Failed to delete category');
+            await fetchCategories();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, fetchCategories]);
 
     // CRUD operations for Expenses
     const getExpenses = useCallback(async (planillaId) => {
@@ -277,15 +343,104 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, session]);
 
+    // Budgets API
+    const getBudgets = useCallback(async (month) => {
+        if (!session) return [];
+        try {
+            const response = await fetch(`${API_URL}/api/budgets?month=${month}`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch budgets');
+            return await response.json();
+        } catch (err) {
+            console.error("Error fetching budgets:", err);
+            return [];
+        }
+    }, [API_URL, session]);
+
+    const upsertBudget = useCallback(async (budgetData) => {
+        try {
+            const response = await fetch(`${API_URL}/api/budgets`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(budgetData),
+            });
+            if (!response.ok) throw new Error('Failed to save budget');
+            return await response.json();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session]);
+
+    // Subscriptions API
+    const addSubscription = useCallback(async (subData) => {
+        try {
+            const response = await fetch(`${API_URL}/api/subscriptions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(subData),
+            });
+            if (!response.ok) throw new Error('Failed to add subscription');
+            await fetchSubscriptions();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, fetchSubscriptions]);
+
+    const deleteSubscription = useCallback(async (id) => {
+        try {
+            const response = await fetch(`${API_URL}/api/subscriptions/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error('Failed to delete subscription');
+            await fetchSubscriptions();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, fetchSubscriptions]);
+
+    const generateSubscriptionExpense = useCallback(async (id, date, planillaId) => {
+        try {
+            const response = await fetch(`${API_URL}/api/subscriptions/${id}/generate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ date, planilla_id: planillaId }),
+            });
+            if (!response.ok) throw new Error('Failed to generate expense');
+            await getExpenses(planillaId); // Refresh expenses
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, getExpenses]);
+
     const value = {
         planillas,
         expenses,
+        categories,
+        subscriptions,
         dailyExpenses, // Add to context
         loading,
         error,
         addPlanilla,
         updatePlanilla, // Added
         deletePlanilla,
+        fetchCategories,
+        addCategory,
+        deleteCategory,
         getExpenses,
         getDailyExpenses, // Add to context
         addExpense,
@@ -293,7 +448,12 @@ export const ExpensesProvider = ({ children }) => {
         deleteExpense,
         sharePlanilla,
         copyExpensesToPlanilla,
-        performMonthRollover
+        performMonthRollover,
+        getBudgets,
+        upsertBudget,
+        addSubscription,
+        deleteSubscription,
+        generateSubscriptionExpense
     };
 
     return (
