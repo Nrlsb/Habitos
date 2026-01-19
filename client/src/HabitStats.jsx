@@ -5,6 +5,14 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import Calendar from './Calendar'
 
 function HabitStats({ habitId, onBack }) {
+    const formatDate = (date) => {
+        const d = new Date(date)
+        const year = d.getFullYear()
+        const month = String(d.getMonth() + 1).padStart(2, '0')
+        const day = String(d.getDate()).padStart(2, '0')
+        return `${year}-${month}-${day}`
+    }
+
     const [habit, setHabit] = useState(null)
     const [loading, setLoading] = useState(true)
     const [selectedDate, setSelectedDate] = useState(null)
@@ -61,14 +69,14 @@ function HabitStats({ habitId, onBack }) {
         let checkDate = new Date(today)
 
         // Check if completed today
-        const todayStr = checkDate.toISOString().split('T')[0]
+        const todayStr = formatDate(checkDate)
         if (sortedDates.includes(todayStr)) {
             currentStreak++
             checkDate.setDate(checkDate.getDate() - 1)
         } else {
             // If not today, check yesterday (streak might still be active if just missed today)
             checkDate.setDate(checkDate.getDate() - 1)
-            const yesterdayStr = checkDate.toISOString().split('T')[0]
+            const yesterdayStr = formatDate(checkDate)
             if (!sortedDates.includes(yesterdayStr)) {
                 currentStreak = 0
             }
@@ -76,7 +84,7 @@ function HabitStats({ habitId, onBack }) {
 
         // Continue counting backwards
         while (true) {
-            const dateStr = checkDate.toISOString().split('T')[0]
+            const dateStr = formatDate(checkDate)
             if (sortedDates.includes(dateStr)) {
                 // If we haven't counted this day yet (e.g. if we started from yesterday)
                 if (dateStr !== todayStr) {
@@ -266,7 +274,7 @@ function HabitStats({ habitId, onBack }) {
         let current = new Date(start)
 
         while (current <= end) {
-            const dateStr = current.toISOString().split('T')[0]
+            const dateStr = formatDate(current)
             const completion = completions.find(c => (c.completed_date || c) === dateStr)
 
             let level = 0

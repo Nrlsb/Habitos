@@ -99,7 +99,7 @@ app.get('/api/habits', authenticateUser, async (req, res) => {
     // Since Supabase join filtering is tricky, we can fetch habits and THEN fetch today's completions.
     // Or use the powerful select query.
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = req.query.date || new Date().toISOString().split('T')[0];
 
     // 1. Get Habits
     const { data: habits, error: habitsError } = await supabase

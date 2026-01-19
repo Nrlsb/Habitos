@@ -2,6 +2,14 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 function Calendar({ completions, onDateClick, habitType, habitGoal }) {
+    const formatDate = (year, month, day) => {
+        const d = new Date(year, month, day)
+        const y = d.getFullYear()
+        const m = String(d.getMonth() + 1).padStart(2, '0')
+        const da = String(d.getDate()).padStart(2, '0')
+        return `${y}-${m}-${da}`
+    }
+
     const [currentDate, setCurrentDate] = useState(new Date())
 
     const getDaysInMonth = (date) => {
@@ -28,7 +36,7 @@ function Calendar({ completions, onDateClick, habitType, habitGoal }) {
     }
 
     const getDayState = (day) => {
-        const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0]
+        const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day)
         const completion = completions.find(c => c.completed_date === dateStr)
 
         if (completion) return completion.state || 'completed' // Default to completed if state missing
@@ -43,7 +51,7 @@ function Calendar({ completions, onDateClick, habitType, habitGoal }) {
     }
 
     const handleDayClick = (day) => {
-        const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0]
+        const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), day)
         onDateClick(dateStr)
     }
 
@@ -57,7 +65,7 @@ function Calendar({ completions, onDateClick, habitType, habitGoal }) {
 
         // Days of current month
         for (let i = 1; i <= days; i++) {
-            const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), i).toISOString().split('T')[0]
+            const dateStr = formatDate(currentDate.getFullYear(), currentDate.getMonth(), i)
             const completion = completions.find(c => (c.completed_date || c) === dateStr)
 
             let state = 'none'

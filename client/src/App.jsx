@@ -11,6 +11,14 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 
 function AppContent() {
+  const getLocalDateString = () => {
+    const d = new Date()
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
   const { user, session, loading: authLoading, signOut } = useAuth()
   const [view, setView] = useState('habits') // 'habits' | 'expenses'
   const [habits, setHabits] = useState([])
@@ -35,7 +43,7 @@ function AppContent() {
   const fetchHabits = async () => {
     if (!session) return
     try {
-      const response = await fetch(`${API_URL}/api/habits`, {
+      const response = await fetch(`${API_URL}/api/habits?date=${getLocalDateString()}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
@@ -99,7 +107,7 @@ function AppContent() {
 
   const toggleHabitDay = async (e, habit) => {
     e.stopPropagation()
-    const today = new Date().toISOString().split('T')[0]
+    const today = getLocalDateString()
 
     // Optimistic Update
     const isCompleted = habit.today_state === 'completed'
