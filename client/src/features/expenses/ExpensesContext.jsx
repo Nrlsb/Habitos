@@ -16,6 +16,8 @@ export const ExpensesProvider = ({ children }) => {
     const [subscriptions, setSubscriptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [dolarOficial, setDolarOficial] = useState(null);
+    const [dolarTarjeta, setDolarTarjeta] = useState(null);
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -66,13 +68,33 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, session]);
 
+    const fetchDolar = useCallback(async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/bna`);
+            if (response.ok) {
+                const data = await response.json();
+                setDolarOficial(data.venta_billete);
+                // Calculo aproximado Dólar Tarjeta: Oficial + 30% Impuesto PAIS + 30% Ganancias ~ 60% recargo
+                // O usar cotización directa si estuviera disponible.
+                // Asumimos 1.6x del oficial aprox o ajustamos según regulación actual.
+                // BNA suele devolver dolar oficial minorista. 
+                // A fecha 2026? Asumimos un factor genérico o usamos el valor si viniera.
+                // Usaremos 1.6 (60% impuestos) a falta de dato exacto.
+                setDolarTarjeta(data.venta_billete * 1.6);
+            }
+        } catch (error) {
+            console.error("Error fetching BNA:", error);
+        }
+    }, [API_URL]);
+
     useEffect(() => {
+        fetchDolar(); // Fetch publico
         if (session) {
             fetchPlanillas();
             fetchCategories();
             fetchSubscriptions();
         }
-    }, [fetchPlanillas, fetchCategories, fetchSubscriptions, session]);
+    }, [fetchPlanillas, fetchCategories, fetchSubscriptions, fetchDolar, session]);
 
     // CRUD operations for Planillas
     const addPlanilla = useCallback(async (nombre, participants = ['Yo']) => {
@@ -395,6 +417,24 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, session, fetchSubscriptions]);
 
+    const updateSubscription = useCallback(async (id, subData) => {
+        try {
+            const response = await fetch(`${API_URL}/api/subscriptions/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(subData),
+            });
+            if (!response.ok) throw new Error('Failed to update subscription');
+            await fetchSubscriptions();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, fetchSubscriptions]);
+
     const deleteSubscription = useCallback(async (id) => {
         try {
             const response = await fetch(`${API_URL}/api/subscriptions/${id}`, {
@@ -452,8 +492,11 @@ export const ExpensesProvider = ({ children }) => {
         getBudgets,
         upsertBudget,
         addSubscription,
+        updateSubscription,
         deleteSubscription,
-        generateSubscriptionExpense
+        generateSubscriptionExpense,
+        dolarOficial,
+        dolarTarjeta
     };
 
     return (

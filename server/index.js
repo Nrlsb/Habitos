@@ -1338,7 +1338,7 @@ app.get('/api/subscriptions', authenticateUser, async (req, res) => {
 });
 
 app.post('/api/subscriptions', authenticateUser, async (req, res) => {
-    const { name, amount, currency, category_name, frequency } = req.body;
+    const { name, amount, currency, category_name, frequency, billing_date } = req.body;
     if (!name || !amount) return res.status(400).json({ error: 'Name and amount required' });
 
     const { data, error } = await supabase
@@ -1349,12 +1349,36 @@ app.post('/api/subscriptions', authenticateUser, async (req, res) => {
             amount,
             currency: currency || 'ARS',
             category_name: category_name || 'General',
-            frequency: frequency || 'monthly'
+            frequency: frequency || 'monthly',
+            billing_date: billing_date || null
         }])
         .select();
 
     if (error) return res.status(500).json({ error: error.message });
     res.status(201).json(data[0]);
+});
+
+app.put('/api/subscriptions/:id', authenticateUser, async (req, res) => {
+    const { id } = req.params;
+    const { name, amount, currency, category_name, frequency, billing_date } = req.body;
+
+    const updates = {};
+    if (name) updates.name = name;
+    if (amount) updates.amount = amount;
+    if (currency) updates.currency = currency;
+    if (category_name) updates.category_name = category_name;
+    if (frequency) updates.frequency = frequency;
+    if (billing_date !== undefined) updates.billing_date = billing_date;
+
+    const { data, error } = await supabase
+        .from('subscriptions')
+        .update(updates)
+        .eq('id', id)
+        .eq('user_id', req.user.id)
+        .select();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json(data[0]);
 });
 
 app.delete('/api/subscriptions/:id', authenticateUser, async (req, res) => {

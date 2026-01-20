@@ -6,7 +6,7 @@ const Subscriptions = () => {
     const {
         subscriptions,
         addSubscription,
-        removeSubscription,
+        deleteSubscription,
         updateSubscription,
         dolarOficial,
         dolarTarjeta
@@ -80,7 +80,7 @@ const Subscriptions = () => {
     const handleDelete = async (id) => {
         if (window.confirm('¿Estás seguro de eliminar esta suscripción?')) {
             try {
-                await removeSubscription(id);
+                await deleteSubscription(id);
             } catch (error) {
                 console.error("Error al eliminar:", error);
             }
