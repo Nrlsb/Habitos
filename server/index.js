@@ -1268,30 +1268,50 @@ app.get('/api/categories', authenticateUser, async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message });
 
-    // Auto-seed if empty
-    if (!data || data.length === 0) {
-        const defaults = [
-            { user_id: req.user.id, name: 'Comida', icon: '🍔', color: '#ef4444' },
-            { user_id: req.user.id, name: 'Transporte', icon: '🚌', color: '#3b82f6' },
-            { user_id: req.user.id, name: 'Servicios', icon: '💡', color: '#eab308' },
-            { user_id: req.user.id, name: 'Entretenimiento', icon: '🎬', color: '#a855f7' },
-            { user_id: req.user.id, name: 'Supermercado', icon: '🛒', color: '#10b981' },
-            { user_id: req.user.id, name: 'Salud', icon: '⚕️', color: '#f43f5e' },
-            { user_id: req.user.id, name: 'Varios', icon: '📦', color: '#64748b' },
-            { user_id: req.user.id, name: 'General', icon: '📝', color: '#94a3b8' },
-            { user_id: req.user.id, name: 'Educación', icon: '📚', color: '#f97316' },
-            { user_id: req.user.id, name: 'Ropa', icon: '👗', color: '#ec4899' }
-        ];
+    // List matches "DailyExpenses" hardcoded list + essential ones
+    const defaults = [
+        { name: 'General', icon: '📝', color: '#94a3b8' },
+        { name: 'Comida', icon: '🍔', color: '#ef4444' },
+        { name: 'Transporte', icon: '🚌', color: '#3b82f6' },
+        { name: 'Servicios', icon: '💡', color: '#eab308' },
+        { name: 'Alquiler', icon: '🏠', color: '#6366f1' },
+        { name: 'Supermercado', icon: '🛒', color: '#10b981' },
+        { name: 'Mascota', icon: '🐶', color: '#fca5a5' },
+        { name: 'Hogar', icon: '🛋️', color: '#a855f7' },
+        { name: 'Viandas', icon: '🍱', color: '#f97316' },
+        { name: 'Alcohol', icon: '🍺', color: '#eab308' },
+        { name: 'Ocio', icon: '🎬', color: '#8b5cf6' },
+        { name: 'Salud', icon: '⚕️', color: '#f43f5e' },
+        { name: 'Ropa', icon: '👕', color: '#ec4899' },
+        { name: 'Educación', icon: '📚', color: '#f97316' },
+        { name: 'Otros', icon: '📦', color: '#64748b' },
+        { name: 'Entretenimiento', icon: '🎬', color: '#a855f7' }, // Alias or extra
+        { name: 'Varios', icon: '📦', color: '#64748b' } // Alias for Otros
+    ];
 
+    // Check which defaults are missing in the user's current list
+    const existingNames = new Set(data?.map(c => c.name) || []);
+    const missingDefaults = defaults.filter(d => !existingNames.has(d.name));
+
+    if (missingDefaults.length > 0) {
+        // Insert only the missing ones
+        const toInsert = missingDefaults.map(d => ({ ...d, user_id: req.user.id }));
         const { data: newCats, error: seedError } = await supabase
             .from('categories')
-            .insert(defaults)
-            .select()
-            .order('name');
+            .insert(toInsert)
+            .select();
 
         if (!seedError && newCats) {
-            data = newCats;
+            // Merge existing data with newly inserted
+            data = [...(data || []), ...newCats];
+        } else if (seedError) {
+            console.error("Error auto-seeding missing categories:", seedError);
         }
+    }
+
+    // Sort alphabetically for frontend
+    if (data) {
+        data.sort((a, b) => a.name.localeCompare(b.name));
     }
 
     res.json(data);
