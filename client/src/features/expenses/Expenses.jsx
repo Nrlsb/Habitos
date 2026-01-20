@@ -75,6 +75,38 @@ function Expenses() {
     const [splitDetails, setSplitDetails] = useState([]); // [{ name: 'Lucas', amount: 0 }, { name: 'Gise', amount: 0 }]
     const [editingId, setEditingId] = useState(null);
 
+    // Selection State for Copying
+    const [selectedExpenseIds, setSelectedExpenseIds] = useState(new Set());
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+    const toggleExpenseSelection = (id) => {
+        const newSelected = new Set(selectedExpenseIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedExpenseIds(newSelected);
+
+        // Auto-enable selection mode if items selected, disable if empty (optional, but good UX)
+        // setIsSelectionMode(newSelected.size > 0); 
+    };
+
+    const clearSelection = () => {
+        setSelectedExpenseIds(new Set());
+        setIsSelectionMode(false);
+    };
+
+    const handleSelectAll = () => {
+        if (selectedExpenseIds.size === filteredExpenses.length) {
+            clearSelection();
+        } else {
+            setSelectedExpenseIds(new Set(filteredExpenses.map(e => e.id)));
+            setIsSelectionMode(true);
+        }
+    };
+
+
     const [notification, setNotification] = useState({
         isOpen: false,
         title: '',
@@ -262,8 +294,19 @@ function Expenses() {
         if (!selectedPlanillaId || !exportTargetId) return;
 
         try {
-            await copyExpensesToPlanilla(selectedPlanillaId, exportTargetId);
-            setExportMessage('Gastos copiados exitosamente!');
+            // Updated to pass selectedExpenseIds (converted to array) if any are selected
+            const idsToCopy = selectedExpenseIds.size > 0 ? Array.from(selectedExpenseIds) : [];
+
+            await copyExpensesToPlanilla(selectedPlanillaId, exportTargetId, idsToCopy);
+
+            const countMsg = idsToCopy.length > 0 ? `${idsToCopy.length} gastos seleccionados` : 'Todos los gastos';
+            setExportMessage(`${countMsg} copiados exitosamente!`);
+
+            // Clear selection if we copied
+            if (idsToCopy.length > 0) {
+                clearSelection();
+            }
+
             setTimeout(() => {
                 setIsExportModalOpen(false);
                 setExportMessage('');
@@ -1256,6 +1299,33 @@ function Expenses() {
                             <h3 className="text-xl font-bold text-slate-200 mb-2">Historial de Gastos</h3>
                         </div>
 
+                        {/* SELECTION ACTION BAR */}
+                        <div className={`flex items-center justify-between gap-4 mb-4 bg-indigo-900/40 border border-indigo-500/30 p-3 rounded-xl transition-all duration-300 ${selectedExpenseIds.size > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none absolute'}`}>
+                            <div className="flex items-center gap-3">
+                                <div className="bg-indigo-500/20 p-2 rounded-lg text-indigo-300">
+                                    <CheckCircle size={20} />
+                                </div>
+                                <span className="text-indigo-200 font-medium text-sm">
+                                    <span className="font-bold text-white">{selectedExpenseIds.size}</span> gastos seleccionados
+                                </span>
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={clearSelection}
+                                    className="px-3 py-1.5 text-xs font-medium text-indigo-300 hover:text-white hover:bg-indigo-500/20 rounded-lg transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={() => setIsExportModalOpen(true)}
+                                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg text-xs font-medium shadow-lg shadow-indigo-900/20 transition-colors"
+                                >
+                                    <ArrowRightCircle size={16} />
+                                    Copiar Seleccionados
+                                </button>
+                            </div>
+                        </div>
+
                         {/* MOBILE CARD VIEW */}
                         <div className="block md:hidden space-y-4">
                             {expenses.length === 0 ? (
@@ -1281,11 +1351,19 @@ function Expenses() {
                                         }
 
                                         return (
-                                            <div key={expense.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
+                                            <div key={expense.id} className={`bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm transition-all ${selectedExpenseIds.has(expense.id) ? 'border-indigo-500/50 bg-indigo-900/10' : ''}`}>
                                                 <div className="flex justify-between items-start mb-3">
-                                                    <div>
-                                                        <h4 className="font-semibold text-slate-200 text-lg">{expense.description}</h4>
-                                                        <p className="text-xs text-slate-500">{new Date(expense.created_at).toLocaleDateString()}</p>
+                                                    <div className="flex items-start gap-3">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedExpenseIds.has(expense.id)}
+                                                            onChange={() => toggleExpenseSelection(expense.id)}
+                                                            className="mt-1 w-5 h-5 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                        />
+                                                        <div>
+                                                            <h4 className="font-semibold text-slate-200 text-lg">{expense.description}</h4>
+                                                            <p className="text-xs text-slate-500">{new Date(expense.created_at).toLocaleDateString()}</p>
+                                                        </div>
                                                     </div>
                                                     <div className="flex gap-2">
                                                         <button
@@ -1357,6 +1435,14 @@ function Expenses() {
                                 <table className="w-full text-sm text-left text-slate-400">
                                     <thead className="text-xs text-slate-300 uppercase bg-slate-900/80 border-b border-slate-700">
                                         <tr>
+                                            <th scope="col" className="px-6 py-4 w-10 text-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={filteredExpenses.length > 0 && selectedExpenseIds.size === filteredExpenses.length}
+                                                    onChange={handleSelectAll}
+                                                    className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                />
+                                            </th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide">Descripción</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Total (ARS)</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Categoría</th>
@@ -1371,7 +1457,7 @@ function Expenses() {
                                     <tbody className="divide-y divide-slate-700/50">
                                         {filteredExpenses.length === 0 ? (
                                             <tr>
-                                                <td colSpan="8" className="px-6 py-12 text-center text-slate-500">
+                                                <td colSpan="9" className="px-6 py-12 text-center text-slate-500">
                                                     No hay gastos registrados en este mes.
                                                 </td>
                                             </tr>
@@ -1389,7 +1475,15 @@ function Expenses() {
                                                 }
 
                                                 return (
-                                                    <tr key={expense.id} className={`group hover:bg-slate-700/30 transition-colors ${index % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/30'}`}>
+                                                    <tr key={expense.id} className={`group hover:bg-slate-700/30 transition-colors ${index % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/30'} ${selectedExpenseIds.has(expense.id) ? 'bg-indigo-900/10' : ''}`}>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedExpenseIds.has(expense.id)}
+                                                                onChange={() => toggleExpenseSelection(expense.id)}
+                                                                className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                            />
+                                                        </td>
                                                         <td className="px-6 py-4 font-medium text-slate-200">
                                                             {expense.description}
                                                         </td>

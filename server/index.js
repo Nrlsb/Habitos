@@ -729,10 +729,22 @@ app.post('/api/planillas/:targetId/expenses/copy', authenticateUser, async (req,
             return res.json({ message: 'No expenses to copy', count: 0 });
         }
 
+        // 3.5 Filter by expenseIds if provided
+        const { expenseIds } = req.body;
+        let expensesToCopy = sourceExpenses;
+
+        if (expenseIds && Array.isArray(expenseIds) && expenseIds.length > 0) {
+            expensesToCopy = sourceExpenses.filter(e => expenseIds.includes(e.id));
+        }
+
+        if (expensesToCopy.length === 0) {
+            return res.json({ message: 'No matching expenses to copy', count: 0 });
+        }
+
         // 4. Prepare expenses for insertion into TARGET
         // We omit 'id' to let DB generate new ones.
         // We keep 'created_at' to preserve history/order.
-        const expensesToInsert = sourceExpenses.map(e => ({
+        const expensesToInsert = expensesToCopy.map(e => ({
             planilla_id: targetId,
             description: e.description,
             amount: e.amount,

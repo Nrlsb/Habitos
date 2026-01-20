@@ -298,7 +298,7 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, getExpenses]);
 
-    const copyExpensesToPlanilla = useCallback(async (sourceId, targetId) => {
+    const copyExpensesToPlanilla = useCallback(async (sourceId, targetId, expenseIds = []) => {
         try {
             const response = await fetch(`${API_URL}/api/planillas/${targetId}/expenses/copy`, {
                 method: 'POST',
@@ -306,7 +306,7 @@ export const ExpensesProvider = ({ children }) => {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session.access_token}`
                 },
-                body: JSON.stringify({ sourcePlanillaId: sourceId }),
+                body: JSON.stringify({ sourcePlanillaId: sourceId, expenseIds }),
             });
 
             if (!response.ok) {
