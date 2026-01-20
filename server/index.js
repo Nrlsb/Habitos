@@ -1260,12 +1260,40 @@ app.delete('/api/tasks/:id', authenticateUser, async (req, res) => {
 
 // 1. Categories Routes
 app.get('/api/categories', authenticateUser, async (req, res) => {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
         .from('categories')
         .select('*')
         .or(`user_id.eq.${req.user.id},is_default.eq.true`)
         .order('name');
+
     if (error) return res.status(500).json({ error: error.message });
+
+    // Auto-seed if empty
+    if (!data || data.length === 0) {
+        const defaults = [
+            { user_id: req.user.id, name: 'Comida', icon: '🍔', color: '#ef4444' },
+            { user_id: req.user.id, name: 'Transporte', icon: '🚌', color: '#3b82f6' },
+            { user_id: req.user.id, name: 'Servicios', icon: '💡', color: '#eab308' },
+            { user_id: req.user.id, name: 'Entretenimiento', icon: '🎬', color: '#a855f7' },
+            { user_id: req.user.id, name: 'Supermercado', icon: '🛒', color: '#10b981' },
+            { user_id: req.user.id, name: 'Salud', icon: '⚕️', color: '#f43f5e' },
+            { user_id: req.user.id, name: 'Varios', icon: '📦', color: '#64748b' },
+            { user_id: req.user.id, name: 'General', icon: '📝', color: '#94a3b8' },
+            { user_id: req.user.id, name: 'Educación', icon: '📚', color: '#f97316' },
+            { user_id: req.user.id, name: 'Ropa', icon: '👗', color: '#ec4899' }
+        ];
+
+        const { data: newCats, error: seedError } = await supabase
+            .from('categories')
+            .insert(defaults)
+            .select()
+            .order('name');
+
+        if (!seedError && newCats) {
+            data = newCats;
+        }
+    }
+
     res.json(data);
 });
 
