@@ -322,7 +322,23 @@ function Expenses() {
         setAmount('');
         setCurrency('ARS');
         setCategory('General');
-        setExpenseDate(currentDate.toISOString().split('T')[0]); // Reset to current view/today
+
+        // Use local date for the input
+        const now = new Date();
+        const isCurrentMonth = currentDate.getMonth() === now.getMonth() &&
+            currentDate.getFullYear() === now.getFullYear();
+
+        if (isCurrentMonth) {
+            setExpenseDate(now.toISOString().split('T')[0]);
+        } else {
+            // If viewing another month, default to the 1st of that month in local time
+            const firstOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const year = firstOfMonth.getFullYear();
+            const month = String(firstOfMonth.getMonth() + 1).padStart(2, '0');
+            const day = String(firstOfMonth.getDate()).padStart(2, '0');
+            setExpenseDate(`${year}-${month}-${day}`);
+        }
+
         setEsCompartido(false);
         setEnCuotas(false);
         setCuotaActual('');
@@ -352,6 +368,11 @@ function Expenses() {
         e.preventDefault();
         if (!description || !amount) return;
 
+        // PARSE DATE LOCALLY: Avoid timezone shifting
+        // expenseDate is "YYYY-MM-DD"
+        const [year, month, day] = expenseDate.split('-').map(Number);
+        const localDate = new Date(year, month - 1, day);
+
         const expenseData = {
             description,
             amount: parseFloat(amount),
@@ -362,7 +383,7 @@ function Expenses() {
             cuotaActual: enCuotas ? parseInt(cuotaActual) : null,
             totalCuotas: enCuotas ? parseInt(totalCuotas) : null,
             payer_name: esCompartido ? paidBy : null,
-            date: expenseDate ? new Date(expenseDate).toISOString() : currentDate.toISOString(),
+            date: localDate.toISOString(),
             split_details: (esCompartido && splitDetails.length > 0) ? splitDetails : null
         };
 
@@ -381,9 +402,16 @@ function Expenses() {
         setCurrency(expense.currency || 'ARS');
         setCategory(expense.category || 'General');
 
-        // Ensure date is formatted for input date (YYYY-MM-DD)
+        // Ensure date is formatted for input date (YYYY-MM-DD) in LOCAL time
         const dateObj = new Date(expense.created_at);
-        setExpenseDate(dateObj.toISOString().split('T')[0]);
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0'); // Database stores as UTC midnight often
+        // However, if we want to be safe and it was created as local midnight...
+        // Let's use the local month/day which is what the user expects to see.
+        const localYear = dateObj.getFullYear();
+        const localMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const localDay = String(dateObj.getDate()).padStart(2, '0');
+        setExpenseDate(`${localYear}-${localMonth}-${localDay}`);
 
         setEsCompartido(expense.is_shared);
         setEnCuotas(expense.is_installment);

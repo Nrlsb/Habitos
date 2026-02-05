@@ -206,8 +206,11 @@ const DailyExpenses = () => {
             }
 
             // Create expense for each selected planilla
-            const promises = selectedPlanillaIds.map(id =>
-                addExpense(id, {
+            const promises = selectedPlanillaIds.map(id => {
+                // Ensure date is sent as local midnight/current time but for the selected date
+                const finalDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+
+                return addExpense(id, {
                     description,
                     amount: parseFloat(amount),
                     currency,
@@ -218,10 +221,10 @@ const DailyExpenses = () => {
                     enCuotas,
                     cuotaActual: enCuotas ? parseInt(cuotaActual) : null,
                     totalCuotas: enCuotas ? parseInt(totalCuotas) : null,
-                    // Use selectedDate for creation to ensure it appears in the right day
-                    date: selectedDate.toISOString()
-                })
-            );
+                    // Use local date converted to ISO to preserve the "day"
+                    date: finalDate.toISOString()
+                });
+            });
 
             await Promise.all(promises);
 
