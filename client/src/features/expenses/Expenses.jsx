@@ -75,7 +75,7 @@ function Expenses() {
     const [splitDetails, setSplitDetails] = useState([]); // [{ name: 'Lucas', amount: 0 }, { name: 'Gise', amount: 0 }]
     const [editingId, setEditingId] = useState(null);
 
-    // Selection State for Copying
+    // Selection  State for Copying
     const [selectedExpenseIds, setSelectedExpenseIds] = useState(new Set());
     const [isSelectionMode, setIsSelectionMode] = useState(false);
 
