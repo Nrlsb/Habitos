@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
-import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard, Users, ArrowRightLeft, CheckCircle, Target, Edit2, Save, X } from 'lucide-react';
+import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard, Users, ArrowRightLeft, CheckCircle, Target, Edit2, Save, X, List } from 'lucide-react';
 import { useExpenses } from './ExpensesContext';
 
 const COLORS = ['#6366f1', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444', '#64748b'];
