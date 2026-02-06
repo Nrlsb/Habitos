@@ -9,7 +9,7 @@ const SHARED_COLORS = ['#3f46e4', '#06b6d4']; // Personal (Indigo), Shared (Cyan
 const INSTALLMENT_COLORS = ['#f59e0b', '#10b981']; // Installments (Amber), Current (Emerald)
 const CURRENCY_COLORS = ['#6366f1', '#22c5e']; // ARS (Indigo), USD (Green)
 
-const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate }) => {
+const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, participants = ['Yo'] }) => {
     const [showProjection, setShowProjection] = useState(true);
     const [payerA, setPayerA] = useState('');
     const [payerB, setPayerB] = useState('');
@@ -277,7 +277,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate }) =
             ;
 
         // Debt Calculator Logic
-        const payers = [...new Set(expenses.filter(e => e.is_shared && e.payer_name).map(e => e.payer_name))].sort();
+        const distinctPayersFromExpenses = [...new Set(expenses.filter(e => e.is_shared && e.payer_name).map(e => e.payer_name))];
+        const payers = [...new Set([...participants, ...distinctPayersFromExpenses])].sort();
 
         // Ensure default selection if specific payers exist and likely just 2 people
         // (can be handled in useEffect but useMemo derived is safer for read-only)
@@ -734,55 +735,116 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate }) =
 
                     {/* Results */}
                     {debtCalculation && (
-                        <div className="flex-1 bg-slate-900/50 rounded-xl border border-slate-700/50 p-4">
-                            <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-slate-700/50">
-                                <div>
-                                    <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerA === 'OTHER' ? manualPayerA : payerA}</span>
-                                    <span className="text-slate-200 font-bold">${debtCalculation.paidA.toLocaleString()}</span>
+                        <div className="flex-1 space-y-4">
+                            <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 p-4">
+                                <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-slate-700/50">
+                                    <div>
+                                        <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerA === 'OTHER' ? manualPayerA : payerA}</span>
+                                        <span className="text-slate-200 font-bold">${debtCalculation.paidA.toLocaleString()}</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerB === 'OTHER' ? manualPayerB : payerB}</span>
+                                        <span className="text-slate-200 font-bold">${debtCalculation.paidB.toLocaleString()}</span>
+                                    </div>
                                 </div>
-                                <div className="text-right">
-                                    <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerB === 'OTHER' ? manualPayerB : payerB}</span>
-                                    <span className="text-slate-200 font-bold">${debtCalculation.paidB.toLocaleString()}</span>
+
+                                <div className="text-center">
+                                    {debtCalculation.isEven ? (
+                                        <div className="text-emerald-400 font-medium flex items-center justify-center gap-2">
+                                            <CheckCircle size={20} />
+                                            <span>¡Están a mano!</span>
+                                        </div>
+                                    ) : (
+                                        <div className="animate-in zoom-in duration-300">
+                                            <span className="text-slate-500 text-sm mb-1 block">Balance</span>
+                                            <div className="flex items-center justify-center gap-3 text-lg">
+                                                <span className="font-bold text-indigo-300">{debtCalculation.debtor}</span>
+                                                <span className="text-slate-500 text-sm">le debe a</span>
+                                                <span className="font-bold text-indigo-300">{debtCalculation.creditor}</span>
+                                            </div>
+                                            <div className="text-3xl font-bold text-white mt-2 flex items-center justify-center gap-2">
+                                                <ArrowRightLeft className="text-indigo-500" size={24} />
+                                                ${debtCalculation.amountOwed.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                            </div>
+                                            {onSettleDebt && (
+                                                <button
+                                                    onClick={() => {
+                                                        // Find expenses shared between these two
+                                                        const expensesToSettle = expenses.filter(e =>
+                                                            e.is_shared &&
+                                                            (e.payer_name === payerA || e.payer_name === payerB)
+                                                        );
+                                                        const newPayerName = `${payerA} & ${payerB}`;
+                                                        onSettleDebt(expensesToSettle, newPayerName);
+                                                    }}
+                                                    className="mt-4 px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-sm font-medium rounded-lg border border-emerald-500/30 transition-colors flex items-center gap-2 mx-auto"
+                                                >
+                                                    <CheckCircle size={16} />
+                                                    Saldar Deuda (Cambiar a "{payerA} & {payerB}")
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
-                            <div className="text-center">
-                                {debtCalculation.isEven ? (
-                                    <div className="text-emerald-400 font-medium flex items-center justify-center gap-2">
-                                        <CheckCircle size={20} />
-                                        <span>¡Están a mano!</span>
-                                    </div>
-                                ) : (
-                                    <div className="animate-in zoom-in duration-300">
-                                        <span className="text-slate-500 text-sm mb-1 block">Balance</span>
-                                        <div className="flex items-center justify-center gap-3 text-lg">
-                                            <span className="font-bold text-indigo-300">{debtCalculation.debtor}</span>
-                                            <span className="text-slate-500 text-sm">le debe a</span>
-                                            <span className="font-bold text-indigo-300">{debtCalculation.creditor}</span>
-                                        </div>
-                                        <div className="text-3xl font-bold text-white mt-2 flex items-center justify-center gap-2">
-                                            <ArrowRightLeft className="text-indigo-500" size={24} />
-                                            ${debtCalculation.amountOwed.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                                        </div>
-                                        {onSettleDebt && (
-                                            <button
-                                                onClick={() => {
-                                                    // Find expenses shared between these two
-                                                    const expensesToSettle = expenses.filter(e =>
-                                                        e.is_shared &&
-                                                        (e.payer_name === payerA || e.payer_name === payerB)
-                                                    );
-                                                    const newPayerName = `${payerA} & ${payerB}`;
-                                                    onSettleDebt(expensesToSettle, newPayerName);
-                                                }}
-                                                className="mt-4 px-4 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-sm font-medium rounded-lg border border-emerald-500/30 transition-colors flex items-center gap-2 mx-auto"
-                                            >
-                                                <CheckCircle size={16} />
-                                                Saldar Deuda (Cambiar a "{payerA} & {payerB}")
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
+                            {/* Detailed Expenses Breakdown */}
+                            <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 p-4 max-h-[400px] overflow-y-auto">
+                                <h4 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                                    <List size={16} className="text-indigo-400" />
+                                    Detalle de Gastos Compartidos
+                                </h4>
+                                <div className="space-y-2">
+                                    {expenses.filter(e => {
+                                        if (!e.is_shared) return false;
+                                        const effectiveA = payerA === 'OTHER' ? manualPayerA : payerA;
+                                        const effectiveB = payerB === 'OTHER' ? manualPayerB : payerB;
+
+                                        // Case 1: One of them is the payer
+                                        if (e.payer_name === effectiveA || e.payer_name === effectiveB) return true;
+
+                                        // Case 2: One of them is mentioned in split_details
+                                        if (e.split_details && Array.isArray(e.split_details)) {
+                                            return e.split_details.some(d => d.name === effectiveA || d.name === effectiveB);
+                                        }
+
+                                        return false;
+                                    }).length === 0 ? (
+                                        <p className="text-xs text-slate-500 text-center py-4 italic">No hay gastos registrados entre estas personas.</p>
+                                    ) : (
+                                        expenses.filter(e => {
+                                            if (!e.is_shared) return false;
+                                            const effectiveA = payerA === 'OTHER' ? manualPayerA : payerA;
+                                            const effectiveB = payerB === 'OTHER' ? manualPayerB : payerB;
+                                            if (e.payer_name === effectiveA || e.payer_name === effectiveB) return true;
+                                            if (e.split_details && Array.isArray(e.split_details)) {
+                                                return e.split_details.some(d => d.name === effectiveA || d.name === effectiveB);
+                                            }
+                                            return false;
+                                        }).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(e => {
+                                            const amountARS = e.currency === 'USD' && dolarRate ? e.amount * dolarRate : e.amount;
+                                            return (
+                                                <div key={e.id} className="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50 flex justify-between items-center group">
+                                                    <div>
+                                                        <p className="text-xs font-medium text-slate-200">{e.description}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className="text-[10px] text-slate-500">{new Date(e.created_at).toLocaleDateString('es-AR')}</span>
+                                                            <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded">Pagó: {e.payer_name}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-xs font-bold text-slate-200">
+                                                            ${amountARS.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                                        </p>
+                                                        {e.currency === 'USD' && (
+                                                            <p className="text-[9px] text-slate-500">USD ${e.amount.toFixed(2)}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
