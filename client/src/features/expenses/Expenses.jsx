@@ -4,6 +4,7 @@ import { getDolarRate } from '../../services/dolarApi';
 import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle, ChevronLeft, ChevronRight, Calendar, RefreshCcw } from 'lucide-react';
 import ExpensesAnalysis from './ExpensesAnalysis';
 import Subscriptions from './Subscriptions';
+import BudgetTab from './BudgetTab';
 import NotificationModal from '../../components/NotificationModal';
 
 function Expenses() {
@@ -1066,6 +1067,13 @@ function Expenses() {
                         <RefreshCcw size={18} />
                         Suscripciones
                     </button>
+                    <button
+                        onClick={() => setActiveTab('budget')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                    >
+                        <Wallet size={18} />
+                        Presupuesto
+                    </button>
                 </div>
 
                 {activeTab === 'analysis' ? (
@@ -1078,6 +1086,13 @@ function Expenses() {
                     />
                 ) : activeTab === 'subscriptions' ? (
                     <Subscriptions currentPlanillaId={selectedPlanillaId} />
+                ) : activeTab === 'budget' ? (
+                    <BudgetTab
+                        currentPlanillaId={selectedPlanillaId}
+                        dolarRate={dolarRate}
+                        expenses={filteredExpenses}
+                        currentDate={currentDate}
+                    />
                 ) : (
                     <>
                         {/* ADD NEW EXPENSE FORM */}
