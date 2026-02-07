@@ -33,11 +33,16 @@ export const AuthProvider = ({ children }) => {
     }, [])
 
     useEffect(() => {
+        // DEBUG: Mostrar configuración de Supabase al iniciar
+        const key = supabase.supabaseKey || 'NO_KEY'
+        const url = supabase.supabaseUrl || 'NO_URL'
+        toast.info(`Config: URL=${url.substring(0, 10)}... Key=${key.substring(0, 5)}...`)
+
         // Escuchar Deep Links en móvil
         if (Capacitor.isNativePlatform()) {
             App.addListener('appUrlOpen', async (event) => {
                 try {
-                    toast.info(`Link recibido: ${event.url.substring(0, 30)}...`)
+                    // toast.info(`Link recibido: ${event.url.substring(0, 30)}...`)
                     // La URL viene como com.mishabitos.app://google-auth#access_token=...&refresh_token=...
                     const url = new URL(event.url)
 
