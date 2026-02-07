@@ -24,7 +24,8 @@ function Expenses() {
         performMonthRollover,
         categories,
         addCategory,
-        deleteCategory
+        deleteCategory,
+        error // Added error
     } = useExpenses();
 
     const [selectedPlanillaId, setSelectedPlanillaId] = useState(null);
@@ -501,6 +502,24 @@ function Expenses() {
     const currentPlanilla = planillas.find(p => p.id === selectedPlanillaId);
 
     if (loading && !planillas.length) return <div className="text-center py-10 text-slate-400">Cargando...</div>;
+
+    // Show error if fetching failed
+    if (error) {
+        return (
+            <div className="p-6 text-center">
+                <div className="bg-red-500/10 text-red-400 p-4 rounded-xl border border-red-500/20 mb-4">
+                    <p className="font-bold">Error de conexión</p>
+                    <p className="text-sm">{error}</p>
+                </div>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700"
+                >
+                    Reintentar
+                </button>
+            </div>
+        );
+    }
 
     // VIEW: LIST OF PLANILLAS
     if (!selectedPlanillaId) {

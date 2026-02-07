@@ -26,6 +26,8 @@ app.use(cors({
         'http://192.168.0.18:3000',
         'http://192.168.0.18:5173',
         'http://localhost',
+        'capacitor://localhost', // For iOS/Android Capacitor
+        'https://localhost', // Just in case
         /\.vercel\.app$/, // Allow all Vercel deployments
         /\.onrender\.com$/ // Allow Render deployments
     ],

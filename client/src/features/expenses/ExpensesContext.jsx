@@ -23,8 +23,12 @@ export const ExpensesProvider = ({ children }) => {
 
     // Fetch planillas
     const fetchPlanillas = useCallback(async () => {
-        if (!session) return;
+        if (!session) {
+            console.log("Waiting for session to fetch planillas...");
+            return;
+        }
         setLoading(true);
+        setError(null); // Clear previous errors
         try {
             const response = await fetch(`${API_URL}/api/planillas`, {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
@@ -33,7 +37,7 @@ export const ExpensesProvider = ({ children }) => {
             const data = await response.json();
             setPlanillas(data);
         } catch (err) {
-            setError(err.message);
+            setError(`Error cargando planillas: ${err.message}`);
             console.error("Error fetching planillas:", err);
         } finally {
             setLoading(false);
