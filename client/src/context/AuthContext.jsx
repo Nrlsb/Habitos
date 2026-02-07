@@ -36,7 +36,29 @@ export const AuthProvider = ({ children }) => {
         // DEBUG: Mostrar configuración de Supabase al iniciar
         const key = supabase.supabaseKey || 'NO_KEY'
         const url = supabase.supabaseUrl || 'NO_URL'
-        toast.info(`Config: URL=${url.substring(0, 10)}... Key=${key.substring(0, 5)}...`)
+        // toast.info(`Config: URL=${url.substring(0, 10)}... Key=${key.substring(0, 5)}...`)
+
+        // Connectivity Test
+        const testConnection = async () => {
+            try {
+                const res = await fetch(`${url}/rest/v1/`, {
+                    headers: {
+                        'apikey': key,
+                        'Authorization': `Bearer ${key}`
+                    }
+                })
+                if (res.ok) {
+                    toast.success('Conexión Supabase: OK')
+                } else {
+                    const txt = await res.text()
+                    toast.error(`Conexión Supabase FAILED: ${res.status}`)
+                    console.error('Supabase Test Error:', txt)
+                }
+            } catch (e) {
+                toast.error(`Conexión Error: ${e.message}`)
+            }
+        }
+        testConnection()
 
         // Escuchar Deep Links en móvil
         if (Capacitor.isNativePlatform()) {
