@@ -90,9 +90,7 @@ export const AuthProvider = ({ children }) => {
                         toast.success('¡Sesión establecida!')
                     }
                 } catch (error) {
-                    const keyStatus = supabase.supabaseKey ? `Key=${supabase.supabaseKey.substring(0, 3)}...` : 'NO_KEY'
-                    const urlStatus = supabase.supabaseUrl ? `URL=${supabase.supabaseUrl.substring(8, 15)}...` : 'NO_URL'
-                    toast.error(`Error: ${error.message}. ${keyStatus} ${urlStatus}`)
+                    toast.error(`Error login: ${error.message}`)
                     console.error('Error procesando deep link:', error)
                 }
             })
