@@ -67,12 +67,16 @@ export const AuthProvider = ({ children }) => {
 
     const signInWithGoogle = async () => {
         try {
+            const redirectTo = Capacitor.isNativePlatform()
+                ? 'com.mishabitos.app://google-auth'
+                : window.location.origin
+
+            toast.info(`Redireccionando a: ${redirectTo}`)
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: Capacitor.isNativePlatform()
-                        ? 'com.mishabitos.app://google-auth'
-                        : window.location.origin
+                    redirectTo
                 }
             })
             if (error) throw error
