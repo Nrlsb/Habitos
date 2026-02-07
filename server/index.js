@@ -21,11 +21,13 @@ console.log('SUPABASE_SERVICE_ROLE_KEY exists:', !!process.env.SUPABASE_SERVICE_
 
 app.use(cors({
     origin: [
-        'https://habitos-y7im.vercel.app',
         'http://localhost:5173',
         'http://localhost:3000',
-        'http://192.168.1.109:5173',
-        'http://192.168.1.109:3000'
+        'http://192.168.0.18:3000',
+        'http://192.168.0.18:5173',
+        'http://localhost',
+        /\.vercel\.app$/, // Allow all Vercel deployments
+        /\.onrender\.com$/ // Allow Render deployments
     ],
     credentials: true
 }));

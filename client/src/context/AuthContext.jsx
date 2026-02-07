@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { App } from '@capacitor/app'
 import { supabase } from '../services/supabaseClient'
 import { Toaster, toast } from 'sonner'
 
@@ -30,12 +32,47 @@ export const AuthProvider = ({ children }) => {
         return () => subscription.unsubscribe()
     }, [])
 
+    useEffect(() => {
+        // Escuchar Deep Links en móvil
+        if (Capacitor.isNativePlatform()) {
+            App.addListener('appUrlOpen', async (event) => {
+                try {
+                    // La URL viene como com.mishabitos.app://google-auth#access_token=...&refresh_token=...
+                    const url = new URL(event.url)
+
+                    // Supabase a veces manda los tokens en el hash (#)
+                    let params = new URLSearchParams(url.hash.substring(1)) // Quitar el #
+
+                    // Si no están en el hash, probar en search (?)
+                    if (!params.get('access_token')) {
+                        params = new URLSearchParams(url.search)
+                    }
+
+                    const access_token = params.get('access_token')
+                    const refresh_token = params.get('refresh_token')
+
+                    if (access_token && refresh_token) {
+                        const { error } = await supabase.auth.setSession({
+                            access_token,
+                            refresh_token
+                        })
+                        if (error) throw error
+                    }
+                } catch (error) {
+                    console.error('Error procesando deep link:', error)
+                }
+            })
+        }
+    }, [])
+
     const signInWithGoogle = async () => {
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.origin
+                    redirectTo: Capacitor.isNativePlatform()
+                        ? 'com.mishabitos.app://google-auth'
+                        : window.location.origin
                 }
             })
             if (error) throw error

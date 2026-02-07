@@ -35,6 +35,22 @@ function AppContent() {
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
   useEffect(() => {
+    // Escuchar Deep Links de Capacitor (ej: desde el Widget)
+    const setupDeepLinks = async () => {
+      try {
+        const { App: CapApp } = await import('@capacitor/app');
+        CapApp.addListener('appUrlOpen', (event) => {
+          const url = new URL(event.url);
+          if (url.protocol === 'mishabitos:' && url.host === 'add-expense') {
+            setView('expenses');
+          }
+        });
+      } catch (e) {
+        console.log('Capacitor not available or error setting up deep links');
+      }
+    };
+    setupDeepLinks();
+
     if (user && view === 'habits') {
       fetchHabits()
     }
