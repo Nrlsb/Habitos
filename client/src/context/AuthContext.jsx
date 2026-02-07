@@ -37,6 +37,7 @@ export const AuthProvider = ({ children }) => {
         if (Capacitor.isNativePlatform()) {
             App.addListener('appUrlOpen', async (event) => {
                 try {
+                    toast.info(`Link recibido: ${event.url.substring(0, 30)}...`)
                     // La URL viene como com.mishabitos.app://google-auth#access_token=...&refresh_token=...
                     const url = new URL(event.url)
 
@@ -59,6 +60,7 @@ export const AuthProvider = ({ children }) => {
                         if (error) throw error
                     }
                 } catch (error) {
+                    toast.error(`Error login: ${error.message}`)
                     console.error('Error procesando deep link:', error)
                 }
             })
@@ -70,8 +72,6 @@ export const AuthProvider = ({ children }) => {
             const redirectTo = Capacitor.isNativePlatform()
                 ? 'com.mishabitos.app://google-auth'
                 : window.location.origin
-
-            toast.info(`Redireccionando a: ${redirectTo}`)
 
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
