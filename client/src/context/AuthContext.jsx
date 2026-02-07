@@ -69,7 +69,8 @@ export const AuthProvider = ({ children }) => {
                     }
                 } catch (error) {
                     const keyStatus = supabase.supabaseKey ? `Key=${supabase.supabaseKey.substring(0, 3)}...` : 'NO_KEY'
-                    toast.error(`Error: ${error.message}. ${keyStatus}`)
+                    const urlStatus = supabase.supabaseUrl ? `URL=${supabase.supabaseUrl.substring(8, 15)}...` : 'NO_URL'
+                    toast.error(`Error: ${error.message}. ${keyStatus} ${urlStatus}`)
                     console.error('Error procesando deep link:', error)
                 }
             })
