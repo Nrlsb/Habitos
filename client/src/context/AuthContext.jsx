@@ -52,12 +52,15 @@ export const AuthProvider = ({ children }) => {
                     const access_token = params.get('access_token')
                     const refresh_token = params.get('refresh_token')
 
+                    toast.info(`Tokens: ${access_token ? 'OK' : 'Falta Access'} | ${refresh_token ? 'OK' : 'Falta Refresh'}`)
+
                     if (access_token && refresh_token) {
                         const { error } = await supabase.auth.setSession({
                             access_token,
                             refresh_token
                         })
                         if (error) throw error
+                        toast.success('¡Sesión establecida!')
                     }
                 } catch (error) {
                     toast.error(`Error login: ${error.message}`)

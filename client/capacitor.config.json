@@ -1,5 +1,10 @@
 {
   "appId": "com.mishabitos.app",
   "appName": "Mis Habitos",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": false
+    }
+  }
 }
