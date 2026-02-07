@@ -9,7 +9,7 @@ const SHARED_COLORS = ['#3f46e4', '#06b6d4']; // Personal (Indigo), Shared (Cyan
 const INSTALLMENT_COLORS = ['#f59e0b', '#10b981']; // Installments (Amber), Current (Emerald)
 const CURRENCY_COLORS = ['#6366f1', '#22c5e']; // ARS (Indigo), USD (Green)
 
-const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, participants = ['Yo'] }) => {
+const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, participants = ['Yo'], currentPlanillaId }) => {
     const [showProjection, setShowProjection] = useState(true);
     const [payerA, setPayerA] = useState('');
     const [payerB, setPayerB] = useState('');
@@ -24,9 +24,9 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
     React.useEffect(() => {
         if (selectedDate) {
             const month = selectedDate.toISOString().slice(0, 7); // YYYY-MM
-            getBudgets(month).then(setBudgets);
+            getBudgets(month, currentPlanillaId).then(setBudgets);
         }
-    }, [selectedDate, getBudgets]);
+    }, [selectedDate, getBudgets, currentPlanillaId]);
 
     const handleSaveBudget = async (categoryName) => {
         if (!newBudgetAmount || !selectedDate) return;
@@ -34,9 +34,10 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
         await upsertBudget({
             category_name: categoryName,
             amount: parseFloat(newBudgetAmount),
-            month
+            month,
+            planilla_id: currentPlanillaId
         });
-        getBudgets(month).then(setBudgets);
+        getBudgets(month, currentPlanillaId).then(setBudgets);
         setEditingBudgetCategory(null);
         setNewBudgetAmount('');
     };

@@ -1083,6 +1083,7 @@ function Expenses() {
                         onSettleDebt={handleSettleDebt}
                         selectedDate={currentDate}
                         participants={currentPlanilla?.participants || ['Yo']}
+                        currentPlanillaId={selectedPlanillaId}
                     />
                 ) : activeTab === 'subscriptions' ? (
                     <Subscriptions currentPlanillaId={selectedPlanillaId} />

@@ -366,10 +366,13 @@ export const ExpensesProvider = ({ children }) => {
     }, [API_URL, session]);
 
     // Budgets API
-    const getBudgets = useCallback(async (month) => {
+    const getBudgets = useCallback(async (month, planillaId) => {
         if (!session) return [];
         try {
-            const response = await fetch(`${API_URL}/api/budgets?month=${month}`, {
+            const url = planillaId
+                ? `${API_URL}/api/budgets?month=${month}&planilla_id=${planillaId}`
+                : `${API_URL}/api/budgets?month=${month}`;
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (!response.ok) throw new Error('Failed to fetch budgets');

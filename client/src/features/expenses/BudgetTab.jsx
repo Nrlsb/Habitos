@@ -16,7 +16,7 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
 
     useEffect(() => {
         const fetchIncome = async () => {
-            const budgets = await getBudgets(monthKey);
+            const budgets = await getBudgets(monthKey, currentPlanillaId);
             const incomeBudget = budgets.find(b => b.category_name === 'INGRESOS');
             if (incomeBudget) {
                 setIncome(incomeBudget.amount.toString());
@@ -25,7 +25,7 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
             }
         };
         fetchIncome();
-    }, [monthKey, getBudgets]);
+    }, [monthKey, getBudgets, currentPlanillaId]);
 
     const handleSaveIncome = async (e) => {
         e.preventDefault();
@@ -37,7 +37,8 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
             await upsertBudget({
                 category_name: 'INGRESOS',
                 amount: parseFloat(income),
-                month: monthKey
+                month: monthKey,
+                planilla_id: currentPlanillaId
             });
             setSaveStatus('success');
             setTimeout(() => setSaveStatus(null), 3000);
@@ -119,8 +120,8 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
                         type="submit"
                         disabled={isSaving || !income}
                         className={`px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg ${saveStatus === 'success'
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20'
                             } disabled:opacity-50`}
                     >
                         {isSaving ? 'Guardando...' : saveStatus === 'success' ? (

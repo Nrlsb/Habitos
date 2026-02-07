@@ -1355,28 +1355,45 @@ app.delete('/api/categories/:id', authenticateUser, async (req, res) => {
 
 // 2. Budgets Routes
 app.get('/api/budgets', authenticateUser, async (req, res) => {
-    const { month } = req.query; // YYYY-MM
+    const { month, planilla_id } = req.query; // YYYY-MM
     if (!month) return res.status(400).json({ error: 'Month is required' });
 
-    const { data, error } = await supabase
+    let query = supabase
         .from('budgets')
         .select('*')
         .eq('user_id', req.user.id)
         .eq('month', month);
+
+    if (planilla_id) {
+        query = query.eq('planilla_id', planilla_id);
+    } else {
+        // Fallback for global budgets (legacy or specific use case)
+        query = query.is('planilla_id', null);
+    }
+
+    const { data, error } = await query;
 
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
 });
 
 app.post('/api/budgets', authenticateUser, async (req, res) => {
-    const { category_name, amount, month } = req.body;
+    const { category_name, amount, month, planilla_id } = req.body;
     if (!category_name || !amount || !month) return res.status(400).json({ error: 'Missing fields' });
+
+    const budgetData = {
+        user_id: req.user.id,
+        category_name,
+        amount,
+        month,
+        planilla_id: planilla_id || null
+    };
 
     const { data, error } = await supabase
         .from('budgets')
         .upsert(
-            { user_id: req.user.id, category_name, amount, month },
-            { onConflict: 'user_id, category_name, month' }
+            budgetData,
+            { onConflict: 'user_id, category_name, month, planilla_id' }
         )
         .select();
 
