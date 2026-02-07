@@ -418,7 +418,10 @@ export const ExpensesProvider = ({ children }) => {
                 },
                 body: JSON.stringify(subData),
             });
-            if (!response.ok) throw new Error('Failed to add subscription');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to add subscription');
+            }
             await fetchSubscriptions();
         } catch (err) {
             setError(err.message);
@@ -436,7 +439,10 @@ export const ExpensesProvider = ({ children }) => {
                 },
                 body: JSON.stringify(subData),
             });
-            if (!response.ok) throw new Error('Failed to update subscription');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to update subscription');
+            }
             await fetchSubscriptions();
         } catch (err) {
             setError(err.message);
