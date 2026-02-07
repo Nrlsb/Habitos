@@ -1045,31 +1045,31 @@ function Expenses() {
                 </div>
 
                 {/* TABS NAVIGATION */}
-                <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-fit border border-slate-700/50">
+                <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-full md:w-fit border border-slate-700/50 overflow-x-auto scrollbar-hide">
                     <button
                         onClick={() => setActiveTab('list')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'list' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'list' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
                         <List size={18} />
                         Lista
                     </button>
                     <button
                         onClick={() => setActiveTab('analysis')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'analysis' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'analysis' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
                         <PieChart size={18} />
                         Análisis
                     </button>
                     <button
                         onClick={() => setActiveTab('subscriptions')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'subscriptions' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'subscriptions' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
                         <RefreshCcw size={18} />
                         Suscripciones
                     </button>
                     <button
                         onClick={() => setActiveTab('budget')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
                         <Wallet size={18} />
                         Presupuesto

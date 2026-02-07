@@ -375,7 +375,10 @@ export const ExpensesProvider = ({ children }) => {
             const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
-            if (!response.ok) throw new Error('Failed to fetch budgets');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to fetch budgets');
+            }
             return await response.json();
         } catch (err) {
             console.error("Error fetching budgets:", err);
@@ -393,7 +396,10 @@ export const ExpensesProvider = ({ children }) => {
                 },
                 body: JSON.stringify(budgetData),
             });
-            if (!response.ok) throw new Error('Failed to save budget');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Failed to save budget');
+            }
             return await response.json();
         } catch (err) {
             setError(err.message);
