@@ -40,6 +40,15 @@
 
         </activity>
 
+        <activity
+            android:name=".QuickExpenseActivity"
+            android:label="Gasto Rápido"
+            android:theme="@style/Theme.AppCompat.Light.Dialog"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleInstance"
+            android:exported="true" />
+
         <!-- Expense Widget -->
         <receiver
             android:name=".ExpenseWidget"
@@ -67,4 +76,5 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 </manifest>

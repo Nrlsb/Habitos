@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="320dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="#0f172a">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Agregar Gasto Rápido"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="20dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Monto"
+        android:textColor="#94a3b8"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp"/>
+
+    <EditText
+        android:id="@+id/et_amount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="$ 0.00"
+        android:inputType="numberDecimal"
+        android:minHeight="48dp"
+        android:background="#1e293b"
+        android:padding="12dp"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#475569"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Descripción"
+        android:textColor="#94a3b8"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp"/>
+
+    <EditText
+        android:id="@+id/et_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Ej. Supermercado"
+        android:inputType="textCapSentences"
+        android:minHeight="48dp"
+        android:background="#1e293b"
+        android:padding="12dp"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#475569"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Lista / Planilla"
+        android:textColor="#94a3b8"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp"/>
+
+    <Spinner
+        android:id="@+id/sp_planilla"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="#1e293b"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Categoría"
+        android:textColor="#94a3b8"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp"/>
+    
+    <Spinner
+        android:id="@+id/sp_category"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="#1e293b"
+        android:layout_marginBottom="16dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="10dp">
+
+        <CheckBox
+            android:id="@+id/cb_shared"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Compartido"
+            android:textColor="#cbd5e1"
+            android:buttonTint="#4F46E5"
+            android:layout_weight="1"/>
+
+        <CheckBox
+            android:id="@+id/cb_installments"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cuotas"
+            android:textColor="#cbd5e1"
+            android:buttonTint="#4F46E5"
+            android:layout_weight="1"/>
+    </LinearLayout>
+
+    <!-- Paid By Field (Hidden by default) -->
+    <EditText
+        android:id="@+id/et_paid_by"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Pagado por (opcional)"
+        android:inputType="textCapWords"
+        android:minHeight="48dp"
+        android:background="#1e293b"
+        android:padding="12dp"
+        android:textColor="#FFFFFF"
+        android:textColorHint="#475569"
+        android:layout_marginBottom="10dp"
+        android:visibility="gone"/>
+
+    <!-- Installments Fields (Hidden by default) -->
+    <LinearLayout
+        android:id="@+id/layout_installments"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="10dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginEnd="6dp">
+            
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Actual"
+                android:textColor="#94a3b8"
+                android:textSize="10sp"
+                android:layout_marginBottom="2dp"/>
+
+            <EditText
+                android:id="@+id/et_current_installment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="1"
+                android:inputType="number"
+                android:minHeight="48dp"
+                android:background="#1e293b"
+                android:padding="12dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#475569"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="6dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Total"
+                android:textColor="#94a3b8"
+                android:textSize="10sp"
+                android:layout_marginBottom="2dp"/>
+
+            <EditText
+                android:id="@+id/et_total_installments"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Total"
+                android:inputType="number"
+                android:minHeight="48dp"
+                android:background="#1e293b"
+                android:padding="12dp"
+                android:textColor="#FFFFFF"
+                android:textColorHint="#475569"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancelar"
+            style="?android:attr/borderlessButtonStyle"
+            android:textColor="#94a3b8"/>
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Agregar Gasto"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#4F46E5"
+            android:padding="12dp"
+            android:layout_marginLeft="10dp"
+            android:layout_weight="1"/>
+    </LinearLayout>
+
+</LinearLayout>

@@ -18,9 +18,9 @@ public class ExpenseWidget extends AppWidgetProvider {
     }
 
     static void updateAppWidget(Context context, AppWidgetManager appWidgetManager, int appWidgetId) {
-        // La URL que Capacitor puede capturar (custom scheme)
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("mishabitos://add-expense"));
-        intent.setPackage(context.getPackageName());
+        // Abrir la actividad nativa de "Gasto Rápido"
+        Intent intent = new Intent(context, QuickExpenseActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         
         // FLAG_IMMUTABLE es requerido en Android 12+
         PendingIntent pendingIntent = PendingIntent.getActivity(

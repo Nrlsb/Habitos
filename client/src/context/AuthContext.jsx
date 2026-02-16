@@ -2,6 +2,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { App } from '@capacitor/app'
+import { registerPlugin } from '@capacitor/core'
+
+const WidgetAuth = registerPlugin('WidgetAuth')
 import { supabase } from '../services/supabaseClient'
 import { Toaster, toast } from 'sonner'
 
@@ -22,11 +25,24 @@ export const AuthProvider = ({ children }) => {
             setLoading(false)
         })
 
+
+
+        // ...
+
         // Escuchar cambios de sesión
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session)
             setUser(session?.user ?? null)
             setLoading(false)
+
+            if (Capacitor.isNativePlatform() && session?.access_token) {
+                // Save token for the widget
+                WidgetAuth.saveAuthToken({
+                    token: session.access_token,
+                    url: supabase.supabaseUrl,
+                    key: supabase.supabaseKey
+                }).catch(e => console.error('Error saving widget token:', e))
+            }
         })
 
         return () => subscription.unsubscribe()
@@ -67,6 +83,12 @@ export const AuthProvider = ({ children }) => {
                     // toast.info(`Link recibido: ${event.url.substring(0, 30)}...`)
                     // La URL viene como com.mishabitos.app://google-auth#access_token=...&refresh_token=...
                     const url = new URL(event.url)
+
+                    // Ignorar deep links del Widget (mishabitos://)
+                    if (url.protocol === 'mishabitos:') {
+                        console.log('Deep link del widget detectado, ignorando auth check.');
+                        return;
+                    }
 
                     // Supabase a veces manda los tokens en el hash (#)
                     let params = new URLSearchParams(url.hash.substring(1)) // Quitar el #

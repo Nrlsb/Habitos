@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { startOfDay, endOfDay } from 'date-fns';
 import { useAuth } from '../../context/AuthContext';
+import { registerPlugin } from '@capacitor/core';
+import { Capacitor } from '@capacitor/core';
+
+const WidgetAuth = registerPlugin('WidgetAuth');
 
 const ExpensesContext = createContext();
 
@@ -44,6 +48,17 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, session]);
 
+    // Sync Planillas to Widget
+    useEffect(() => {
+        if (Capacitor.isNativePlatform() && planillas.length > 0) {
+            WidgetAuth.savePlanillas({
+                planillas: JSON.stringify(planillas)
+            }).catch(e => console.error("Error syncing planillas to widget:", e));
+        }
+    }, [planillas]);
+
+
+
     const fetchCategories = useCallback(async () => {
         if (!session) return;
         try {
@@ -53,6 +68,13 @@ export const ExpensesProvider = ({ children }) => {
             if (!response.ok) throw new Error('Failed to fetch categories');
             const data = await response.json();
             setCategories(data);
+
+            if (Capacitor.isNativePlatform()) {
+                WidgetAuth.saveCategories({
+                    categories: JSON.stringify(data)
+                }).catch(e => console.error("Error syncing categories to widget:", e));
+            }
+
         } catch (err) {
             console.error("Error fetching categories:", err);
         }
