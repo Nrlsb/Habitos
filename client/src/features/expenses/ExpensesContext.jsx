@@ -3,6 +3,7 @@ import { startOfDay, endOfDay } from 'date-fns';
 import { useAuth } from '../../context/AuthContext';
 import { registerPlugin } from '@capacitor/core';
 import { Capacitor } from '@capacitor/core';
+import { toast } from 'sonner';
 
 const WidgetAuth = registerPlugin('WidgetAuth');
 
@@ -22,6 +23,10 @@ export const ExpensesProvider = ({ children }) => {
     const [error, setError] = useState(null);
     const [dolarOficial, setDolarOficial] = useState(null);
     const [dolarTarjeta, setDolarTarjeta] = useState(null);
+    const [tarjetaFactor, setTarjetaFactorState] = useState(() => {
+        const stored = localStorage.getItem('tarjeta_factor');
+        return stored ? parseFloat(stored) : 1.6;
+    });
 
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -53,7 +58,10 @@ export const ExpensesProvider = ({ children }) => {
         if (Capacitor.isNativePlatform() && planillas.length > 0) {
             WidgetAuth.savePlanillas({
                 planillas: JSON.stringify(planillas)
-            }).catch(e => console.error("Error syncing planillas to widget:", e));
+            }).catch(e => {
+                console.error("Error syncing planillas to widget:", e);
+                toast.error('No se pudo sincronizar el widget');
+            });
         }
     }, [planillas]);
 
@@ -72,7 +80,10 @@ export const ExpensesProvider = ({ children }) => {
             if (Capacitor.isNativePlatform()) {
                 WidgetAuth.saveCategories({
                     categories: JSON.stringify(data)
-                }).catch(e => console.error("Error syncing categories to widget:", e));
+                }).catch(e => {
+                    console.error("Error syncing categories to widget:", e);
+                    toast.error('No se pudo sincronizar el widget');
+                });
             }
 
         } catch (err) {
@@ -100,18 +111,23 @@ export const ExpensesProvider = ({ children }) => {
             if (response.ok) {
                 const data = await response.json();
                 setDolarOficial(data.venta_billete);
-                // Calculo aproximado Dólar Tarjeta: Oficial + 30% Impuesto PAIS + 30% Ganancias ~ 60% recargo
-                // O usar cotización directa si estuviera disponible.
-                // Asumimos 1.6x del oficial aprox o ajustamos según regulación actual.
-                // BNA suele devolver dolar oficial minorista. 
-                // A fecha 2026? Asumimos un factor genérico o usamos el valor si viniera.
-                // Usaremos 1.6 (60% impuestos) a falta de dato exacto.
-                setDolarTarjeta(data.venta_billete * 1.6);
+                const factor = parseFloat(localStorage.getItem('tarjeta_factor')) || 1.6;
+                setDolarTarjeta(data.venta_billete * factor);
             }
         } catch (error) {
             console.error("Error fetching BNA:", error);
         }
     }, [API_URL]);
+
+    const setTarjetaFactor = useCallback((factor) => {
+        const parsed = parseFloat(factor) || 1.6;
+        localStorage.setItem('tarjeta_factor', String(parsed));
+        setTarjetaFactorState(parsed);
+        setDolarOficial(prev => {
+            if (prev) setDolarTarjeta(prev * parsed);
+            return prev;
+        });
+    }, []);
 
     useEffect(() => {
         fetchDolar(); // Fetch publico
@@ -537,7 +553,9 @@ export const ExpensesProvider = ({ children }) => {
         deleteSubscription,
         generateSubscriptionExpense,
         dolarOficial,
-        dolarTarjeta
+        dolarTarjeta,
+        tarjetaFactor,
+        setTarjetaFactor
     };
 
     return (

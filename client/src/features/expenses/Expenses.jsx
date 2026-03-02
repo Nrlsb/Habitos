@@ -41,6 +41,8 @@ function Expenses() {
     const [shareEmail, setShareEmail] = useState('');
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
+    const [isSharing, setIsSharing] = useState(false);
+    const [isDeletingExpense, setIsDeletingExpense] = useState(false);
 
     // Month Navigation State
     const [currentDate, setCurrentDate] = useState(new Date()); // Defaults to today -> Current Month View
@@ -474,8 +476,10 @@ function Expenses() {
 
     const handleShareSubmit = async (e) => {
         e.preventDefault();
+        if (isSharing) return;
         setShareError('');
         setShareSuccess('');
+        setIsSharing(true);
 
         try {
             await sharePlanilla(selectedPlanillaId, shareEmail);
@@ -487,6 +491,8 @@ function Expenses() {
             }, 2000);
         } catch (err) {
             setShareError(err.message || 'Error al compartir');
+        } finally {
+            setIsSharing(false);
         }
     };
 
@@ -634,9 +640,10 @@ function Expenses() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-medium"
+                                    disabled={isSharing}
+                                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Enviar Invitación
+                                    {isSharing ? 'Enviando...' : 'Enviar Invitación'}
                                 </button>
                             </div>
                         </form>
@@ -1172,6 +1179,7 @@ function Expenses() {
                                         <input
                                             type="number"
                                             step="0.01"
+                                            min="0"
                                             value={amount}
                                             onChange={(e) => setAmount(e.target.value)}
                                             placeholder="0.00"

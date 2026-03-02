@@ -9,7 +9,9 @@ const Subscriptions = () => {
         deleteSubscription,
         updateSubscription,
         dolarOficial,
-        dolarTarjeta
+        dolarTarjeta,
+        tarjetaFactor,
+        setTarjetaFactor
     } = useExpenses();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -117,6 +119,18 @@ const Subscriptions = () => {
                     <p className="text-xs text-slate-500 mt-1">
                         Dólar Tarjeta: ${dolarTarjeta ? dolarTarjeta.toFixed(2) : '---'}
                     </p>
+                    <div className="flex items-center gap-1 mt-2">
+                        <span className="text-[10px] text-slate-500">Factor impuesto:</span>
+                        <input
+                            type="number"
+                            min="1"
+                            step="0.01"
+                            value={tarjetaFactor}
+                            onChange={(e) => setTarjetaFactor(e.target.value)}
+                            className="w-16 bg-slate-700 border border-slate-600 text-slate-200 text-[10px] rounded px-1.5 py-0.5 focus:outline-none focus:border-indigo-500"
+                        />
+                        <span className="text-[10px] text-slate-500">x</span>
+                    </div>
                 </div>
                 <div className="bg-indigo-900/30 p-4 rounded-xl border border-indigo-500/30">
                     <h3 className="text-indigo-300 text-sm mb-1">Total Estimado Final (ARS)</h3>

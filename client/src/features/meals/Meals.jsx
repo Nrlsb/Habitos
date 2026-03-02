@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format, addDays, subDays, isSameDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Save, Utensils, Coffee, Sun, Moon, Cookie } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 
 const Meals = () => {
@@ -71,11 +72,10 @@ const Meals = () => {
             });
 
             if (!response.ok) throw new Error('Error saving meals');
-
-            // Optional: Show success feedback
+            toast.success('Comidas guardadas');
         } catch (error) {
             console.error('Error saving meals:', error);
-            alert('Error al guardar las comidas');
+            toast.error('Error al guardar las comidas');
         } finally {
             setSaving(false);
         }

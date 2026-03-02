@@ -1,12 +1,11 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { Capacitor } from '@capacitor/core'
+import { Capacitor, registerPlugin } from '@capacitor/core'
 import { App } from '@capacitor/app'
-import { registerPlugin } from '@capacitor/core'
-
-const WidgetAuth = registerPlugin('WidgetAuth')
 import { supabase } from '../services/supabaseClient'
 import { Toaster, toast } from 'sonner'
+
+const WidgetAuth = registerPlugin('WidgetAuth')
 
 const AuthContext = createContext({})
 
@@ -17,6 +16,41 @@ export const AuthProvider = ({ children }) => {
     const [session, setSession] = useState(null)
     const [loading, setLoading] = useState(true)
 
+    const processAuthUrl = async (url) => {
+        try {
+            const parsed = new URL(url)
+
+            // Ignorar deep links del Widget (mishabitos://)
+            if (parsed.protocol === 'mishabitos:') {
+                console.log('Deep link del widget detectado, ignorando auth check.')
+                return
+            }
+
+            // Supabase a veces manda los tokens en el hash (#)
+            let params = new URLSearchParams(parsed.hash.substring(1))
+
+            // Si no están en el hash, probar en search (?)
+            if (!params.get('access_token')) {
+                params = new URLSearchParams(parsed.search)
+            }
+
+            const access_token = params.get('access_token')
+            const refresh_token = params.get('refresh_token')
+
+            if (access_token && refresh_token) {
+                const { error } = await supabase.auth.setSession({
+                    access_token,
+                    refresh_token
+                })
+                if (error) throw error
+                toast.success('¡Sesión establecida!')
+            }
+        } catch (error) {
+            toast.error(`Error login: ${error.message}`)
+            console.error('Error procesando deep link:', error)
+        }
+    }
+
     useEffect(() => {
         // Verificar sesión inicial
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -24,10 +58,6 @@ export const AuthProvider = ({ children }) => {
             setUser(session?.user ?? null)
             setLoading(false)
         })
-
-
-
-        // ...
 
         // Escuchar cambios de sesión
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -49,73 +79,31 @@ export const AuthProvider = ({ children }) => {
     }, [])
 
     useEffect(() => {
-        // DEBUG: Mostrar configuración de Supabase al iniciar
-        const key = supabase.supabaseKey || 'NO_KEY'
-        const url = supabase.supabaseUrl || 'NO_URL'
-        // toast.info(`Config: URL=${url.substring(0, 10)}... Key=${key.substring(0, 5)}...`)
+        if (!Capacitor.isNativePlatform()) return
 
-        // Connectivity Test
-        const testConnection = async () => {
+        let appUrlListener = null
+
+        const setupDeepLinks = async () => {
+            // Cold start: verificar URL de lanzamiento
             try {
-                const res = await fetch(`${url}/rest/v1/`, {
-                    headers: {
-                        'apikey': key,
-                        'Authorization': `Bearer ${key}`
-                    }
-                })
-                if (res.ok) {
-                    toast.success('Conexión Supabase: OK')
-                } else {
-                    const txt = await res.text()
-                    toast.error(`Conexión Supabase FAILED: ${res.status}`)
-                    console.error('Supabase Test Error:', txt)
+                const launchUrl = await App.getLaunchUrl()
+                if (launchUrl?.url) {
+                    await processAuthUrl(launchUrl.url)
                 }
             } catch (e) {
-                toast.error(`Conexión Error: ${e.message}`)
+                console.log('Error checking launch URL', e)
             }
-        }
-        testConnection()
 
-        // Escuchar Deep Links en móvil
-        if (Capacitor.isNativePlatform()) {
-            App.addListener('appUrlOpen', async (event) => {
-                try {
-                    // toast.info(`Link recibido: ${event.url.substring(0, 30)}...`)
-                    // La URL viene como com.mishabitos.app://google-auth#access_token=...&refresh_token=...
-                    const url = new URL(event.url)
-
-                    // Ignorar deep links del Widget (mishabitos://)
-                    if (url.protocol === 'mishabitos:') {
-                        console.log('Deep link del widget detectado, ignorando auth check.');
-                        return;
-                    }
-
-                    // Supabase a veces manda los tokens en el hash (#)
-                    let params = new URLSearchParams(url.hash.substring(1)) // Quitar el #
-
-                    // Si no están en el hash, probar en search (?)
-                    if (!params.get('access_token')) {
-                        params = new URLSearchParams(url.search)
-                    }
-
-                    const access_token = params.get('access_token')
-                    const refresh_token = params.get('refresh_token')
-
-                    toast.info(`Tokens: ${access_token ? 'OK' : 'Falta Access'} | ${refresh_token ? 'OK' : 'Falta Refresh'}`)
-
-                    if (access_token && refresh_token) {
-                        const { error } = await supabase.auth.setSession({
-                            access_token,
-                            refresh_token
-                        })
-                        if (error) throw error
-                        toast.success('¡Sesión establecida!')
-                    }
-                } catch (error) {
-                    toast.error(`Error login: ${error.message}`)
-                    console.error('Error procesando deep link:', error)
-                }
+            // Warm start: registrar listener y guardar referencia para cleanup
+            appUrlListener = await App.addListener('appUrlOpen', async (event) => {
+                await processAuthUrl(event.url)
             })
+        }
+
+        setupDeepLinks()
+
+        return () => {
+            appUrlListener?.remove()
         }
     }, [])
 

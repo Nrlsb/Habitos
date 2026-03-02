@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut, Layout, Utensils } from 'lucide-react'
+import { toast } from 'sonner'
+import { Capacitor } from '@capacitor/core'
 import HabitStats from './HabitStats'
 import Expenses from './features/expenses/Expenses'
 import DailyExpenses from './features/expenses/DailyExpenses'
@@ -9,6 +11,7 @@ import { ExpensesProvider } from './features/expenses/ExpensesContext'
 import { PlanningProvider } from './features/planning/PlanningContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function AppContent() {
   const getLocalDateString = () => {
@@ -33,6 +36,21 @@ function AppContent() {
   const [habitCategory, setHabitCategory] = useState('General')
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+  // Splash Screen: ocultar cuando auth esté listo
+  useEffect(() => {
+    if (!authLoading) {
+      const hideSplash = async () => {
+        try {
+          const { SplashScreen } = await import('@capacitor/splash-screen')
+          await SplashScreen.hide()
+        } catch (e) {
+          // No disponible en web, ignorar
+        }
+      }
+      hideSplash()
+    }
+  }, [authLoading])
 
   useEffect(() => {
     // Escuchar Deep Links de Capacitor (ej: desde el Widget)
@@ -70,6 +88,55 @@ function AppContent() {
     checkLaunchUrl();
   }, []);
 
+  // Notificaciones locales: pedir permiso al iniciar en nativo
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+
+    const requestNotificationPermission = async () => {
+      try {
+        const { LocalNotifications } = await import('@capacitor/local-notifications')
+        await LocalNotifications.requestPermissions()
+      } catch (e) {
+        console.log('Local notifications not available', e)
+      }
+    }
+    requestNotificationPermission()
+  }, [])
+
+  // Programar notificación de recordatorio a las 21:00 si hay hábitos sin completar
+  const scheduleReminderNotification = async (currentHabits) => {
+    if (!Capacitor.isNativePlatform()) return
+    try {
+      const { LocalNotifications } = await import('@capacitor/local-notifications')
+      const allCompleted = currentHabits.every(h => h.today_state === 'completed')
+
+      // Cancelar notificación previa
+      await LocalNotifications.cancel({ notifications: [{ id: 1001 }] })
+
+      if (!allCompleted && currentHabits.length > 0) {
+        const now = new Date()
+        const reminder = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 0, 0)
+        // Si ya pasaron las 21:00, no programar para hoy
+        if (reminder > now) {
+          await LocalNotifications.schedule({
+            notifications: [{
+              id: 1001,
+              title: 'Mis Hábitos',
+              body: '¡Todavía tienes hábitos pendientes hoy! 💪',
+              schedule: { at: reminder },
+              smallIcon: 'ic_stat_icon_config_sample',
+              sound: null,
+              actionTypeId: '',
+              extra: null
+            }]
+          })
+        }
+      }
+    } catch (e) {
+      console.log('Error scheduling notification', e)
+    }
+  }
+
   // Efecto para cargar hábitos al iniciar
   useEffect(() => {
     if (session?.user && !authLoading) {
@@ -77,115 +144,89 @@ function AppContent() {
     }
   }, [session, authLoading])
 
-  // Efecto para el Podómetro
+  // Reprogramar notificación cuando cambien los hábitos
   useEffect(() => {
-    let intervalId;
+    if (habits.length > 0) {
+      scheduleReminderNotification(habits)
+    }
+  }, [habits])
+
+  // Efecto para el Podómetro — implementación robusta con polling y baseline diario
+  useEffect(() => {
+    const stepHabitIds = habits
+      .filter(h => h.type === 'counter' && h.unit?.toLowerCase().includes('pasos'))
+      .map(h => h.id)
+
+    if (stepHabitIds.length === 0) return
+
+    let intervalId = null
 
     const setupPedometer = async () => {
-      // Verificar si hay algún hábito de tipo contador con unidad 'pasos'
-      const hasStepHabit = habits.some(h => h.type === 'counter' && h.unit.toLowerCase().includes('pasos'));
-
-      if (hasStepHabit) {
-        try {
-          const { Pedometer } = await import('@capgo/capacitor-pedometer');
-
-          try {
-            await Pedometer.start();
-          } catch (e) {
-            // Si ya estaba iniciado o no es necesario iniciar explícitamente en algunas versiones
-            console.log('Pedometer start error (might be running)', e);
-          }
-
-          // Usar un intervalo para verificar pasos y actualizar
-          // Nota: El plugin suele ser event-based o query-based. Haremos polling suave.
-          intervalId = setInterval(async () => {
-            try {
-              // Obtenemos los pasos totales desde el inicio del tracking o boot
-              // La API de este plugin es simple: count(). 
-              // PERO para "hoy", necesitamos saber cuántos pasos había al inicio del día o usar la diferencia.
-              // Simplificación: Asumiremos que el plugin nos da pasos acumulados y nosotros guardamos el offset
-              // OJO: @capacitor-community/pedometer a veces es simple.
-              // Revisemos documentación ideal: Pedometer.getStepCount() usually returns steps since boot or start.
-              // Para un contador diario real, lo ideal es leer al inicio del día y restar, o usar Google Fit.
-              // VAMOS A IMPLEMENTAR UNA VERSIÓN SIMPLIFICADA QUE INCREMENTA SI DETECTA ACTIVIDAD
-              // Si el plugin soporta eventos, mejor. Re-leamos docs mentalmente...
-              // Doc standard: Pedometer.addListener('step', ...)
-
-              // Mejor enfoque: Escuchar eventos en vivo
-            } catch (e) {
-              console.error('Error polling steps', e);
-            }
-          }, 5000); // Polling fallback if needed, but let's try listeners below
-        } catch (e) {
-          console.error('Pedometer not available', e);
-        }
-      }
-    };
-
-    // Implementación con Event Listener (más eficiente)
-    const startStepListener = async () => {
-      const stepHabits = habits.filter(h => h.type === 'counter' && h.unit.toLowerCase().includes('pasos'));
-      if (stepHabits.length === 0) return;
-
       try {
-        const { Pedometer } = await import('@capgo/capacitor-pedometer');
-        await Pedometer.start();
+        const { Pedometer } = await import('@capgo/capacitor-pedometer')
 
-        // No hay un "getStepsToday" directo universal sin Google Fit.
-        // Usaremos un listener que nos avise de nuevos pasos y los sumaremos al hábito.
-        // OJO: Esto solo funciona si la app está en primer plano o background activo.
-
-        window.addEventListener('pedometer', async () => {
-          // Esto es hipotético si el plugin emitiera eventos al window.
-          // El plugin oficial tiene addListener.
-        });
-
-        const listener = await Pedometer.addListener('step', (data) => {
-          // data.count es el número de pasos desde el inicio.
-          // Para "sumar 1", necesitamos lógica de estado anterior.
-          // Simplificación UX para el usuario:
-          // Vamos a auto-incrementar los hábitos de pasos periódicamente consultando el total
-          // y viendo si cambió.
-
-          // ACTULIZACION REALISTA:
-          // Simplemente incrementaremos en 1 el contador local por cada evento recibido
-          // y haremos debounce para enviar al servidor.
-
-          setHabits(currentHabits => {
-            return currentHabits.map(h => {
-              if (h.type === 'counter' && h.unit.toLowerCase().includes('pasos')) {
-                const newVal = (h.today_value || 0) + 1;
-                // Optimistic update
-                return { ...h, today_value: newVal, today_state: newVal >= h.goal ? 'completed' : 'none' };
-              }
-              return h;
-            });
-          });
-        });
-
-        return () => {
-          listener.remove();
+        // Pedir permiso ACTIVITY_RECOGNITION
+        try {
+          await Pedometer.requestPermission?.()
+        } catch (e) {
+          console.log('requestPermission not available or already granted', e)
         }
 
+        const today = getLocalDateString()
+        const STORAGE_KEY = 'pedometer_baseline'
+
+        // Leer o inicializar baseline del día
+        let baselineData = null
+        try {
+          const stored = localStorage.getItem(STORAGE_KEY)
+          if (stored) baselineData = JSON.parse(stored)
+        } catch (e) { /* ignore */ }
+
+        // Función de polling
+        const poll = async () => {
+          try {
+            const result = await Pedometer.getStepCount()
+            const currentCount = result?.count ?? result?.steps ?? 0
+
+            // Verificar si es un nuevo día
+            const storedToday = baselineData?.date === today
+            if (!storedToday) {
+              // Nuevo día: establecer baseline
+              baselineData = { date: today, baseline: currentCount }
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(baselineData))
+            }
+
+            const delta = Math.max(0, currentCount - (baselineData?.baseline ?? currentCount))
+
+            setHabits(prev => prev.map(h => {
+              if (h.type === 'counter' && h.unit?.toLowerCase().includes('pasos')) {
+                if (h.today_value === delta) return h // sin cambio
+                return {
+                  ...h,
+                  today_value: delta,
+                  today_state: delta >= h.goal ? 'completed' : 'none'
+                }
+              }
+              return h
+            }))
+          } catch (e) {
+            console.error('Error polling steps', e)
+          }
+        }
+
+        await poll() // Primera lectura inmediata
+        intervalId = setInterval(poll, 10000) // Polling cada 10 segundos
       } catch (e) {
-        console.error('Error starting pedometer', e);
+        console.error('Pedometer not available', e)
       }
-    };
-
-    // Nota: El plugin @capacitor-community/pedometer es básico.
-    // Una implementación robusta requeriría guardar el "lastStepCount" timestamp.
-    // Propondré esta implementación básica reactiva al evento 'step'.
-
-    let listenerRef = null;
-    const init = async () => {
-      listenerRef = await startStepListener();
     }
-    init();
+
+    setupPedometer()
 
     return () => {
-      if (listenerRef && typeof listenerRef === 'function') listenerRef();
-    };
-  }, [habits.length]); // Re-run si cambian los hábitos (ej: se agrega uno de pasos)
+      if (intervalId) clearInterval(intervalId)
+    }
+  }, [habits.filter(h => h.type === 'counter' && h.unit?.toLowerCase().includes('pasos')).map(h => h.id).join(',')])
 
 
   const fetchHabits = async () => {
@@ -224,6 +265,7 @@ function AppContent() {
           category: habitCategory
         }),
       })
+      if (!response.ok) throw new Error('Error al agregar hábito')
       const newHabit = await response.json()
       setHabits([newHabit, ...habits])
       setNewHabitTitle('')
@@ -231,8 +273,10 @@ function AppContent() {
       setHabitGoal('')
       setHabitUnit('')
       setHabitCategory('General')
+      toast.success('Hábito agregado')
     } catch (error) {
       console.error('Error al agregar hábito:', error)
+      toast.error('No se pudo agregar el hábito')
     }
   }
 
@@ -240,21 +284,33 @@ function AppContent() {
     if (!confirm('¿Estás seguro de eliminar este hábito?')) return
 
     try {
-      await fetch(`${API_URL}/api/habits/${id}`, {
+      const response = await fetch(`${API_URL}/api/habits/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
       })
+      if (!response.ok) throw new Error('Error al eliminar hábito')
       setHabits(habits.filter(h => h.id !== id))
       if (selectedHabitId === id) setSelectedHabitId(null)
+      toast.success('Hábito eliminado')
     } catch (error) {
       console.error('Error al eliminar hábito:', error)
+      toast.error('No se pudo eliminar el hábito')
     }
   }
 
   const toggleHabitDay = async (e, habit) => {
     e.stopPropagation()
+
+    // Haptic feedback en Android
+    try {
+      const { Haptics, ImpactStyle } = await import('@capacitor/haptics')
+      await Haptics.impact({ style: ImpactStyle.Light })
+    } catch (e) {
+      // No disponible en web, ignorar
+    }
+
     const today = getLocalDateString()
 
     // Optimistic Update
@@ -265,10 +321,8 @@ function AppContent() {
     let newValue = habit.today_value || 0
 
     if (isCounter) {
-      // Increment by one unit? Or filling goal? 
-      // Let's implement +1 logic for quick action
       newValue = (habit.today_value || 0) + 1
-      newStatus = newValue >= habit.goal ? 'completed' : 'none' // Actually backend might handle 'completed' state, but relevant for UI color
+      newStatus = newValue >= habit.goal ? 'completed' : 'none'
     }
 
     // Update local state immediately
@@ -300,7 +354,7 @@ function AppContent() {
 
     } catch (error) {
       console.error('Error toggling habit:', error)
-      // Revert on error (could fetch fresh data)
+      // Revert on error
       fetchHabits()
     }
   }
@@ -397,17 +451,25 @@ function AppContent() {
         </header>
 
         {view === 'planning' ? (
-          <PlanningProvider>
-            <Planning />
-          </PlanningProvider>
+          <ErrorBoundary>
+            <PlanningProvider>
+              <Planning />
+            </PlanningProvider>
+          </ErrorBoundary>
         ) : view === 'meals' ? (
-          <Meals />
+          <ErrorBoundary>
+            <Meals />
+          </ErrorBoundary>
         ) : view === 'expenses' || view === 'daily-expenses' ? (
-          <ExpensesProvider>
-            {view === 'expenses' ? <Expenses /> : <DailyExpenses />}
-          </ExpensesProvider>
+          <ErrorBoundary>
+            <ExpensesProvider>
+              {view === 'expenses' ? <Expenses /> : <DailyExpenses />}
+            </ExpensesProvider>
+          </ErrorBoundary>
         ) : selectedHabitId ? (
-          <HabitStats habitId={selectedHabitId} onBack={() => setSelectedHabitId(null)} />
+          <ErrorBoundary>
+            <HabitStats habitId={selectedHabitId} onBack={() => setSelectedHabitId(null)} />
+          </ErrorBoundary>
         ) : (
           <>
             <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6 mb-8">
@@ -472,6 +534,7 @@ function AppContent() {
                       <label className="block text-xs text-slate-500 mb-1">Meta Diaria</label>
                       <input
                         type="number"
+                        min="0"
                         value={habitGoal}
                         onChange={(e) => setHabitGoal(e.target.value)}
                         placeholder="Ej. 10000"

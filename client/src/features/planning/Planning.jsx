@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, addDays, subDays, isSameDay, parseISO, isToday } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, CheckCircle, Circle, Calendar, Layout, Trash2, Clock, Share2, Users, FolderPlus, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { useAuth } from '../../context/AuthContext';
 import { usePlanning } from './PlanningContext';
 
@@ -73,22 +74,40 @@ const Planning = () => {
         e.preventDefault();
         if (!newTaskTitle.trim()) return;
 
-        await addTask({
-            title: newTaskTitle,
-            due_date: newTaskDate.toISOString(),
-            priority: newTaskPriority
-        });
+        try {
+            await addTask({
+                title: newTaskTitle,
+                due_date: newTaskDate.toISOString(),
+                priority: newTaskPriority
+            });
+            toast.success('Tarea agregada');
+        } catch (err) {
+            toast.error('No se pudo agregar la tarea');
+        }
 
         setNewTaskTitle('');
         setIsAddingTask(false);
-        // fetchTasks triggered by dependency/optimistic update in context
         fetchTasks(view, currentDate);
     };
 
     const handleDeleteSheet = async (e) => {
-        e.stopPropagation(); // prevent select trigger if button inside select area (though it's separate)
+        e.stopPropagation();
         if (!window.confirm('¿Seguro que quieres eliminar esta lista y todas sus tareas?')) return;
-        await deleteSheet(currentSheetId);
+        try {
+            await deleteSheet(currentSheetId);
+            toast.success('Lista eliminada');
+        } catch (err) {
+            toast.error('No se pudo eliminar la lista');
+        }
+    };
+
+    const handleDeleteTask = async (taskId) => {
+        try {
+            await deleteTask(taskId);
+            toast.success('Tarea eliminada');
+        } catch (err) {
+            toast.error('No se pudo eliminar la tarea');
+        }
     };
 
     // Navigation Utils
@@ -273,7 +292,7 @@ const Planning = () => {
                                                     <p className={`truncate font-medium ${task.is_completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>{task.title}</p>
                                                     <div className="flex justify-between items-center mt-1">
                                                         <span className={`text-[9px] px-1 rounded border ${getPriorityColor(task.priority)} uppercase`}>{task.priority.slice(0, 3)}</span>
-                                                        <button onClick={() => deleteTask(task.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12} /></button>
+                                                        <button onClick={() => handleDeleteTask(task.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={12} /></button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -303,7 +322,7 @@ const Planning = () => {
                                         <h3 className={`text-lg font-medium ${task.is_completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>{task.title}</h3>
                                     </div>
                                     <span className={`text-xs px-2 py-1 rounded border font-bold uppercase ${getPriorityColor(task.priority)}`}>{task.priority}</span>
-                                    <button onClick={() => deleteTask(task.id)} className="p-2 text-slate-500 hover:text-red-400 rounded-lg hover:bg-slate-700/50"><Trash2 size={18} /></button>
+                                    <button onClick={() => handleDeleteTask(task.id)} className="p-2 text-slate-500 hover:text-red-400 rounded-lg hover:bg-slate-700/50"><Trash2 size={18} /></button>
                                 </div>
                             ))}
                         </div>

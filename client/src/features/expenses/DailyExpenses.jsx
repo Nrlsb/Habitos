@@ -31,6 +31,7 @@ const DailyExpenses = () => {
 
     // Editing State
     const [editingGroup, setEditingGroup] = useState(null); // Stores the group being edited { ids: [], ... }
+    const [isDeletingGroup, setIsDeletingGroup] = useState(false);
 
     // New State for Advanced Options
     const [esCompartido, setEsCompartido] = useState(false);
@@ -98,9 +99,7 @@ const DailyExpenses = () => {
                 g.category === expense.category &&
                 g.is_shared === expense.is_shared &&
                 g.is_installment === expense.is_installment &&
-                // Check split details deep equality? simpler to check length or payer
-                g.payer_name === expense.payer_name &&
-                Math.abs(new Date(g.primary_created_at) - new Date(expense.created_at)) < 5000
+                g.payer_name === expense.payer_name
             );
 
             const idObj = { id: expense.id, planilla_id: expense.planilla_id };
@@ -183,14 +182,18 @@ const DailyExpenses = () => {
     };
 
     const handleDeleteGroup = async (group) => {
+        if (isDeletingGroup) return;
         if (!window.confirm('¿Eliminar este gasto (y sus copias en otras planillas)?')) return;
 
+        setIsDeletingGroup(true);
         try {
             await Promise.all(group.ids.map(item => deleteExpense(item.planilla_id, item.id)));
             getDailyExpenses(selectedDate);
         } catch (err) {
             console.error("Error deleting group:", err);
             alert("Error al eliminar");
+        } finally {
+            setIsDeletingGroup(false);
         }
     };
 
@@ -390,6 +393,7 @@ const DailyExpenses = () => {
                                         <input
                                             type="number"
                                             step="0.01"
+                                            min="0"
                                             value={amount}
                                             onChange={(e) => setAmount(e.target.value)}
                                             placeholder="0.00"
@@ -530,6 +534,7 @@ const DailyExpenses = () => {
                                             <label className="text-[10px] text-slate-500 ml-1 mb-0.5 block">Actual</label>
                                             <input
                                                 type="number"
+                                                min="1"
                                                 value={cuotaActual}
                                                 onChange={(e) => setCuotaActual(e.target.value)}
                                                 placeholder="1"
@@ -540,6 +545,7 @@ const DailyExpenses = () => {
                                             <label className="text-[10px] text-slate-500 ml-1 mb-0.5 block">Total</label>
                                             <input
                                                 type="number"
+                                                min="1"
                                                 value={totalCuotas}
                                                 onChange={(e) => setTotalCuotas(e.target.value)}
                                                 placeholder="Total"
@@ -589,7 +595,7 @@ const DailyExpenses = () => {
                                 <p className="text-sm">No hay gastos registrados en esta fecha.</p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-slate-700/30">
+                            <div className="divide-y divide-slate-700/30 max-h-[70vh] overflow-y-auto">
                                 {groupedExpenses.map((expense) => (
                                     <div key={expense.id} className="p-4 hover:bg-slate-700/20 transition-colors flex items-center justify-between group">
                                         <div className="flex items-center gap-4">
@@ -648,7 +654,8 @@ const DailyExpenses = () => {
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteGroup(expense)}
-                                                    className="p-1.5 bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white rounded-lg transition-colors"
+                                                    disabled={isDeletingGroup}
+                                                    className="p-1.5 bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                     title="Eliminar"
                                                 >
                                                     <Trash2 size={14} />
