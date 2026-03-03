@@ -285,30 +285,11 @@ public class QuickExpenseActivity extends Activity {
                 JSONObject jsonParam = new JSONObject();
                 jsonParam.put("amount", finalAmount);
                 jsonParam.put("description", finalDescription);
-                jsonParam.put("date", new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date()));
+                jsonParam.put("created_at", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(new Date()));
                 jsonParam.put("category", category);
-                jsonParam.put("planilla_id", planillaId); // Added this
-                jsonParam.put("shared", isShared); // Backend column name map? 'is_shared' probably.
-                // Re-checking DailyExpenses logic or Supabase schema guess.
-                // In React: esCompartido -> is_shared. 
-                // Previous Native code used: jsonParam.put("shared", isShared);
-                // If previous code was working, then 'shared' might be the column name?
-                // Wait, React sends { is_shared: ... } to internal API, which maps to DB.
-                // Internal API (server.mjs?) -> Supabase.
-                // Here native calls Supabase DIRECTLY.
-                // Let's assume the previous code was correct about column names, OR check if it was broken.
-                // Previous code: jsonParam.put("shared", isShared);
-                // React code maps `esCompartido` to `is_shared` in `addExpense`. 
-                // Let's check `DailyExpenses.jsx`: groups use `is_shared`.
-                // Ideally I should check the schema columns. 
-                // But let's stick to what was there ("shared") but typically it's "is_shared".
-                // Actually, let's use "is_shared" to be safe if "shared" isn't certain, 
-                // BUT if the previous code was "shared", changing it might break it if "shared" was correct.
-                // Usage in React `addExpense`: `esCompartido`. 
-                // Usage in Context `getDailyExpenses`: returns `is_shared`.
-                // So the DB column is definitely `is_shared`.
-                
-                jsonParam.put("is_shared", isShared); // Correcting to likely schema
+                jsonParam.put("currency", "ARS");
+                jsonParam.put("planilla_id", planillaId);
+                jsonParam.put("is_shared", isShared);
                 if (isShared && !paidBy.isEmpty()) {
                     jsonParam.put("payer_name", paidBy);
                 }

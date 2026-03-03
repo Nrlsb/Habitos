@@ -49,6 +49,12 @@
             android:launchMode="singleInstance"
             android:exported="true" />
 
+        <!-- Step Counter Background Service -->
+        <service
+            android:name=".StepCounterService"
+            android:foregroundServiceType="health"
+            android:exported="false" />
+
         <!-- Expense Widget -->
         <receiver
             android:name=".ExpenseWidget"
@@ -60,6 +66,19 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/expense_widget_info" />
+        </receiver>
+
+        <!-- Step Widget -->
+        <receiver
+            android:name=".StepWidget"
+            android:exported="true"
+            android:label="Pasos hoy">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/step_widget_info" />
         </receiver>
 
         <provider
@@ -78,4 +97,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
 </manifest>

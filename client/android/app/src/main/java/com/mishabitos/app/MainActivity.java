@@ -8,6 +8,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(WidgetAuthPlugin.class);
+        registerPlugin(StepServicePlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

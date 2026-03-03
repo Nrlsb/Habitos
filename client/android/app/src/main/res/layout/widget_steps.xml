@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_steps_bg"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pasos hoy"
+        android:textColor="#9ca3af"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="4dp">
+
+        <TextView
+            android:id="@+id/tv_step_count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:textColor="#2ecc70"
+            android:textSize="30sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_step_goal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="/ 8,000"
+            android:textColor="#9ca3af"
+            android:textSize="13sp"
+            android:layout_marginStart="8dp" />
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/pb_steps"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="10dp"
+        android:max="8000"
+        android:progress="0"
+        android:progressTint="#2ecc70"
+        android:progressBackgroundTint="#1a3a2a" />
+
+</LinearLayout>
