@@ -1,17 +1,25 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, lazy, Suspense, useRef } from 'react'
 import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut, Layout, Utensils } from 'lucide-react'
 import { toast } from 'sonner'
 import { Capacitor } from '@capacitor/core'
-import HabitStats from './HabitStats'
-import Expenses from './features/expenses/Expenses'
-import DailyExpenses from './features/expenses/DailyExpenses'
-import Planning from './features/planning/Planning'
-import Meals from './features/meals/Meals'
+import { usePedometer } from './hooks/usePedometer'
 import { ExpensesProvider } from './features/expenses/ExpensesContext'
 import { PlanningProvider } from './features/planning/PlanningContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import ErrorBoundary from './components/ErrorBoundary'
+
+const HabitStats = lazy(() => import('./HabitStats'))
+const Expenses = lazy(() => import('./features/expenses/Expenses'))
+const DailyExpenses = lazy(() => import('./features/expenses/DailyExpenses'))
+const Planning = lazy(() => import('./features/planning/Planning'))
+const Meals = lazy(() => import('./features/meals/Meals'))
+
+const LazySpinner = () => (
+  <div className="flex items-center justify-center py-20">
+    <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+)
 
 function AppContent() {
   const getLocalDateString = () => {
@@ -34,6 +42,9 @@ function AppContent() {
   const [habitGoal, setHabitGoal] = useState('')
   const [habitUnit, setHabitUnit] = useState('')
   const [habitCategory, setHabitCategory] = useState('General')
+
+  // Drag-and-drop state
+  const dragIndexRef = useRef(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -151,82 +162,77 @@ function AppContent() {
     }
   }, [habits])
 
-  // Efecto para el Podómetro — implementación robusta con polling y baseline diario
+  // Pedómetro — delegado al custom hook
+  usePedometer(habits, setHabits, getLocalDateString)
+
+  // Aplicar orden guardado en localStorage al cargar hábitos
   useEffect(() => {
-    const stepHabitIds = habits
-      .filter(h => h.type === 'counter' && h.unit?.toLowerCase().includes('pasos'))
-      .map(h => h.id)
+    if (!habits.length || !user) return
+    const savedOrder = localStorage.getItem(`habits_order_${user.id}`)
+    if (!savedOrder) return
+    try {
+      const orderIds = JSON.parse(savedOrder)
+      const ordered = [...habits].sort((a, b) => {
+        const ia = orderIds.indexOf(a.id)
+        const ib = orderIds.indexOf(b.id)
+        if (ia === -1) return 1
+        if (ib === -1) return -1
+        return ia - ib
+      })
+      // Solo actualizar si el orden cambió
+      const changed = ordered.some((h, i) => h.id !== habits[i]?.id)
+      if (changed) setHabits(ordered)
+    } catch (e) { /* ignore */ }
+  }, [habits.length, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (stepHabitIds.length === 0) return
+  const handleDragStart = (index) => {
+    dragIndexRef.current = index
+  }
 
-    let intervalId = null
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    const from = dragIndexRef.current
+    if (from === null || from === index) return
+    const reordered = [...habits]
+    const [moved] = reordered.splice(from, 1)
+    reordered.splice(index, 0, moved)
+    dragIndexRef.current = index
+    setHabits(reordered)
+  }
 
-    const setupPedometer = async () => {
-      try {
-        const { Pedometer } = await import('@capgo/capacitor-pedometer')
+  const handleDragEnd = () => {
+    dragIndexRef.current = null
+    if (user) {
+      localStorage.setItem(`habits_order_${user.id}`, JSON.stringify(habits.map(h => h.id)))
+    }
+  }
 
-        // Pedir permiso ACTIVITY_RECOGNITION
-        try {
-          await Pedometer.requestPermission?.()
-        } catch (e) {
-          console.log('requestPermission not available or already granted', e)
-        }
-
-        const today = getLocalDateString()
-        const STORAGE_KEY = 'pedometer_baseline'
-
-        // Leer o inicializar baseline del día
-        let baselineData = null
-        try {
-          const stored = localStorage.getItem(STORAGE_KEY)
-          if (stored) baselineData = JSON.parse(stored)
-        } catch (e) { /* ignore */ }
-
-        // Función de polling
-        const poll = async () => {
-          try {
-            const result = await Pedometer.getStepCount()
-            const currentCount = result?.count ?? result?.steps ?? 0
-
-            // Verificar si es un nuevo día
-            const storedToday = baselineData?.date === today
-            if (!storedToday) {
-              // Nuevo día: establecer baseline
-              baselineData = { date: today, baseline: currentCount }
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(baselineData))
-            }
-
-            const delta = Math.max(0, currentCount - (baselineData?.baseline ?? currentCount))
-
-            setHabits(prev => prev.map(h => {
-              if (h.type === 'counter' && h.unit?.toLowerCase().includes('pasos')) {
-                if (h.today_value === delta) return h // sin cambio
-                return {
-                  ...h,
-                  today_value: delta,
-                  today_state: delta >= h.goal ? 'completed' : 'none'
-                }
-              }
-              return h
-            }))
-          } catch (e) {
-            console.error('Error polling steps', e)
-          }
-        }
-
-        await poll() // Primera lectura inmediata
-        intervalId = setInterval(poll, 10000) // Polling cada 10 segundos
-      } catch (e) {
-        console.error('Pedometer not available', e)
+  // Exportar todos los hábitos como JSON
+  const exportBackupJSON = async () => {
+    try {
+      const [habitsRes] = await Promise.all([
+        fetch(`${API_URL}/api/habits?date=${getLocalDateString()}`, {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        })
+      ])
+      const habitsData = await habitsRes.json()
+      const backup = {
+        exportedAt: new Date().toISOString(),
+        user: user.email,
+        habits: habitsData,
       }
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `mis-habitos-backup-${getLocalDateString()}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('Backup exportado')
+    } catch (e) {
+      toast.error('Error al exportar backup')
     }
-
-    setupPedometer()
-
-    return () => {
-      if (intervalId) clearInterval(intervalId)
-    }
-  }, [habits.filter(h => h.type === 'counter' && h.unit?.toLowerCase().includes('pasos')).map(h => h.id).join(',')])
+  }
 
 
   const fetchHabits = async () => {
@@ -379,9 +385,18 @@ function AppContent() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-900/10 rounded-full blur-[120px]"></div>
       </div>
 
-      <div className={`mx-auto px-4 py-8 md:py-12 relative z-10 transition-all duration-300 ${view === 'expenses' ? 'max-w-7xl' : 'max-w-5xl'}`}>
-        <header className="mb-6 md:mb-10 text-center relative">
-          <div className="absolute top-0 right-0">
+      <div className={`mx-auto px-4 py-6 md:py-12 pb-28 md:pb-14 relative z-10 transition-all duration-300 ${view === 'expenses' ? 'max-w-7xl' : 'max-w-5xl'}`}>
+        <header className="mb-4 md:mb-10 text-center relative">
+          <div className="absolute top-0 right-0 flex items-center gap-1">
+            {view === 'habits' && !selectedHabitId && (
+              <button
+                onClick={exportBackupJSON}
+                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
+                title="Exportar backup JSON"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+            )}
             <button
               onClick={signOut}
               className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
@@ -390,85 +405,38 @@ function AppContent() {
               <LogOut size={20} />
             </button>
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 mb-2">
+          <h1 className="text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
             Mis Hábitos & Gastos
           </h1>
-          <p className="text-slate-400 text-lg">Construye tu mejor versión, día a día.</p>
-
-          {/* Navigation */}
-          <div className="flex justify-start md:justify-center gap-2 md:gap-3 mt-6 md:mt-8 bg-slate-900/50 p-1.5 rounded-full border border-slate-800 backdrop-blur-sm w-full md:w-fit mx-auto overflow-x-auto max-w-full">
-            <button
-              onClick={() => setView('habits')}
-              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'habits'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-            >
-              <CheckCircle size={18} />
-              Hábitos
-            </button>
-            <button
-              onClick={() => setView('meals')}
-              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'meals'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-            >
-              <Utensils size={18} />
-              Comidas
-            </button>
-            <button
-              onClick={() => setView('expenses')}
-              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'expenses'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-            >
-              <Wallet size={18} />
-              Gastos
-            </button>
-            <button
-              onClick={() => setView('daily-expenses')}
-              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'daily-expenses'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-            >
-              <Calendar size={18} />
-              Diario
-            </button>
-            <button
-              onClick={() => setView('planning')}
-              className={`shrink-0 px-4 md:px-5 py-2.5 rounded-full flex items-center gap-2 transition-all duration-300 font-medium whitespace-nowrap ${view === 'planning'
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-            >
-              <Layout size={18} />
-              Planificación
-            </button>
-          </div>
         </header>
 
         {view === 'planning' ? (
           <ErrorBoundary>
-            <PlanningProvider>
-              <Planning />
-            </PlanningProvider>
+            <Suspense fallback={<LazySpinner />}>
+              <PlanningProvider>
+                <Planning />
+              </PlanningProvider>
+            </Suspense>
           </ErrorBoundary>
         ) : view === 'meals' ? (
           <ErrorBoundary>
-            <Meals />
+            <Suspense fallback={<LazySpinner />}>
+              <Meals />
+            </Suspense>
           </ErrorBoundary>
         ) : view === 'expenses' || view === 'daily-expenses' ? (
           <ErrorBoundary>
-            <ExpensesProvider>
-              {view === 'expenses' ? <Expenses /> : <DailyExpenses />}
-            </ExpensesProvider>
+            <Suspense fallback={<LazySpinner />}>
+              <ExpensesProvider>
+                {view === 'expenses' ? <Expenses /> : <DailyExpenses />}
+              </ExpensesProvider>
+            </Suspense>
           </ErrorBoundary>
         ) : selectedHabitId ? (
           <ErrorBoundary>
-            <HabitStats habitId={selectedHabitId} onBack={() => setSelectedHabitId(null)} />
+            <Suspense fallback={<LazySpinner />}>
+              <HabitStats habitId={selectedHabitId} onBack={() => setSelectedHabitId(null)} />
+            </Suspense>
           </ErrorBoundary>
         ) : (
           <>
@@ -570,10 +538,14 @@ function AppContent() {
                 </div>
               ) : (
                 <ul className="space-y-3">
-                  {habits.map((habit) => (
+                  {habits.map((habit, index) => (
                     <li
                       key={habit.id}
                       onClick={() => setSelectedHabitId(habit.id)}
+                      draggable
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragEnd={handleDragEnd}
                       className="group bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl p-4 flex items-center justify-between transition-all duration-200 hover:shadow-lg hover:border-slate-600 hover:-translate-y-0.5 cursor-pointer"
                     >
                       <div className="flex items-center gap-4 flex-1">
@@ -653,6 +625,43 @@ function AppContent() {
           </>
         )}
       </div>
+
+      {/* Bottom Navigation Bar */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/80"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        <div className="flex items-center justify-around px-1 py-2">
+          {[
+            { v: 'habits', icon: CheckCircle, label: 'Hábitos' },
+            { v: 'meals', icon: Utensils, label: 'Comidas' },
+            { v: 'expenses', icon: Wallet, label: 'Gastos' },
+            { v: 'daily-expenses', icon: Calendar, label: 'Diario' },
+            { v: 'planning', icon: Layout, label: 'Plan' },
+          ].map(({ v, icon: Icon, label }) => {
+            const isActive = view === v
+            return (
+              <button
+                key={v}
+                onClick={() => {
+                  setView(v)
+                  setSelectedHabitId(null)
+                }}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all duration-200 flex-1 min-w-0 ${
+                  isActive ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                <div className={`p-1.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-indigo-500/15' : ''}`}>
+                  <Icon size={20} />
+                </div>
+                <span className={`text-[10px] font-medium transition-colors truncate w-full text-center ${isActive ? 'text-indigo-300' : 'text-slate-600'}`}>
+                  {label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </nav>
     </div>
   )
 }

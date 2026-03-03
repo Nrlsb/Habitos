@@ -519,6 +519,47 @@ function HabitStats({ habitId, onBack }) {
                 </div>
             </div>
 
+            {/* Badges de Rachas */}
+            {(currentStreak > 0 || longestStreak > 0) && (
+                <div className="flex flex-wrap gap-3">
+                    {currentStreak >= 100 && (
+                        <div className="flex items-center gap-2 bg-yellow-500/10 border border-yellow-500/30 rounded-full px-4 py-2 text-yellow-300 font-semibold text-sm">
+                            🏆 Leyenda — {currentStreak} días seguidos
+                        </div>
+                    )}
+                    {currentStreak >= 30 && currentStreak < 100 && (
+                        <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-4 py-2 text-indigo-300 font-semibold text-sm">
+                            💎 Diamante — {currentStreak} días seguidos
+                        </div>
+                    )}
+                    {currentStreak >= 7 && currentStreak < 30 && (
+                        <div className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-2 text-green-300 font-semibold text-sm">
+                            🔥 En racha — {currentStreak} días seguidos
+                        </div>
+                    )}
+                    {currentStreak > 0 && currentStreak < 7 && (
+                        <div className="flex items-center gap-2 bg-slate-700/50 border border-slate-600/50 rounded-full px-4 py-2 text-slate-300 font-semibold text-sm">
+                            ⚡ {currentStreak} día{currentStreak > 1 ? 's' : ''} seguido{currentStreak > 1 ? 's' : ''}
+                        </div>
+                    )}
+                    {longestStreak >= 100 && (
+                        <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-2 text-amber-300 font-semibold text-sm">
+                            👑 Mejor racha: {longestStreak} días
+                        </div>
+                    )}
+                    {longestStreak >= 30 && longestStreak < 100 && (
+                        <div className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 rounded-full px-4 py-2 text-purple-300 font-semibold text-sm">
+                            🥇 Mejor racha: {longestStreak} días
+                        </div>
+                    )}
+                    {longestStreak >= 7 && longestStreak < 30 && (
+                        <div className="flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full px-4 py-2 text-cyan-300 font-semibold text-sm">
+                            🥈 Mejor racha: {longestStreak} días
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Heatmap Section */}
             <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl overflow-x-auto">
                 <h3 className="text-lg font-semibold text-slate-200 mb-4">Consistencia Anual</h3>

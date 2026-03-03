@@ -102,10 +102,10 @@ function Expenses() {
     };
 
     const handleSelectAll = () => {
-        if (selectedExpenseIds.size === filteredExpenses.length) {
+        if (selectedExpenseIds.size === displayedExpenses.length) {
             clearSelection();
         } else {
-            setSelectedExpenseIds(new Set(filteredExpenses.map(e => e.id)));
+            setSelectedExpenseIds(new Set(displayedExpenses.map(e => e.id)));
             setIsSelectionMode(true);
         }
     };
@@ -119,6 +119,7 @@ function Expenses() {
     });
 
     const [activeTab, setActiveTab] = useState('list'); // 'list' or 'analysis'
+    const [searchQuery, setSearchQuery] = useState('');
 
     const [dolarRate, setDolarRate] = useState(null);
 
@@ -504,6 +505,39 @@ function Expenses() {
             return acc + personalAmount;
         }, 0);
     }, [filteredExpenses, dolarRate]);
+
+    // Expenses filtered by month AND search query (used in list view only)
+    const displayedExpenses = useMemo(() => {
+        if (!searchQuery.trim()) return filteredExpenses;
+        const q = searchQuery.toLowerCase();
+        return filteredExpenses.filter(e =>
+            e.description?.toLowerCase().includes(q) ||
+            e.category?.toLowerCase().includes(q)
+        );
+    }, [filteredExpenses, searchQuery]);
+
+    const exportToCSV = () => {
+        if (!filteredExpenses.length) return;
+        const headers = ['Fecha', 'Descripción', 'Categoría', 'Monto', 'Moneda', 'Tipo', 'Pagado por'];
+        const rows = filteredExpenses.map(e => [
+            new Date(e.created_at).toLocaleDateString('es-AR'),
+            `"${(e.description || '').replace(/"/g, '""')}"`,
+            e.category || 'General',
+            e.amount,
+            e.currency || 'ARS',
+            e.is_shared ? 'Compartido' : 'Personal',
+            e.payer_name || ''
+        ]);
+        const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const month = currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' });
+        a.href = url;
+        a.download = `gastos-${month}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
 
     const currentPlanilla = planillas.find(p => p.id === selectedPlanillaId);
 
@@ -1398,6 +1432,34 @@ function Expenses() {
                             </div>
                         </div>
 
+                        {/* SEARCH + CSV TOOLBAR */}
+                        <div className="flex gap-3 mb-4">
+                            <div className="relative flex-1">
+                                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={e => setSearchQuery(e.target.value)}
+                                    placeholder="Buscar por descripción o categoría..."
+                                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800/60 border border-slate-700 text-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-500 text-sm"
+                                />
+                                {searchQuery && (
+                                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
+                                        <X size={14} />
+                                    </button>
+                                )}
+                            </div>
+                            <button
+                                onClick={exportToCSV}
+                                disabled={!filteredExpenses.length}
+                                title="Exportar a CSV"
+                                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-900/30 hover:bg-emerald-900/50 text-emerald-300 rounded-xl border border-emerald-500/20 transition-all font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <span className="hidden sm:inline">CSV</span>
+                            </button>
+                        </div>
+
                         {/* MOBILE CARD VIEW */}
                         <div className="block md:hidden space-y-4">
                             {expenses.length === 0 ? (
@@ -1405,12 +1467,12 @@ function Expenses() {
                                     No hay gastos registrados.
                                 </div>
                             ) : (
-                                filteredExpenses.length === 0 ? (
+                                displayedExpenses.length === 0 ? (
                                     <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-700 rounded-xl bg-slate-800/20">
-                                        No hay gastos registrados en este mes.
+                                        {searchQuery ? 'No hay resultados para tu búsqueda.' : 'No hay gastos registrados en este mes.'}
                                     </div>
                                 ) : (
-                                    filteredExpenses.map((expense) => {
+                                    displayedExpenses.map((expense) => {
                                         const montoTotalArs = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
                                         const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
 
@@ -1510,7 +1572,7 @@ function Expenses() {
                                             <th scope="col" className="px-6 py-4 w-10 text-center">
                                                 <input
                                                     type="checkbox"
-                                                    checked={filteredExpenses.length > 0 && selectedExpenseIds.size === filteredExpenses.length}
+                                                    checked={displayedExpenses.length > 0 && selectedExpenseIds.size === displayedExpenses.length}
                                                     onChange={handleSelectAll}
                                                     className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                                                 />
@@ -1527,14 +1589,14 @@ function Expenses() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-700/50">
-                                        {filteredExpenses.length === 0 ? (
+                                        {displayedExpenses.length === 0 ? (
                                             <tr>
                                                 <td colSpan="9" className="px-6 py-12 text-center text-slate-500">
-                                                    No hay gastos registrados en este mes.
+                                                    {searchQuery ? 'No hay resultados para tu búsqueda.' : 'No hay gastos registrados en este mes.'}
                                                 </td>
                                             </tr>
                                         ) : (
-                                            filteredExpenses.map((expense, index) => {
+                                            displayedExpenses.map((expense, index) => {
                                                 const montoTotalArs = expense.currency === 'USD' && dolarRate ? expense.amount * dolarRate : expense.amount;
                                                 const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
 
