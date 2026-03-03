@@ -245,30 +245,32 @@ const DailyExpenses = () => {
     const isToday = isSameDay(selectedDate, new Date());
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             {/* Header / Date Navigation */}
-            <div className="flex items-center justify-between mb-6 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 backdrop-blur-sm">
+            <div className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md border-b border-primary/10 px-4 py-4 flex items-center justify-between">
                 <button
                     onClick={handlePrevDay}
-                    className="p-2 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-colors"
+                    className="p-2 hover:bg-primary/10 rounded-xl text-slate-400 hover:text-primary transition-colors"
                 >
                     <ChevronLeft size={24} />
                 </button>
 
                 <div className="text-center">
-                    <h2 className="text-lg font-semibold text-slate-200 capitalize">
+                    <h2 className="text-lg font-bold text-slate-100 capitalize tracking-tight">
                         {format(selectedDate, "EEEE d 'de' MMMM", { locale: es })}
                     </h2>
-                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
-                        {isToday ? 'Hoy' : 'Histórico'}
-                    </p>
+                    {isToday && (
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                            Hoy
+                        </span>
+                    )}
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                     {!isToday && (
                         <button
                             onClick={() => setSelectedDate(new Date())}
-                            className="p-2 hover:bg-slate-700 rounded-xl text-indigo-400 hover:text-indigo-300 transition-colors text-xs font-bold uppercase border border-indigo-500/20"
+                            className="px-3 py-1 hover:bg-primary/10 rounded-xl text-primary transition-colors text-xs font-bold uppercase border border-primary/20"
                         >
                             HOY
                         </button>
@@ -276,38 +278,37 @@ const DailyExpenses = () => {
                     <button
                         onClick={handleNextDay}
                         disabled={isToday}
-                        className={`p-2 rounded-xl transition-colors ${isToday ? 'text-slate-700 cursor-not-allowed' : 'hover:bg-slate-700 text-slate-400 hover:text-white'}`}
+                        className={`p-2 rounded-xl transition-colors ${isToday ? 'text-slate-700 cursor-not-allowed' : 'hover:bg-primary/10 text-slate-400 hover:text-primary'}`}
                     >
                         <ChevronRight size={24} />
                     </button>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left Column: Summary & Add Form */}
-                <div className="lg:col-span-1 space-y-6">
-                    {/* Total Card */}
-                    <div className="bg-gradient-to-br from-indigo-900/40 to-slate-900/40 border border-indigo-500/20 rounded-2xl p-6 shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl -mr-8 -mt-8"></div>
-                        <div className="relative z-10">
-                            <span className="text-indigo-300 text-xs font-bold uppercase tracking-wider flex items-center gap-2 mb-2">
-                                <Wallet size={14} /> Total del Día
+            <div className="px-4 py-4 space-y-4">
+                {/* Total Card */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-6 shadow-xl shadow-primary/20">
+                    <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
+                    <div className="absolute -left-4 -bottom-4 w-24 h-24 bg-black/5 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                        <p className="text-xs font-bold text-[#131f18]/60 uppercase tracking-widest mb-1">Total del día</p>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-4xl font-black text-[#131f18] tabular-nums">
+                                $ {totalDayAmount.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                             </span>
-                            <div className="text-4xl font-bold text-white tabular-nums tracking-tight">
-                                <span className="text-2xl text-slate-400 mr-1">$</span>
-                                {totalDayAmount.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-                            </div>
-                            {dolarRate && (
-                                <p className="text-xs text-slate-500 mt-2 font-mono">
-                                    ≈ USD {(totalDayAmount / dolarRate).toFixed(2)}
-                                </p>
-                            )}
+                            <span className="text-sm font-medium text-[#131f18]/70">ARS</span>
                         </div>
+                        {dolarRate && (
+                            <p className="text-xs text-[#131f18]/50 mt-1 font-mono">
+                                ≈ USD {(totalDayAmount / dolarRate).toFixed(2)}
+                            </p>
+                        )}
                     </div>
+                </div>
 
-                    {/* Quick Add Form */}
-                    <div className={`bg-slate-800/50 border ${editingGroup ? 'border-amber-500/30 shadow-amber-500/10' : 'border-slate-700/50'} border-slate-700/50 rounded-2xl p-5 backdrop-blur-sm transition-colors`}>
-                        <h3 className="text-slate-200 font-semibold mb-4 flex items-center justify-between">
+                {/* Quick Add Form */}
+                <div className={`bg-primary/5 border ${editingGroup ? 'border-amber-500/30' : 'border-primary/10'} rounded-2xl p-5 transition-colors`}>
+                        <h3 className="text-slate-100 font-bold text-lg mb-4 flex items-center justify-between">
                             <div className="flex items-center gap-2">
                                 {editingGroup ? (
                                     <>
@@ -316,7 +317,7 @@ const DailyExpenses = () => {
                                     </>
                                 ) : (
                                     <>
-                                        <Plus size={18} className="text-emerald-400" />
+                                        <Plus size={18} className="text-primary" />
                                         <span>Agregar Gasto Rápido</span>
                                     </>
                                 )}
@@ -329,9 +330,9 @@ const DailyExpenses = () => {
                         </h3>
 
                         {planillas.length === 0 ? (
-                            <div className="text-center p-4 bg-slate-900/50 rounded-xl border border-dashed border-slate-700">
-                                <p className="text-sm text-slate-500 mb-2">No tienes planillas activas.</p>
-                                <p className="text-xs text-slate-600">Crea una en la pestaña "Mis Planillas" para comenzar.</p>
+                            <div className="text-center p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20">
+                                <p className="text-sm text-slate-400 mb-2">No tienes planillas activas.</p>
+                                <p className="text-xs text-slate-500">Crea una en la pestaña "Mis Planillas" para comenzar.</p>
                             </div>
                         ) : (
                             <form onSubmit={handleAddExpense} className="space-y-3">
@@ -340,7 +341,7 @@ const DailyExpenses = () => {
                                     <button
                                         type="button"
                                         onClick={() => setShowPlanillaDropdown(!showPlanillaDropdown)}
-                                        className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 text-left flex justify-between items-center"
+                                        className="w-full bg-white/5 border border-primary/10 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 text-left flex justify-between items-center"
                                     >
                                         <span className="truncate">
                                             {selectedPlanillaIds.length === 0
@@ -354,15 +355,15 @@ const DailyExpenses = () => {
                                     </button>
 
                                     {showPlanillaDropdown && (
-                                        <div className="absolute z-10 w-full mt-1 bg-slate-800 border border-slate-600 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                                        <div className="absolute z-10 w-full mt-1 bg-[#1a2e20] border border-primary/20 rounded-xl shadow-xl max-h-48 overflow-y-auto">
                                             {planillas.map(p => (
                                                 <div
                                                     key={p.id}
                                                     onClick={() => togglePlanillaSelection(p.id)}
-                                                    className="flex items-center gap-2 px-3 py-2 hover:bg-slate-700 cursor-pointer"
+                                                    className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 cursor-pointer"
                                                 >
-                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedPlanillaIds.includes(p.id) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500'}`}>
-                                                        {selectedPlanillaIds.includes(p.id) && <Plus size={12} className="text-white" />}
+                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedPlanillaIds.includes(p.id) ? 'bg-primary border-primary' : 'border-slate-500'}`}>
+                                                        {selectedPlanillaIds.includes(p.id) && <Plus size={12} className="text-[#131f18]" />}
                                                     </div>
                                                     <span className="text-sm text-slate-200">{p.nombre}</span>
                                                 </div>
@@ -383,7 +384,7 @@ const DailyExpenses = () => {
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Descripción"
-                                        className="w-full bg-slate-900/50 border border-slate-600 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 placeholder:text-slate-600"
+                                        className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500"
                                     />
                                 </div>
 
@@ -397,13 +398,13 @@ const DailyExpenses = () => {
                                             value={amount}
                                             onChange={(e) => setAmount(e.target.value)}
                                             placeholder="0.00"
-                                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 placeholder:text-slate-600"
+                                            className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500"
                                         />
                                     </div>
                                     <select
                                         value={currency}
                                         onChange={(e) => setCurrency(e.target.value)}
-                                        className="bg-slate-900/50 border border-slate-600 text-slate-300 text-sm rounded-xl px-2 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                        className="bg-white/5 border border-primary/10 text-slate-300 text-sm rounded-xl px-2 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
                                     >
                                         <option value="ARS">ARS</option>
                                         <option value="USD">USD</option>
@@ -415,7 +416,7 @@ const DailyExpenses = () => {
                                     <select
                                         value={category}
                                         onChange={(e) => setCategory(e.target.value)}
-                                        className="w-full bg-slate-900/50 border border-slate-600 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500"
+                                        className="w-full bg-white/5 border border-primary/10 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
                                     >
                                         {categories.map(cat => (
                                             <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -425,9 +426,9 @@ const DailyExpenses = () => {
 
                                 {/* Extra Options: Shared & Installments */}
                                 <div className="flex gap-3">
-                                    <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-slate-900/30 p-2 rounded-lg border border-slate-700/50 hover:border-slate-600">
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500 bg-slate-800'}`}>
-                                            {esCompartido && <Plus size={10} className="text-white" />}
+                                    <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-white/5 p-2 rounded-xl border border-primary/10 hover:border-primary/30 transition-colors">
+                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-primary border-primary' : 'border-slate-500 bg-white/5'}`}>
+                                            {esCompartido && <Plus size={10} className="text-[#131f18]" />}
                                         </div>
                                         <input
                                             type="checkbox"
@@ -438,9 +439,9 @@ const DailyExpenses = () => {
                                         <span className="text-xs text-slate-400 group-hover:text-slate-300">Compartido</span>
                                     </label>
 
-                                    <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-slate-900/30 p-2 rounded-lg border border-slate-700/50 hover:border-slate-600">
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500 bg-slate-800'}`}>
-                                            {enCuotas && <Plus size={10} className="text-white" />}
+                                    <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-white/5 p-2 rounded-xl border border-primary/10 hover:border-primary/30 transition-colors">
+                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-primary border-primary' : 'border-slate-500 bg-white/5'}`}>
+                                            {enCuotas && <Plus size={10} className="text-[#131f18]" />}
                                         </div>
                                         <input
                                             type="checkbox"
@@ -459,17 +460,17 @@ const DailyExpenses = () => {
                                             value={paidBy}
                                             onChange={(e) => setPaidBy(e.target.value)}
                                             placeholder="Pagado por (opcional)"
-                                            className="w-full bg-slate-900/50 border border-slate-600 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 placeholder:text-slate-600"
+                                            className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500"
                                         />
 
                                         {/* Division Personalizada */}
-                                        <div className="mt-3 p-3 bg-slate-900/30 rounded-xl border border-slate-700/30">
+                                        <div className="mt-3 p-3 bg-white/5 rounded-xl border border-primary/10">
                                             <div className="flex justify-between items-center mb-2">
                                                 <h4 className="text-xs font-medium text-slate-300">División Personalizada</h4>
                                                 <button
                                                     type="button"
                                                     onClick={addSplitDetail}
-                                                    className="text-[10px] flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 px-2 py-1 rounded"
+                                                    className="text-[10px] flex items-center gap-1 text-primary hover:text-primary/80 transition-colors bg-primary/10 px-2 py-1 rounded"
                                                 >
                                                     <Plus size={10} /> Añadir
                                                 </button>
@@ -491,7 +492,7 @@ const DailyExpenses = () => {
                                                                 placeholder="Persona (ej. Lucas)"
                                                                 value={detail.name}
                                                                 onChange={(e) => updateSplitDetail(index, 'name', e.target.value)}
-                                                                className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 text-[10px] rounded p-1.5 focus:border-indigo-500 focus:outline-none"
+                                                                className="flex-1 bg-white/5 border border-primary/10 text-slate-200 text-[10px] rounded p-1.5 focus:border-primary focus:outline-none"
                                                             />
                                                             <div className="relative w-20">
                                                                 <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]">$</span>
@@ -500,7 +501,7 @@ const DailyExpenses = () => {
                                                                     placeholder="0"
                                                                     value={detail.amount}
                                                                     onChange={(e) => updateSplitDetail(index, 'amount', parseFloat(e.target.value) || 0)}
-                                                                    className="w-full bg-slate-800 border border-slate-600 text-slate-200 text-[10px] rounded pl-3 pr-1 py-1.5 focus:border-indigo-500 focus:outline-none text-right"
+                                                                    className="w-full bg-white/5 border border-primary/10 text-slate-200 text-[10px] rounded pl-3 pr-1 py-1.5 focus:border-primary focus:outline-none text-right"
                                                                 />
                                                             </div>
                                                             <button
@@ -512,11 +513,11 @@ const DailyExpenses = () => {
                                                             </button>
                                                         </div>
                                                     ))}
-                                                    <div className="pt-2 border-t border-slate-700/50 text-right text-[10px] text-slate-500">
+                                                    <div className="pt-2 border-t border-primary/10 text-right text-[10px] text-slate-500">
                                                         Asignado: <span className="text-slate-300">${splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0).toFixed(2)}</span>
                                                         {amount && (
                                                             <span className="ml-2">
-                                                                Resto: <span className="text-emerald-400">${(parseFloat(amount) - splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0)).toFixed(2)}</span>
+                                                                Resto: <span className="text-primary">${(parseFloat(amount) - splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0)).toFixed(2)}</span>
                                                             </span>
                                                         )}
                                                     </div>
@@ -538,7 +539,7 @@ const DailyExpenses = () => {
                                                 value={cuotaActual}
                                                 onChange={(e) => setCuotaActual(e.target.value)}
                                                 placeholder="1"
-                                                className="w-full bg-slate-900/50 border border-slate-600 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                                className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
                                             />
                                         </div>
                                         <div className="flex-1">
@@ -549,7 +550,7 @@ const DailyExpenses = () => {
                                                 value={totalCuotas}
                                                 onChange={(e) => setTotalCuotas(e.target.value)}
                                                 placeholder="Total"
-                                                className="w-full bg-slate-900/50 border border-slate-600 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                                                className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
                                             />
                                         </div>
                                     </div>
@@ -558,7 +559,7 @@ const DailyExpenses = () => {
                                 <button
                                     type="submit"
                                     disabled={isSubmitting || !description || !amount || selectedPlanillaIds.length === 0}
-                                    className={`w-full ${editingGroup ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/20' : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'} text-white font-medium py-2.5 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-2`}
+                                    className={`w-full ${editingGroup ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20 text-[#131f18]' : 'bg-primary hover:bg-primary/90 shadow-primary/20 text-[#131f18]'} font-bold py-3.5 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-2`}
                                 >
                                     {isSubmitting ? (
                                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -572,101 +573,93 @@ const DailyExpenses = () => {
                             </form>
                         )}
                     </div>
-                </div>
 
-                {/* Right Column: List */}
-                <div className="lg:col-span-2">
-                    <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden backdrop-blur-sm min-h-[400px]">
-                        <div className="p-4 border-b border-slate-700/50 flex justify-between items-center">
-                            <h3 className="text-slate-300 font-medium">Movimientos</h3>
-                            <span className="text-xs bg-slate-700/50 text-slate-400 px-2 py-1 rounded-lg">
-                                {groupedExpenses.length} reg.
-                            </span>
+                {/* Expense List */}
+                <div className="bg-primary/5 border border-primary/10 rounded-2xl overflow-hidden">
+                    <div className="p-4 border-b border-primary/10 flex justify-between items-center">
+                        <h3 className="text-slate-200 font-semibold">Movimientos</h3>
+                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-lg font-medium">
+                            {groupedExpenses.length} reg.
+                        </span>
+                    </div>
+
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20 text-slate-500">
+                            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mb-3"></div>
+                            <p className="text-sm">Cargando...</p>
                         </div>
-
-                        {loading ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                                <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-3"></div>
-                                <p className="text-sm">Cargando...</p>
-                            </div>
-                        ) : groupedExpenses.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                                <CalendarIcon size={48} className="mb-4 opacity-20" />
-                                <p className="text-sm">No hay gastos registrados en esta fecha.</p>
-                            </div>
-                        ) : (
-                            <div className="divide-y divide-slate-700/30 max-h-[70vh] overflow-y-auto">
-                                {groupedExpenses.map((expense) => (
-                                    <div key={expense.id} className="p-4 hover:bg-slate-700/20 transition-colors flex items-center justify-between group">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 font-bold">
-                                                {expense.category ? expense.category.charAt(0) : (expense.currency === 'USD' ? 'U' : '$')}
-                                            </div>
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <h4 className="text-slate-200 font-medium">{expense.description}</h4>
-                                                    <span className="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
-                                                        {categories.find(c => c.value === expense.category)?.label || expense.category}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                                    {expense.planillas.map((pName, idx) => (
-                                                        <span key={idx} className="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded border border-slate-600">
-                                                            {pName}
-                                                        </span>
-                                                    ))}
-                                                    {expense.is_shared && (
-                                                        <span className="text-[10px] bg-emerald-900/30 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                                                            Compartido
-                                                        </span>
-                                                    )}
-                                                    {expense.is_installment && (
-                                                        <span className="text-[10px] bg-indigo-900/30 text-indigo-400 px-1.5 py-0.5 rounded border border-indigo-500/20">
-                                                            Cuotas
-                                                        </span>
-                                                    )}
-                                                    <span className="text-xs text-slate-500 ml-1 border-l border-slate-700 pl-2">
-                                                        {format(parseISO(expense.primary_created_at), 'HH:mm')} hs
-                                                    </span>
-                                                </div>
-                                                {/* Split Details Indicator */}
-                                                {expense.split_details && expense.split_details.length > 0 && (
-                                                    <div className="text-[10px] text-slate-500 mt-1">
-                                                        División: {expense.split_details.map(d => `${d.name} $${d.amount}`).join(', ')}
-                                                    </div>
-                                                )}
-                                            </div>
+                    ) : groupedExpenses.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+                            <CalendarIcon size={40} className="mb-3 opacity-20" />
+                            <p className="text-sm">No hay gastos en esta fecha.</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-primary/5 max-h-[70vh] overflow-y-auto">
+                            {groupedExpenses.map((expense) => (
+                                <div key={expense.id} className="p-4 hover:bg-primary/5 transition-colors flex items-center justify-between group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                                            {expense.category ? expense.category.charAt(0) : (expense.currency === 'USD' ? 'U' : '$')}
                                         </div>
-                                        <div className="text-right flex items-center gap-4">
-                                            <div className="text-slate-200 font-semibold tabular-nums">
-                                                {expense.currency === 'USD' ? 'USD ' : '$ '}
-                                                {expense.amount.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-slate-200 font-medium text-sm">{expense.description}</h4>
+                                                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
+                                                    {categories.find(c => c.value === expense.category)?.label || expense.category}
+                                                </span>
                                             </div>
-
-                                            {/* Action Buttons */}
-                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => handleEditGroup(expense)}
-                                                    className="p-1.5 bg-slate-700 hover:bg-amber-600 text-slate-300 hover:text-white rounded-lg transition-colors"
-                                                    title="Editar"
-                                                >
-                                                    <Edit2 size={14} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteGroup(expense)}
-                                                    disabled={isDeletingGroup}
-                                                    className="p-1.5 bg-slate-700 hover:bg-red-600 text-slate-300 hover:text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    title="Eliminar"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                                {expense.planillas.map((pName, idx) => (
+                                                    <span key={idx} className="text-[10px] bg-white/5 text-slate-400 px-1.5 py-0.5 rounded-full border border-white/10">
+                                                        {pName}
+                                                    </span>
+                                                ))}
+                                                {expense.is_shared && (
+                                                    <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full border border-primary/20">
+                                                        Compartido
+                                                    </span>
+                                                )}
+                                                {expense.is_installment && (
+                                                    <span className="text-[10px] bg-blue-400/10 text-blue-400 px-1.5 py-0.5 rounded-full border border-blue-400/20">
+                                                        Cuotas
+                                                    </span>
+                                                )}
+                                                <span className="text-xs text-slate-600 ml-1 border-l border-white/10 pl-2">
+                                                    {format(parseISO(expense.primary_created_at), 'HH:mm')} hs
+                                                </span>
                                             </div>
+                                            {expense.split_details && expense.split_details.length > 0 && (
+                                                <div className="text-[10px] text-slate-500 mt-1">
+                                                    División: {expense.split_details.map(d => `${d.name} $${d.amount}`).join(', ')}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                                    <div className="text-right flex items-center gap-3">
+                                        <div className="text-slate-200 font-semibold tabular-nums text-sm">
+                                            {expense.currency === 'USD' ? 'USD ' : '$ '}
+                                            {expense.amount.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                        </div>
+                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => handleEditGroup(expense)}
+                                                className="p-1.5 bg-white/5 hover:bg-amber-500/20 text-slate-400 hover:text-amber-400 rounded-lg transition-colors"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteGroup(expense)}
+                                                disabled={isDeletingGroup}
+                                                className="p-1.5 bg-white/5 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-lg transition-colors disabled:opacity-50"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

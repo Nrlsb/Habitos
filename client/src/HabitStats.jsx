@@ -299,7 +299,7 @@ function HabitStats({ habitId, onBack }) {
 
     if (loading) return (
         <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
     )
 
@@ -399,7 +399,7 @@ function HabitStats({ habitId, onBack }) {
                 onClick={onBack}
                 className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4 group"
             >
-                <div className="p-2 rounded-full bg-slate-800 group-hover:bg-slate-700 transition-colors">
+                <div className="p-2 rounded-full bg-white/5 group-hover:bg-primary/10 transition-colors">
                     <ArrowLeft size={20} />
                 </div>
                 <span className="font-medium">Volver a mis hábitos</span>
@@ -411,7 +411,7 @@ function HabitStats({ habitId, onBack }) {
                         <h2 className="text-3xl font-bold text-white mb-2">{habit.title}</h2>
                         <div className="flex items-center gap-2 mb-2">
                             {habit.category && habit.category !== 'General' && (
-                                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
                                     {habit.category}
                                 </span>
                             )}
@@ -422,20 +422,20 @@ function HabitStats({ habitId, onBack }) {
                         <div className="relative">
                             <button
                                 onClick={() => setShowHeightSettings(!showHeightSettings)}
-                                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors border border-transparent hover:border-slate-700"
+                                className="p-2 text-slate-400 hover:text-white hover:bg-primary/5 rounded-lg transition-colors border border-transparent hover:border-primary/20"
                                 title="Configurar altura para cálculo de Km"
                             >
                                 <Settings size={20} />
                             </button>
                             {showHeightSettings && (
-                                <div className="absolute right-0 top-full mt-2 w-48 bg-slate-800 border border-slate-700 rounded-xl shadow-xl p-4 z-20 animate-in fade-in zoom-in-50 duration-200">
+                                <div className="absolute right-0 top-full mt-2 w-48 bg-primary/5 border border-primary/10 rounded-xl shadow-xl p-4 z-20 animate-in fade-in zoom-in-50 duration-200">
                                     <label className="block text-xs text-slate-400 mb-2">Tu altura (cm)</label>
                                     <div className="flex items-center gap-2">
                                         <input
                                             type="number"
                                             value={userHeight}
                                             onChange={(e) => setUserHeight(e.target.value)}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-white text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            className="w-full bg-white/5 border border-primary/10 rounded-lg px-3 py-1.5 text-white text-sm focus:ring-2 focus:ring-primary outline-none"
                                             placeholder="170"
                                         />
                                     </div>
@@ -446,7 +446,7 @@ function HabitStats({ habitId, onBack }) {
                     )}
                 </div>
                 {habit.type === 'counter' && (
-                    <div className="inline-block bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-sm font-medium border border-slate-700">
+                    <div className="inline-block bg-white/5 text-slate-300 px-3 py-1 rounded-full text-sm font-medium border border-primary/10">
                         Meta: {habit.goal} {habit.unit} / día
                     </div>
                 )}
@@ -454,15 +454,15 @@ function HabitStats({ habitId, onBack }) {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
-                    <div className="h-12 w-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
+                    <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-3">
                         <CheckCircle size={24} />
                     </div>
                     <span className="text-3xl font-bold text-white mb-1">{successfulCompletions.length}</span>
                     <span className="text-sm text-slate-400">Total Completado</span>
                     {isStepHabit && (
-                        <div className="mt-2 pt-2 border-t border-slate-700/50 w-full text-center">
-                            <span className="text-indigo-400 font-medium text-lg">
+                        <div className="mt-2 pt-2 border-t border-primary/10 w-full text-center">
+                            <span className="text-primary font-medium text-lg">
                                 {calculateKm(habit.completions.reduce((acc, curr) => acc + (curr.value || 0), 0))}
                             </span>
                             <span className="text-xs text-slate-500 ml-1">Km Totales</span>
@@ -470,7 +470,7 @@ function HabitStats({ habitId, onBack }) {
                     )}
                 </div>
 
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
                     <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 mb-3">
                         <Trophy size={24} />
                     </div>
@@ -478,7 +478,7 @@ function HabitStats({ habitId, onBack }) {
                     <span className="text-sm text-slate-400">Mejor Racha (días)</span>
                 </div>
 
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
                     <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mb-3">
                         <Flame size={24} />
                     </div>
@@ -487,7 +487,7 @@ function HabitStats({ habitId, onBack }) {
                     {renderTrend(stats7)}
                 </div>
 
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
                     <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mb-3">
                         <CalendarIcon size={24} />
                     </div>
@@ -497,7 +497,7 @@ function HabitStats({ habitId, onBack }) {
                 </div>
 
                 {habit.type === 'counter' && personalRecord && (
-                    <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
+                    <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
                         <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 mb-3">
                             <Trophy size={24} />
                         </div>
@@ -509,7 +509,7 @@ function HabitStats({ habitId, onBack }) {
                     </div>
                 )}
 
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-slate-800/60 transition-colors">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
                     <div className="h-12 w-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 mb-3">
                         <TrendingUp size={24} />
                     </div>
@@ -528,7 +528,7 @@ function HabitStats({ habitId, onBack }) {
                         </div>
                     )}
                     {currentStreak >= 30 && currentStreak < 100 && (
-                        <div className="flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-4 py-2 text-indigo-300 font-semibold text-sm">
+                        <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-full px-4 py-2 text-primary font-semibold text-sm">
                             💎 Diamante — {currentStreak} días seguidos
                         </div>
                     )}
@@ -538,7 +538,7 @@ function HabitStats({ habitId, onBack }) {
                         </div>
                     )}
                     {currentStreak > 0 && currentStreak < 7 && (
-                        <div className="flex items-center gap-2 bg-slate-700/50 border border-slate-600/50 rounded-full px-4 py-2 text-slate-300 font-semibold text-sm">
+                        <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2 text-slate-300 font-semibold text-sm">
                             ⚡ {currentStreak} día{currentStreak > 1 ? 's' : ''} seguido{currentStreak > 1 ? 's' : ''}
                         </div>
                     )}
@@ -561,12 +561,12 @@ function HabitStats({ habitId, onBack }) {
             )}
 
             {/* Heatmap Section */}
-            <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl overflow-x-auto">
+            <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl overflow-x-auto">
                 <h3 className="text-lg font-semibold text-slate-200 mb-4">Consistencia Anual</h3>
                 <div className="flex gap-1 min-w-max pb-2">
                     <div className="grid grid-rows-7 grid-flow-col gap-1">
                         {heatmapData.map((day) => {
-                            let color = 'bg-slate-800'
+                            let color = 'bg-white/5'
                             if (day.level === 1) color = 'bg-green-900/40' // very low
                             if (day.level === 2) color = 'bg-green-700/60' // low
                             if (day.level === 3) color = 'bg-green-500/80' // medium
@@ -587,7 +587,7 @@ function HabitStats({ habitId, onBack }) {
             {/* Analytics Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Day of Week Chart */}
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Día más Productivo</h3>
                     <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
@@ -607,7 +607,7 @@ function HabitStats({ habitId, onBack }) {
                 </div>
 
                 {/* Monthly Chart */}
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Mensual ({new Date().getFullYear()})</h3>
                     <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
@@ -627,7 +627,7 @@ function HabitStats({ habitId, onBack }) {
             </div>
 
             {habit.type === 'counter' && chartData.length > 0 && mounted && (
-                <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 p-6 rounded-2xl">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Reciente</h3>
                     <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
@@ -672,9 +672,9 @@ function HabitStats({ habitId, onBack }) {
                 habitGoal={habit.goal}
             />
 
-            <div className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/30 rounded-2xl p-6">
+            <div className="bg-white/5 backdrop-blur-sm border border-primary/10 rounded-2xl p-6">
                 <h3 className="text-xl font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                    <CalendarIcon size={20} className="text-indigo-400" />
+                    <CalendarIcon size={20} className="text-primary" />
                     Historial Reciente
                 </h3>
                 {habit.completions.length === 0 ? (
@@ -685,7 +685,7 @@ function HabitStats({ habitId, onBack }) {
                             const isFailed = completion.state === 'failed'
                             const colorClass = isFailed
                                 ? 'bg-red-500/10 text-red-300 border-red-500/20'
-                                : 'bg-indigo-500/10 text-indigo-300 border-indigo-500/20'
+                                : 'bg-primary/10 text-primary border-primary/20'
 
                             return (
                                 <div key={completion.completed_date || completion} className={`${colorClass} px-3 py-1 rounded-lg text-sm border`}>
@@ -748,7 +748,7 @@ function CompletionModal({ date, habit, initialValue, initialState, onClose, onS
 
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
                 <h3 className="text-xl font-bold text-white mb-4">
                     {new Date(date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </h3>
@@ -762,14 +762,14 @@ function CompletionModal({ date, habit, initialValue, initialState, onClose, onS
                             type="number"
                             value={val}
                             onChange={(e) => setVal(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                            className="w-full bg-white/5 border border-primary/10 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                             placeholder={`Meta: ${habit.goal}`}
                             autoFocus
                         />
                     </div>
                 ) : (
                     <div className="mb-6 space-y-4">
-                        <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-700">
+                        <div className="flex bg-white/[0.03] rounded-lg p-1 border border-primary/10">
                             <button
                                 onClick={() => setStatus('completed')}
                                 className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${status === 'completed'
@@ -803,7 +803,7 @@ function CompletionModal({ date, habit, initialValue, initialState, onClose, onS
                                     type="number"
                                     value={val}
                                     onChange={(e) => setVal(e.target.value)}
-                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none placeholder:text-slate-600"
+                                    className="w-full bg-white/5 border border-primary/10 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none placeholder:text-slate-600"
                                     placeholder="Ej. Cantidad consumida..."
                                     autoFocus
                                 />
@@ -815,7 +815,7 @@ function CompletionModal({ date, habit, initialValue, initialState, onClose, onS
                 <div className="flex justify-end gap-3">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                        className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-primary/10 transition-colors"
                     >
                         Cancelar
                     </button>
@@ -823,7 +823,7 @@ function CompletionModal({ date, habit, initialValue, initialState, onClose, onS
                         onClick={handleSave}
                         className={`px-4 py-2 rounded-lg text-white font-medium transition-colors shadow-lg ${status === 'failed' && habit.type !== 'counter'
                             ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
-                            : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/25'
+                            : 'bg-primary hover:bg-primary/90 shadow-primary/25'
                             }`}
                     >
                         Guardar

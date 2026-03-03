@@ -93,16 +93,16 @@ const Meals = () => {
         { id: 'breakfast', label: 'Desayuno', icon: <Coffee size={20} className="text-orange-400" />, placeholder: '¿Qué desayunaste hoy? ☕' },
         { id: 'lunch', label: 'Almuerzo', icon: <Sun size={20} className="text-yellow-400" />, placeholder: '¿Qué almorzaste? 🥗' },
         { id: 'snack', label: 'Merienda', icon: <Cookie size={20} className="text-pink-400" />, placeholder: '¿Algo de merienda? 🍪' },
-        { id: 'dinner', label: 'Cena', icon: <Moon size={20} className="text-indigo-400" />, placeholder: '¿Qué cenaste? 🌙' }
+        { id: 'dinner', label: 'Cena', icon: <Moon size={20} className="text-primary" />, placeholder: '¿Qué cenaste? 🌙' }
     ];
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
             {/* Header / Date Navigation */}
-            <div className="flex items-center justify-between mb-6 bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 backdrop-blur-sm sticky top-0 z-20">
+            <div className="flex items-center justify-between mb-6 bg-primary/5 p-4 rounded-2xl border border-primary/10 backdrop-blur-sm sticky top-0 z-20">
                 <button
                     onClick={handlePrevDay}
-                    className="p-2 hover:bg-slate-700 rounded-xl text-slate-400 hover:text-white transition-colors"
+                    className="p-2 hover:bg-primary/10 rounded-xl text-slate-400 hover:text-white transition-colors"
                 >
                     <ChevronLeft size={24} />
                 </button>
@@ -120,7 +120,7 @@ const Meals = () => {
                     {!isToday && (
                         <button
                             onClick={() => setSelectedDate(new Date())}
-                            className="p-2 hover:bg-slate-700 rounded-xl text-indigo-400 hover:text-indigo-300 transition-colors text-xs font-bold uppercase border border-indigo-500/20"
+                            className="p-2 hover:bg-primary/10 rounded-xl text-primary hover:text-primary transition-colors text-xs font-bold uppercase border border-primary/20"
                         >
                             HOY
                         </button>
@@ -128,7 +128,7 @@ const Meals = () => {
                     <button
                         onClick={handleNextDay}
                         disabled={isToday}
-                        className={`p-2 rounded-xl transition-colors ${isToday ? 'text-slate-700 cursor-not-allowed' : 'hover:bg-slate-700 text-slate-400 hover:text-white'}`}
+                        className={`p-2 rounded-xl transition-colors ${isToday ? 'text-slate-700 cursor-not-allowed' : 'hover:bg-primary/10 text-slate-400 hover:text-white'}`}
                     >
                         <ChevronRight size={24} />
                     </button>
@@ -137,15 +137,15 @@ const Meals = () => {
 
             {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-                    <div className="w-8 h-8 border-2 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-3"></div>
+                    <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mb-3"></div>
                     <p className="text-sm">Cargando comidas...</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {sections.map((section) => (
-                        <div key={section.id} className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-5 backdrop-blur-sm flex flex-col h-full focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/20 transition-all">
+                        <div key={section.id} className="bg-primary/5 border border-primary/10 rounded-2xl p-5 backdrop-blur-sm flex flex-col h-full focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
                             <div className="flex items-center gap-3 mb-3">
-                                <div className="p-2 bg-slate-800 rounded-lg border border-slate-700">
+                                <div className="p-2 bg-white/5 rounded-lg border border-primary/10">
                                     {section.icon}
                                 </div>
                                 <h3 className="text-slate-200 font-medium">{section.label}</h3>
@@ -154,7 +154,7 @@ const Meals = () => {
                                 value={meals[section.id]}
                                 onChange={(e) => updateMeal(section.id, e.target.value)}
                                 placeholder={section.placeholder}
-                                className="w-full flex-1 bg-slate-900/50 border border-slate-700/50 rounded-xl p-3 text-slate-200 text-sm focus:outline-none focus:border-indigo-500/50 resize-none min-h-[100px] placeholder:text-slate-600"
+                                className="w-full flex-1 bg-white/5 border border-primary/10 rounded-xl p-3 text-slate-200 text-sm focus:outline-none focus:border-primary/50 resize-none min-h-[100px] placeholder:text-slate-600"
                             />
                         </div>
                     ))}
@@ -166,7 +166,7 @@ const Meals = () => {
                 <button
                     onClick={handleSave}
                     disabled={saving || loading}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-indigo-500/30 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="bg-primary hover:bg-primary text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-primary/30 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     {saving ? (
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>

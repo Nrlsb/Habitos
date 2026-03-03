@@ -564,56 +564,92 @@ function Expenses() {
     // VIEW: LIST OF PLANILLAS
     if (!selectedPlanillaId) {
         return (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 p-6">
-                <h2 className="text-3xl font-bold text-slate-800 mb-8 text-center">Mis Planillas de Gastos</h2>
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Header */}
+                <header className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md border-b border-primary/10 px-4 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Wallet size={22} className="text-primary" />
+                        <h1 className="text-xl font-bold tracking-tight">Mis Gastos</h1>
+                    </div>
+                </header>
 
-                <form onSubmit={handleAddPlanilla} className="mb-8 flex gap-3 max-w-2xl mx-auto">
-                    <input
-                        type="text"
-                        value={newPlanillaName}
-                        onChange={(e) => setNewPlanillaName(e.target.value)}
-                        placeholder="Nueva planilla (ej. Enero 2026)"
-                        className="flex-1 bg-slate-800/50 border border-slate-700 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 placeholder:text-slate-500 shadow-lg shadow-black/10"
-                    />
-                    <button type="submit" disabled={!newPlanillaName.trim()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-colors disabled:opacity-50 shadow-lg shadow-indigo-500/20">
-                        <Plus size={20} />
-                    </button>
-                </form>
+                <div className="px-4 py-6 space-y-8">
+                    {/* Nueva Planilla */}
+                    <section>
+                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Plus size={16} className="text-primary" />
+                            Nueva Planilla
+                        </h2>
+                        <form onSubmit={handleAddPlanilla} className="flex gap-3">
+                            <input
+                                type="text"
+                                value={newPlanillaName}
+                                onChange={(e) => setNewPlanillaName(e.target.value)}
+                                placeholder="Ej: Enero 2026"
+                                className="flex-1 bg-white/5 border-0 text-slate-100 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-500"
+                            />
+                            <button
+                                type="submit"
+                                disabled={!newPlanillaName.trim()}
+                                className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95 transition-transform"
+                            >
+                                <Plus size={22} className="text-[#131f18]" />
+                            </button>
+                        </form>
+                    </section>
 
-                <div className="grid gap-4 max-w-2xl mx-auto">
-                    {planillas.map(planilla => (
-                        <div
-                            key={planilla.id}
-                            onClick={() => setSelectedPlanillaId(planilla.id)}
-                            className="bg-slate-800/50 hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 rounded-xl p-5 flex justify-between items-center cursor-pointer transition-all hover:shadow-lg hover:-translate-y-0.5"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className={`h-12 w-12 rounded-full flex items-center justify-center ${planilla.is_shared_with_me ? 'bg-cyan-500/10 text-cyan-400' : 'bg-indigo-500/10 text-indigo-400'}`}>
-                                    {planilla.is_shared_with_me ? <Users size={24} /> : <Wallet size={24} />}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-lg font-semibold text-slate-200">{planilla.nombre}</h3>
-                                        {planilla.is_shared_with_me && <span className="bg-cyan-500/20 text-cyan-400 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide">Compartida</span>}
-                                    </div>
-                                    <p className="text-sm text-slate-500">{new Date(planilla.created_at).toLocaleDateString()}</p>
-                                </div>
-                            </div>
-                            {!planilla.is_shared_with_me && (
-                                <button
-                                    onClick={(e) => handleDeletePlanilla(planilla.id, e)}
-                                    className="text-slate-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-colors"
+                    {/* Planillas List */}
+                    <section>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tus planillas recientes</h2>
+                        </div>
+
+                        <div className="space-y-3">
+                            {planillas.map(planilla => (
+                                <div
+                                    key={planilla.id}
+                                    onClick={() => setSelectedPlanillaId(planilla.id)}
+                                    className="bg-primary/5 border border-primary/10 hover:border-primary/30 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99]"
                                 >
-                                    <Trash2 size={20} />
-                                </button>
+                                    <div className="flex items-center gap-4">
+                                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${planilla.is_shared_with_me ? 'bg-blue-400/15 text-blue-400' : 'bg-primary/15 text-primary'}`}>
+                                            {planilla.is_shared_with_me ? <Users size={22} /> : <Wallet size={22} />}
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-slate-100">{planilla.nombre}</h3>
+                                                {planilla.is_shared_with_me && (
+                                                    <span className="bg-blue-400/15 text-blue-400 text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wide">
+                                                        Compartida
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-slate-500">{new Date(planilla.created_at).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    {!planilla.is_shared_with_me && (
+                                        <button
+                                            onClick={(e) => handleDeletePlanilla(planilla.id, e)}
+                                            className="text-slate-600 hover:text-red-400 p-2 transition-colors"
+                                        >
+                                            <Trash2 size={18} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            {planillas.length === 0 && (
+                                <div className="border-2 border-dashed border-primary/10 rounded-xl py-12 text-center">
+                                    <p className="text-sm text-slate-500">No tienes planillas creadas.</p>
+                                </div>
                             )}
+
+                            {/* Info card */}
+                            <div className="border-2 border-dashed border-primary/10 rounded-xl p-6 flex flex-col items-center text-center">
+                                <ArrowRightCircle size={20} className="text-slate-500 mb-2" />
+                                <p className="text-sm text-slate-500">Las planillas te ayudan a organizar tus gastos mensuales o eventos especiales.</p>
+                            </div>
                         </div>
-                    ))}
-                    {planillas.length === 0 && (
-                        <div className="text-center py-10 text-slate-500 border-2 border-dashed border-slate-700 rounded-xl bg-slate-800/20">
-                            No tienes planillas creadas.
-                        </div>
-                    )}
+                    </section>
                 </div>
             </div>
         );
@@ -621,7 +657,7 @@ function Expenses() {
 
     // VIEW: EXPENSE SHEET
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen relative">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen">
             <NotificationModal
                 isOpen={notification.isOpen}
                 onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
@@ -632,7 +668,7 @@ function Expenses() {
             {/* Share Modal */}
             {isShareModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+                    <div className="bg-[#131f18] border border-primary/10 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
                         <button
                             onClick={() => setIsShareModalOpen(false)}
                             className="absolute top-4 right-4 text-slate-500 hover:text-white"
@@ -641,7 +677,7 @@ function Expenses() {
                         </button>
 
                         <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                            <Share2 className="text-indigo-400" size={24} />
+                            <Share2 className="text-primary" size={24} />
                             Compartir Planilla
                         </h3>
                         <p className="text-slate-400 text-sm mb-6">
@@ -656,13 +692,13 @@ function Expenses() {
                                     value={shareEmail}
                                     onChange={(e) => setShareEmail(e.target.value)}
                                     placeholder="usuario@ejemplo.com"
-                                    className="w-full bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                    className="w-full bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40"
                                     required
                                 />
                             </div>
 
                             {shareError && <p className="text-red-400 text-sm mb-4 bg-red-500/10 p-2 rounded-lg">{shareError}</p>}
-                            {shareSuccess && <p className="text-emerald-400 text-sm mb-4 bg-emerald-500/10 p-2 rounded-lg">{shareSuccess}</p>}
+                            {shareSuccess && <p className="text-primary text-sm mb-4 bg-primary/10 p-2 rounded-lg">{shareSuccess}</p>}
 
                             <div className="flex justify-end gap-3">
                                 <button
@@ -688,7 +724,7 @@ function Expenses() {
             {/* Category Manager Modal */}
             {isCategoryModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+                    <div className="bg-[#131f18] border border-primary/10 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
                         <button
                             onClick={() => setIsCategoryModalOpen(false)}
                             className="absolute top-4 right-4 text-slate-500 hover:text-white"
@@ -697,7 +733,7 @@ function Expenses() {
                         </button>
 
                         <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                            <List className="text-indigo-400" size={24} />
+                            <List className="text-primary" size={24} />
                             Gestionar Categorías
                         </h3>
                         <p className="text-slate-400 text-sm mb-6">
@@ -710,14 +746,14 @@ function Expenses() {
                                 value={newCategoryName}
                                 onChange={(e) => setNewCategoryName(e.target.value)}
                                 placeholder="Nueva categoría..."
-                                className="flex-1 bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                className="flex-1 bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/40"
                             />
                             <input
                                 type="text"
                                 value={newCategoryIcon}
                                 onChange={(e) => setNewCategoryIcon(e.target.value)}
                                 placeholder="emoji"
-                                className="w-20 bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-2 py-2 text-center focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                                className="w-20 bg-slate-800 border border-slate-600 text-slate-100 rounded-xl px-2 py-2 text-center focus:outline-none focus:ring-2 focus:ring-primary/40"
                             />
                             <button
                                 onClick={async () => {
@@ -763,7 +799,7 @@ function Expenses() {
             {/* Export Modal */}
             {isExportModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+                    <div className="bg-[#131f18] border border-primary/10 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
                         <button
                             onClick={() => setIsExportModalOpen(false)}
                             className="absolute top-4 right-4 text-slate-500 hover:text-white"
@@ -772,7 +808,7 @@ function Expenses() {
                         </button>
 
                         <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
-                            <ArrowRightCircle className="text-emerald-400" size={24} />
+                            <ArrowRightCircle className="text-primary" size={24} />
                             Copiar Gastos
                         </h3>
                         <p className="text-slate-400 text-sm mb-6">
@@ -795,7 +831,7 @@ function Expenses() {
                             </div>
 
                             {exportMessage && (
-                                <div className={`text-sm p-3 rounded-lg border ${exportMessage.includes('Error') ? 'bg-red-400/10 text-red-400 border-red-400/20' : 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20'}`}>
+                                <div className={`text-sm p-3 rounded-lg border ${exportMessage.includes('Error') ? 'bg-red-400/10 text-red-400 border-red-400/20' : 'bg-emerald-400/10 text-primary border-emerald-400/20'}`}>
                                     {exportMessage}
                                 </div>
                             )}
@@ -810,7 +846,7 @@ function Expenses() {
                                 <button
                                     onClick={handleExportExpenses}
                                     disabled={!exportTargetId}
-                                    className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-medium transition-all"
+                                    className="bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-2 rounded-xl font-medium transition-all"
                                 >
                                     Copiar Gastos
                                 </button>
@@ -823,7 +859,7 @@ function Expenses() {
             {/* Participants Modal (Detail View) */}
             {showParticipantsModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
+                    <div className="bg-[#131f18] border border-primary/10 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
                         <button
                             onClick={() => setShowParticipantsModal(false)}
                             className="absolute top-4 right-4 text-slate-500 hover:text-white"
@@ -832,7 +868,7 @@ function Expenses() {
                         </button>
 
                         <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                            <Users className="text-emerald-400" size={24} />
+                            <Users className="text-primary" size={24} />
                             Configurar Personas
                         </h3>
                         <p className="text-slate-400 text-sm mb-4">
@@ -845,11 +881,11 @@ function Expenses() {
                                 value={newParticipantName}
                                 onChange={(e) => setNewParticipantName(e.target.value)}
                                 placeholder="Nombre (ej. Lucas)"
-                                className="flex-1 bg-slate-800 border border-slate-600 text-white rounded-lg px-4 py-2 focus:border-emerald-500 focus:outline-none"
+                                className="flex-1 bg-slate-800 border border-slate-600 text-white rounded-lg px-4 py-2 focus:border-primary focus:outline-none"
                             />
                             <button
                                 onClick={addParticipant}
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-lg"
+                                className="bg-primary hover:bg-primary/90 text-white p-2 rounded-lg"
                             >
                                 <Plus size={20} />
                             </button>
@@ -878,7 +914,7 @@ function Expenses() {
                             </button>
                             <button
                                 onClick={saveParticipants}
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                                className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-medium transition-colors"
                             >
                                 Guardar Cambios
                             </button>
@@ -912,21 +948,21 @@ function Expenses() {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setIsExportModalOpen(true)}
-                                className="flex items-center gap-2 bg-emerald-900/30 hover:bg-emerald-900/50 text-emerald-300 px-4 py-2 rounded-xl border border-emerald-500/20 transition-all font-medium"
+                                className="flex items-center gap-2 bg-emerald-900/30 hover:bg-emerald-900/50 text-primary px-4 py-2 rounded-xl border border-primary/20 transition-all font-medium"
                             >
                                 <ArrowRightCircle size={18} />
                                 Copiar
                             </button>
                             <button
                                 onClick={openParticipantsModal}
-                                className="flex items-center gap-2 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 px-4 py-2 rounded-xl border border-indigo-500/20 transition-all font-medium"
+                                className="flex items-center gap-2 bg-primary/10 hover:bg-indigo-900/50 text-primary px-4 py-2 rounded-xl border border-primary/20 transition-all font-medium"
                             >
                                 <Users size={18} />
                                 Personas
                             </button>
                             <button
                                 onClick={() => setIsShareModalOpen(true)}
-                                className="flex items-center gap-2 bg-indigo-900/30 hover:bg-indigo-900/50 text-indigo-300 px-4 py-2 rounded-xl border border-indigo-500/20 transition-all font-medium"
+                                className="flex items-center gap-2 bg-primary/10 hover:bg-indigo-900/50 text-primary px-4 py-2 rounded-xl border border-primary/20 transition-all font-medium"
                             >
                                 <Share2 size={18} />
                                 Compartir
@@ -941,8 +977,8 @@ function Expenses() {
                 {/* ROLLOVER MODAL */}
                 {isRolloverModalOpen && (
                     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-                        <div className="bg-slate-900 border border-slate-700 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
-                            <div className="p-6 border-b border-slate-700/50 flex justify-between items-center">
+                        <div className="bg-[#131f18] border border-primary/10 rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
+                            <div className="p-6 border-b border-primary/10 flex justify-between items-center">
                                 <div>
                                     <h3 className="text-xl font-bold text-white">Importar Gastos del Mes Anterior</h3>
                                     <p className="text-slate-400 text-sm mt-1">
@@ -972,7 +1008,7 @@ function Expenses() {
                                                                 setSelectedRolloverIds(new Set());
                                                             }
                                                         }}
-                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500"
+                                                        className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-primary"
                                                     />
                                                 </th>
                                                 <th className="px-4 py-3">Descripción</th>
@@ -984,13 +1020,13 @@ function Expenses() {
                                             {rolloverCandidates.map(expense => {
                                                 const isSelected = selectedRolloverIds.has(expense.id);
                                                 return (
-                                                    <tr key={expense.id} className={`hover:bg-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-indigo-900/10' : ''}`} onClick={() => toggleRolloverSelection(expense.id)}>
+                                                    <tr key={expense.id} className={`hover:bg-slate-800/50 transition-colors cursor-pointer ${isSelected ? 'bg-primary/5' : ''}`} onClick={() => toggleRolloverSelection(expense.id)}>
                                                         <td className="px-4 py-3 text-center">
                                                             <input
                                                                 type="checkbox"
                                                                 checked={isSelected}
                                                                 onChange={() => { }} // Handle click on row
-                                                                className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500 pointer-events-none"
+                                                                className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-primary pointer-events-none"
                                                             />
                                                         </td>
                                                         <td className="px-4 py-3 font-medium text-slate-200">
@@ -1003,11 +1039,11 @@ function Expenses() {
                                                         </td>
                                                         <td className="px-4 py-3 text-center">
                                                             {expense.is_installment ? (
-                                                                <span className="bg-indigo-500/10 text-indigo-400 text-xs px-2 py-0.5 rounded-full border border-indigo-500/20">
+                                                                <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full border border-primary/20">
                                                                     Cuota {expense.current_installment}/{expense.total_installments}
                                                                 </span>
                                                             ) : (
-                                                                <span className="bg-slate-700/30 text-slate-400 text-xs px-2 py-0.5 rounded-full border border-slate-600/30">
+                                                                <span className="bg-primary/5 text-slate-400 text-xs px-2 py-0.5 rounded-full border border-slate-600/30">
                                                                     Fijo/Único
                                                                 </span>
                                                             )}
@@ -1020,7 +1056,7 @@ function Expenses() {
                                 )}
                             </div>
 
-                            <div className="p-6 border-t border-slate-700/50 flex justify-between items-center bg-slate-900/50 rounded-b-3xl">
+                            <div className="p-6 border-t border-primary/10 flex justify-between items-center bg-white/5 rounded-b-3xl">
                                 <div className="text-sm text-slate-400">
                                     <span className="font-bold text-white">{selectedRolloverIds.size}</span> seleccionados
                                 </div>
@@ -1050,7 +1086,7 @@ function Expenses() {
 
                 {/* MONTH SELECTOR & ROLLOVER */}
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 bg-slate-800/30 p-4 rounded-2xl border border-slate-700/30">
-                    <div className="flex items-center gap-4 bg-slate-900/50 p-1.5 rounded-xl border border-slate-700/50 shadow-inner">
+                    <div className="flex items-center gap-4 bg-white/5 p-1.5 rounded-xl border border-primary/10 shadow-inner">
                         <button
                             onClick={handlePrevMonth}
                             className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors"
@@ -1058,7 +1094,7 @@ function Expenses() {
                             <ChevronLeft size={20} />
                         </button>
                         <div className="flex items-center gap-2 px-2 min-w-[140px] justify-center">
-                            <Calendar size={18} className="text-indigo-400" />
+                            <Calendar size={18} className="text-primary" />
                             <span className="text-lg font-semibold text-slate-200 capitalize">
                                 {currentDate.toLocaleString('es-AR', { month: 'long', year: 'numeric' })}
                             </span>
@@ -1073,7 +1109,7 @@ function Expenses() {
 
                     <button
                         onClick={handleMonthRollover}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-indigo-400 border border-indigo-500/20 rounded-xl transition-all font-medium text-sm"
+                        className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600/10 hover:bg-indigo-600/20 text-primary border border-primary/20 rounded-xl transition-all font-medium text-sm"
                     >
                         <ArrowRightCircle size={16} />
                         Importar Cuotas del Mes Anterior
@@ -1081,11 +1117,11 @@ function Expenses() {
                 </div>
 
                 {/* TOTAL HEADER */}
-                <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity duration-700 group-hover:opacity-75"></div>
+                <div className="bg-primary/5 backdrop-blur-md border border-primary/10 rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity duration-700 group-hover:opacity-75"></div>
                     <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-3 bg-indigo-500/20 rounded-xl text-indigo-300">
+                            <div className="p-3 bg-primary/20 rounded-xl text-primary">
                                 <Wallet size={24} />
                             </div>
                             <div>
@@ -1096,40 +1132,40 @@ function Expenses() {
                             </div>
                         </div>
                         {dolarRate && (
-                            <div className="text-right bg-slate-900/50 px-4 py-2 rounded-lg border border-slate-700/50">
+                            <div className="text-right bg-white/5 px-4 py-2 rounded-lg border border-primary/10">
                                 <span className="text-xs text-slate-500 uppercase block">Cotización Dólar</span>
-                                <span className="text-emerald-400 font-mono font-medium">${dolarRate}</span>
+                                <span className="text-primary font-mono font-medium">${dolarRate}</span>
                             </div>
                         )}
                     </div>
                 </div>
 
                 {/* TABS NAVIGATION */}
-                <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-full md:w-fit border border-slate-700/50 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-full md:w-fit border border-primary/10 overflow-x-auto scrollbar-hide">
                     <button
                         onClick={() => setActiveTab('list')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'list' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'list' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
                         <List size={18} />
                         Lista
                     </button>
                     <button
                         onClick={() => setActiveTab('analysis')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'analysis' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'analysis' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
                         <PieChart size={18} />
                         Análisis
                     </button>
                     <button
                         onClick={() => setActiveTab('subscriptions')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'subscriptions' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'subscriptions' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
                         <RefreshCcw size={18} />
                         Suscripciones
                     </button>
                     <button
                         onClick={() => setActiveTab('budget')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
                         <Wallet size={18} />
                         Presupuesto
@@ -1157,9 +1193,9 @@ function Expenses() {
                 ) : (
                     <>
                         {/* ADD NEW EXPENSE FORM */}
-                        <div className="bg-slate-800/50 border border-slate-700/50 rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-sm">
+                        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-sm">
                             <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
-                                <Plus size={20} className="text-indigo-400" />
+                                <Plus size={20} className="text-primary" />
                                 {editingId ? 'Editar Gasto' : 'Añadir Nuevo Gasto'}
                             </h3>
                             <form onSubmit={handleSubmitExpense}>
@@ -1171,7 +1207,7 @@ function Expenses() {
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
                                             placeholder="Ej: Compra en el supermercado"
-                                            className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600"
+                                            className="w-full bg-white/5 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-slate-600"
                                         />
                                     </div>
                                     <div className="md:col-span-3">
@@ -1180,7 +1216,7 @@ function Expenses() {
                                             <button
                                                 type="button"
                                                 onClick={() => setIsCategoryModalOpen(true)}
-                                                className="text-[10px] text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
+                                                className="text-[10px] text-primary hover:text-primary flex items-center gap-1"
                                             >
                                                 <Edit2 size={10} /> Gestionar
                                             </button>
@@ -1189,7 +1225,7 @@ function Expenses() {
                                             <select
                                                 value={category}
                                                 onChange={(e) => setCategory(e.target.value)}
-                                                className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                                                className="w-full bg-white/5 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all appearance-none cursor-pointer"
                                             >
                                                 {/* Always show General as fallback or first option if desired, or map context categories */}
                                                 {categories.length > 0 ? (
@@ -1217,7 +1253,7 @@ function Expenses() {
                                             value={amount}
                                             onChange={(e) => setAmount(e.target.value)}
                                             placeholder="0.00"
-                                            className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600 tabular-nums"
+                                            className="w-full bg-white/5 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-slate-600 tabular-nums"
                                         />
                                     </div>
                                     <div className="md:col-span-2">
@@ -1226,7 +1262,7 @@ function Expenses() {
                                             <select
                                                 value={currency}
                                                 onChange={(e) => setCurrency(e.target.value)}
-                                                className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none cursor-pointer"
+                                                className="w-full bg-white/5 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all appearance-none cursor-pointer"
                                             >
                                                 <option value="ARS">ARS 🇦🇷</option>
                                                 <option value="USD">USD 🇺🇸</option>
@@ -1242,14 +1278,14 @@ function Expenses() {
                                             type="date"
                                             value={expenseDate}
                                             onChange={(e) => setExpenseDate(e.target.value)}
-                                            className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-600 [color-scheme:dark]"
+                                            className="w-full bg-white/5 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-slate-600 [color-scheme:dark]"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="flex flex-wrap gap-4 mb-6">
                                     <label className="flex items-center gap-2 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600 bg-slate-900/50 group-hover:border-slate-500'}`}>
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-indigo-500 border-primary' : 'border-slate-600 bg-white/5 group-hover:border-slate-500'}`}>
                                             {esCompartido && <CheckCircle size={14} className="text-white" />}
                                         </div>
                                         <input
@@ -1262,7 +1298,7 @@ function Expenses() {
                                     </label>
 
                                     <label className="flex items-center gap-2 cursor-pointer group">
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600 bg-slate-900/50 group-hover:border-slate-500'}`}>
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-indigo-500 border-primary' : 'border-slate-600 bg-white/5 group-hover:border-slate-500'}`}>
                                             {enCuotas && <CheckCircle size={14} className="text-white" />}
                                         </div>
                                         <input
@@ -1281,7 +1317,7 @@ function Expenses() {
                                         <select
                                             value={paidBy}
                                             onChange={(e) => setPaidBy(e.target.value)}
-                                            className="w-full md:w-1/2 bg-slate-900/50 border border-slate-600/50 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all appearance-none"
+                                            className="w-full md:w-1/2 bg-white/5 border border-slate-600/50 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all appearance-none"
                                         >
                                             <option value="" disabled>Seleccionar Persona</option>
                                             {(planillas.find(p => p.id === selectedPlanillaId)?.participants || ['Yo']).map(name => (
@@ -1299,7 +1335,7 @@ function Expenses() {
                                                 <button
                                                     type="button"
                                                     onClick={addSplitDetail}
-                                                    className="text-xs flex items-center gap-1 text-indigo-400 hover:text-indigo-300 transition-colors"
+                                                    className="text-xs flex items-center gap-1 text-primary hover:text-primary transition-colors"
                                                 >
                                                     <Plus size={14} /> Añadir Persona
                                                 </button>
@@ -1322,7 +1358,7 @@ function Expenses() {
                                                                 placeholder="Persona (ej. Lucas)"
                                                                 value={detail.name}
                                                                 onChange={(e) => updateSplitDetail(index, 'name', e.target.value)}
-                                                                className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"
+                                                                className="flex-1 bg-slate-800 border border-slate-600 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-primary/40 focus:outline-none"
                                                             />
                                                             <div className="relative w-24">
                                                                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
@@ -1331,7 +1367,7 @@ function Expenses() {
                                                                     placeholder="0"
                                                                     value={detail.amount}
                                                                     onChange={(e) => updateSplitDetail(index, 'amount', parseFloat(e.target.value) || 0)}
-                                                                    className="w-full bg-slate-800 border border-slate-600 text-slate-200 text-xs rounded-lg pl-5 pr-2 py-2 focus:border-indigo-500 focus:outline-none text-right"
+                                                                    className="w-full bg-slate-800 border border-slate-600 text-slate-200 text-xs rounded-lg pl-5 pr-2 py-2 focus:border-primary/40 focus:outline-none text-right"
                                                                 />
                                                             </div>
                                                             <button
@@ -1348,11 +1384,11 @@ function Expenses() {
                                                             <option key={name} value={name} />
                                                         ))}
                                                     </datalist>
-                                                    <div className="pt-2 border-t border-slate-700/50 text-right text-xs text-slate-500">
+                                                    <div className="pt-2 border-t border-primary/10 text-right text-xs text-slate-500">
                                                         Total asignado: <span className="text-slate-300">${splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0).toFixed(2)}</span>
                                                         {amount && (
                                                             <span className="ml-3">
-                                                                Resto a dividir: <span className="text-emerald-400">${(parseFloat(amount) - splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0)).toFixed(2)}</span>
+                                                                Resto a dividir: <span className="text-primary">${(parseFloat(amount) - splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0)).toFixed(2)}</span>
                                                             </span>
                                                         )}
                                                     </div>
@@ -1372,7 +1408,7 @@ function Expenses() {
                                                 type="number"
                                                 value={cuotaActual}
                                                 onChange={(e) => setCuotaActual(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary"
                                             />
                                         </div>
                                         <div className="w-32">
@@ -1381,14 +1417,14 @@ function Expenses() {
                                                 type="number"
                                                 value={totalCuotas}
                                                 onChange={(e) => setTotalCuotas(e.target.value)}
-                                                className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                className="w-full bg-slate-900 border border-slate-600 text-slate-100 rounded-lg px-3 py-2 text-sm focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary"
                                             />
                                         </div>
                                     </div>
                                 )}
 
                                 <div className="flex gap-3">
-                                    <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex-1 md:flex-none md:min-w-[120px]">
+                                    <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-primary/20 active:scale-95 flex-1 md:flex-none md:min-w-[120px]">
                                         {editingId ? 'Actualizar' : 'Añadir Gasto'}
                                     </button>
                                     {editingId && (
@@ -1406,9 +1442,9 @@ function Expenses() {
                         </div>
 
                         {/* SELECTION ACTION BAR */}
-                        <div className={`flex items-center justify-between gap-4 mb-4 bg-indigo-900/40 border border-indigo-500/30 p-3 rounded-xl transition-all duration-300 ${selectedExpenseIds.size > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none absolute'}`}>
+                        <div className={`flex items-center justify-between gap-4 mb-4 bg-indigo-900/40 border border-primary/30 p-3 rounded-xl transition-all duration-300 ${selectedExpenseIds.size > 0 ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none absolute'}`}>
                             <div className="flex items-center gap-3">
-                                <div className="bg-indigo-500/20 p-2 rounded-lg text-indigo-300">
+                                <div className="bg-primary/20 p-2 rounded-lg text-primary">
                                     <CheckCircle size={20} />
                                 </div>
                                 <span className="text-indigo-200 font-medium text-sm">
@@ -1418,7 +1454,7 @@ function Expenses() {
                             <div className="flex gap-2">
                                 <button
                                     onClick={clearSelection}
-                                    className="px-3 py-1.5 text-xs font-medium text-indigo-300 hover:text-white hover:bg-indigo-500/20 rounded-lg transition-colors"
+                                    className="px-3 py-1.5 text-xs font-medium text-primary hover:text-white hover:bg-primary/20 rounded-lg transition-colors"
                                 >
                                     Cancelar
                                 </button>
@@ -1441,7 +1477,7 @@ function Expenses() {
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     placeholder="Buscar por descripción o categoría..."
-                                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800/60 border border-slate-700 text-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-500 text-sm"
+                                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800/60 border border-slate-700 text-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-slate-500 text-sm"
                                 />
                                 {searchQuery && (
                                     <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
@@ -1453,7 +1489,7 @@ function Expenses() {
                                 onClick={exportToCSV}
                                 disabled={!filteredExpenses.length}
                                 title="Exportar a CSV"
-                                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-900/30 hover:bg-emerald-900/50 text-emerald-300 rounded-xl border border-emerald-500/20 transition-all font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-900/30 hover:bg-emerald-900/50 text-primary rounded-xl border border-primary/20 transition-all font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                                 <span className="hidden sm:inline">CSV</span>
@@ -1485,14 +1521,14 @@ function Expenses() {
                                         }
 
                                         return (
-                                            <div key={expense.id} className={`bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm transition-all ${selectedExpenseIds.has(expense.id) ? 'border-indigo-500/50 bg-indigo-900/10' : ''}`}>
+                                            <div key={expense.id} className={`bg-primary/5 border border-primary/10 rounded-xl p-4 shadow-sm transition-all ${selectedExpenseIds.has(expense.id) ? 'border-primary/50 bg-primary/5' : ''}`}>
                                                 <div className="flex justify-between items-start mb-3">
                                                     <div className="flex items-start gap-3">
                                                         <input
                                                             type="checkbox"
                                                             checked={selectedExpenseIds.has(expense.id)}
                                                             onChange={() => toggleExpenseSelection(expense.id)}
-                                                            className="mt-1 w-5 h-5 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                            className="mt-1 w-5 h-5 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-primary cursor-pointer"
                                                         />
                                                         <div>
                                                             <h4 className="font-semibold text-slate-200 text-lg">{expense.description}</h4>
@@ -1502,7 +1538,7 @@ function Expenses() {
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => handleEditExpense(expense)}
-                                                            className="text-slate-500 hover:text-indigo-400 p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
+                                                            className="text-slate-500 hover:text-primary p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
                                                         >
                                                             <Edit2 size={18} />
                                                         </button>
@@ -1516,13 +1552,13 @@ function Expenses() {
                                                 </div>
 
                                                 <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm mb-4">
-                                                    <div className="bg-slate-900/50 p-2 rounded-lg">
+                                                    <div className="bg-white/5 p-2 rounded-lg">
                                                         <span className="text-slate-500 text-[10px] uppercase tracking-wider block mb-0.5">Monto Total</span>
                                                         <span className="font-medium text-slate-300 tabular-nums">${montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
                                                     </div>
-                                                    <div className="bg-indigo-900/20 p-2 rounded-lg border border-indigo-500/20">
-                                                        <span className="text-indigo-400 text-[10px] uppercase tracking-wider block mb-0.5">Personal</span>
-                                                        <span className="font-bold text-indigo-300 tabular-nums">${montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
+                                                    <div className="bg-indigo-900/20 p-2 rounded-lg border border-primary/20">
+                                                        <span className="text-primary text-[10px] uppercase tracking-wider block mb-0.5">Personal</span>
+                                                        <span className="font-bold text-primary tabular-nums">${montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>
                                                     </div>
                                                     {montoUsdDisplay && (
                                                         <div className="col-span-2 flex justify-between items-center border-t border-slate-700 pt-2 mt-1">
@@ -1564,7 +1600,7 @@ function Expenses() {
                         </div>
 
                         {/* DESKTOP TABLE VIEW */}
-                        <div className="hidden md:block bg-slate-800/40 border border-slate-700/50 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm">
+                        <div className="hidden md:block bg-primary/5 border border-primary/10 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm text-left text-slate-400">
                                     <thead className="text-xs text-slate-300 uppercase bg-slate-900/80 border-b border-slate-700">
@@ -1574,7 +1610,7 @@ function Expenses() {
                                                     type="checkbox"
                                                     checked={displayedExpenses.length > 0 && selectedExpenseIds.size === displayedExpenses.length}
                                                     onChange={handleSelectAll}
-                                                    className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                    className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-primary cursor-pointer"
                                                 />
                                             </th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide">Descripción</th>
@@ -1609,13 +1645,13 @@ function Expenses() {
                                                 }
 
                                                 return (
-                                                    <tr key={expense.id} className={`group hover:bg-slate-700/30 transition-colors ${index % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/30'} ${selectedExpenseIds.has(expense.id) ? 'bg-indigo-900/10' : ''}`}>
+                                                    <tr key={expense.id} className={`group hover:bg-primary/5 transition-colors ${index % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/30'} ${selectedExpenseIds.has(expense.id) ? 'bg-primary/5' : ''}`}>
                                                         <td className="px-6 py-4 text-center">
                                                             <input
                                                                 type="checkbox"
                                                                 checked={selectedExpenseIds.has(expense.id)}
                                                                 onChange={() => toggleExpenseSelection(expense.id)}
-                                                                className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                                                className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-primary cursor-pointer"
                                                             />
                                                         </td>
                                                         <td className="px-6 py-4 font-medium text-slate-200">
@@ -1629,7 +1665,7 @@ function Expenses() {
                                                                 {expense.category || 'General'}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-right tabular-nums font-semibold text-indigo-300">
+                                                        <td className="px-6 py-4 text-right tabular-nums font-semibold text-primary">
                                                             $ {montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                         </td>
                                                         <td className="px-6 py-4 text-right tabular-nums text-slate-500 font-mono text-xs">
@@ -1669,7 +1705,7 @@ function Expenses() {
                                                             <div className={`flex justify-end gap-2 transition-opacity opacity-0 group-hover:opacity-100`}>
                                                                 <button
                                                                     onClick={() => handleEditExpense(expense)}
-                                                                    className="text-slate-400 hover:text-indigo-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
+                                                                    className="text-slate-400 hover:text-primary p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
                                                                     title="Editar"
                                                                 >
                                                                     <Edit2 size={16} />

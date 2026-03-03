@@ -1,5 +1,9 @@
 import { useState, useEffect, lazy, Suspense, useRef } from 'react'
-import { Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut, Layout, Utensils } from 'lucide-react'
+import {
+  Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut,
+  Layout, Utensils, Check, ChevronDown, Ban, Activity, Droplets,
+  Dumbbell, Heart, Briefcase, BookOpen, Star, Download
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Capacitor } from '@capacitor/core'
 import { usePedometer } from './hooks/usePedometer'
@@ -17,9 +21,36 @@ const Meals = lazy(() => import('./features/meals/Meals'))
 
 const LazySpinner = () => (
   <div className="flex items-center justify-center py-20">
-    <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
   </div>
 )
+
+// Derive icon + color from habit category/title/unit
+const getHabitVisuals = (habit) => {
+  const title = habit.title?.toLowerCase() || ''
+  const unit = habit.unit?.toLowerCase() || ''
+  const category = habit.category || 'General'
+
+  if (title.startsWith('sin ') || title.startsWith('no ') || title.includes('alcohol') || title.includes('fumar')) {
+    return { IconComp: Ban, colorClass: 'bg-red-500/15 text-red-400' }
+  }
+  if (unit.includes('paso') || title.includes('caminat') || title.includes('corr') || title.includes('paso')) {
+    return { IconComp: Activity, colorClass: 'bg-primary/15 text-primary' }
+  }
+  if (unit.includes('litro') || unit.includes('ml') || title.includes('agua') || title.includes('hidrat')) {
+    return { IconComp: Droplets, colorClass: 'bg-blue-400/15 text-blue-400' }
+  }
+  if (title.includes('rutina') || title.includes('ejercicio') || title.includes('gym') || title.includes('gimnas') || title.includes('pesas')) {
+    return { IconComp: Dumbbell, colorClass: 'bg-amber-400/15 text-amber-400' }
+  }
+  switch (category) {
+    case 'Salud': return { IconComp: Heart, colorClass: 'bg-primary/15 text-primary' }
+    case 'Trabajo': return { IconComp: Briefcase, colorClass: 'bg-blue-400/15 text-blue-400' }
+    case 'Estudio': return { IconComp: BookOpen, colorClass: 'bg-amber-400/15 text-amber-400' }
+    case 'Espiritualidad': return { IconComp: Star, colorClass: 'bg-purple-400/15 text-purple-400' }
+    default: return { IconComp: Star, colorClass: 'bg-slate-500/15 text-slate-400' }
+  }
+}
 
 function AppContent() {
   const getLocalDateString = () => {
@@ -31,40 +62,34 @@ function AppContent() {
   }
 
   const { user, session, loading: authLoading, signOut } = useAuth()
-  const [view, setView] = useState('habits') // 'habits' | 'expenses'
+  const [view, setView] = useState('habits')
   const [habits, setHabits] = useState([])
   const [loading, setLoading] = useState(true)
   const [newHabitTitle, setNewHabitTitle] = useState('')
   const [selectedHabitId, setSelectedHabitId] = useState(null)
 
-  // New state for habit types
-  const [habitType, setHabitType] = useState('boolean') // 'boolean' or 'counter'
+  const [habitType, setHabitType] = useState('boolean')
   const [habitGoal, setHabitGoal] = useState('')
   const [habitUnit, setHabitUnit] = useState('')
   const [habitCategory, setHabitCategory] = useState('General')
 
-  // Drag-and-drop state
   const dragIndexRef = useRef(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
-  // Splash Screen: ocultar cuando auth esté listo
   useEffect(() => {
     if (!authLoading) {
       const hideSplash = async () => {
         try {
           const { SplashScreen } = await import('@capacitor/splash-screen')
           await SplashScreen.hide()
-        } catch (e) {
-          // No disponible en web, ignorar
-        }
+        } catch (e) {}
       }
       hideSplash()
     }
   }, [authLoading])
 
   useEffect(() => {
-    // Escuchar Deep Links de Capacitor (ej: desde el Widget)
     const setupDeepLinks = async () => {
       try {
         const { App: CapApp } = await import('@capacitor/app');
@@ -74,9 +99,7 @@ function AppContent() {
             setView('expenses');
           }
         });
-      } catch (e) {
-        console.log('Capacitor not available or error setting up deep links');
-      }
+      } catch (e) {}
     };
     setupDeepLinks();
   }, [view, user])
@@ -92,42 +115,31 @@ function AppContent() {
             setView('expenses');
           }
         }
-      } catch (e) {
-        console.log('Error checking launch URL', e);
-      }
+      } catch (e) {}
     };
     checkLaunchUrl();
   }, []);
 
-  // Notificaciones locales: pedir permiso al iniciar en nativo
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
-
     const requestNotificationPermission = async () => {
       try {
         const { LocalNotifications } = await import('@capacitor/local-notifications')
         await LocalNotifications.requestPermissions()
-      } catch (e) {
-        console.log('Local notifications not available', e)
-      }
+      } catch (e) {}
     }
     requestNotificationPermission()
   }, [])
 
-  // Programar notificación de recordatorio a las 21:00 si hay hábitos sin completar
   const scheduleReminderNotification = async (currentHabits) => {
     if (!Capacitor.isNativePlatform()) return
     try {
       const { LocalNotifications } = await import('@capacitor/local-notifications')
       const allCompleted = currentHabits.every(h => h.today_state === 'completed')
-
-      // Cancelar notificación previa
       await LocalNotifications.cancel({ notifications: [{ id: 1001 }] })
-
       if (!allCompleted && currentHabits.length > 0) {
         const now = new Date()
         const reminder = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 21, 0, 0)
-        // Si ya pasaron las 21:00, no programar para hoy
         if (reminder > now) {
           await LocalNotifications.schedule({
             notifications: [{
@@ -143,29 +155,23 @@ function AppContent() {
           })
         }
       }
-    } catch (e) {
-      console.log('Error scheduling notification', e)
-    }
+    } catch (e) {}
   }
 
-  // Efecto para cargar hábitos al iniciar
   useEffect(() => {
     if (session?.user && !authLoading) {
       fetchHabits()
     }
   }, [session, authLoading])
 
-  // Reprogramar notificación cuando cambien los hábitos
   useEffect(() => {
     if (habits.length > 0) {
       scheduleReminderNotification(habits)
     }
   }, [habits])
 
-  // Pedómetro — delegado al custom hook
   usePedometer(habits, setHabits, getLocalDateString)
 
-  // Aplicar orden guardado en localStorage al cargar hábitos
   useEffect(() => {
     if (!habits.length || !user) return
     const savedOrder = localStorage.getItem(`habits_order_${user.id}`)
@@ -179,15 +185,12 @@ function AppContent() {
         if (ib === -1) return -1
         return ia - ib
       })
-      // Solo actualizar si el orden cambió
       const changed = ordered.some((h, i) => h.id !== habits[i]?.id)
       if (changed) setHabits(ordered)
-    } catch (e) { /* ignore */ }
+    } catch (e) {}
   }, [habits.length, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleDragStart = (index) => {
-    dragIndexRef.current = index
-  }
+  const handleDragStart = (index) => { dragIndexRef.current = index }
 
   const handleDragOver = (e, index) => {
     e.preventDefault()
@@ -207,20 +210,13 @@ function AppContent() {
     }
   }
 
-  // Exportar todos los hábitos como JSON
   const exportBackupJSON = async () => {
     try {
-      const [habitsRes] = await Promise.all([
-        fetch(`${API_URL}/api/habits?date=${getLocalDateString()}`, {
-          headers: { 'Authorization': `Bearer ${session.access_token}` }
-        })
-      ])
+      const habitsRes = await fetch(`${API_URL}/api/habits?date=${getLocalDateString()}`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      })
       const habitsData = await habitsRes.json()
-      const backup = {
-        exportedAt: new Date().toISOString(),
-        user: user.email,
-        habits: habitsData,
-      }
+      const backup = { exportedAt: new Date().toISOString(), user: user.email, habits: habitsData }
       const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -234,14 +230,11 @@ function AppContent() {
     }
   }
 
-
   const fetchHabits = async () => {
     if (!session) return
     try {
       const response = await fetch(`${API_URL}/api/habits?date=${getLocalDateString()}`, {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
       })
       const data = await response.json()
       setHabits(data)
@@ -255,7 +248,6 @@ function AppContent() {
   const addHabit = async (e) => {
     e.preventDefault()
     if (!newHabitTitle.trim()) return
-
     try {
       const response = await fetch(`${API_URL}/api/habits`, {
         method: 'POST',
@@ -281,48 +273,36 @@ function AppContent() {
       setHabitCategory('General')
       toast.success('Hábito agregado')
     } catch (error) {
-      console.error('Error al agregar hábito:', error)
       toast.error('No se pudo agregar el hábito')
     }
   }
 
   const deleteHabit = async (id) => {
     if (!confirm('¿Estás seguro de eliminar este hábito?')) return
-
     try {
       const response = await fetch(`${API_URL}/api/habits/${id}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
       })
       if (!response.ok) throw new Error('Error al eliminar hábito')
       setHabits(habits.filter(h => h.id !== id))
       if (selectedHabitId === id) setSelectedHabitId(null)
       toast.success('Hábito eliminado')
     } catch (error) {
-      console.error('Error al eliminar hábito:', error)
       toast.error('No se pudo eliminar el hábito')
     }
   }
 
   const toggleHabitDay = async (e, habit) => {
     e.stopPropagation()
-
-    // Haptic feedback en Android
     try {
       const { Haptics, ImpactStyle } = await import('@capacitor/haptics')
       await Haptics.impact({ style: ImpactStyle.Light })
-    } catch (e) {
-      // No disponible en web, ignorar
-    }
+    } catch (e) {}
 
     const today = getLocalDateString()
-
-    // Optimistic Update
     const isCompleted = habit.today_state === 'completed'
     const isCounter = habit.type === 'counter'
-
     let newStatus = isCompleted ? 'none' : 'completed'
     let newValue = habit.today_value || 0
 
@@ -331,44 +311,33 @@ function AppContent() {
       newStatus = newValue >= habit.goal ? 'completed' : 'none'
     }
 
-    // Update local state immediately
     setHabits(habits.map(h =>
-      h.id === habit.id
-        ? { ...h, today_state: newStatus, today_value: newValue }
-        : h
+      h.id === habit.id ? { ...h, today_state: newStatus, today_value: newValue } : h
     ))
 
     try {
       const body = { date: today }
       if (isCounter) {
         body.value = newValue
-        body.state = 'completed' // Always mark active
+        body.state = 'completed'
       } else {
         body.state = newStatus
       }
-
       const response = await fetch(`${API_URL}/api/habits/${habit.id}/toggle`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify(body)
       })
-
       if (!response.ok) throw new Error('Failed to toggle')
-
     } catch (error) {
-      console.error('Error toggling habit:', error)
-      // Revert on error
       fetchHabits()
     }
   }
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#131f18] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
@@ -377,39 +346,21 @@ function AppContent() {
     return <Login />
   }
 
+  const navTabs = [
+    { v: 'habits', icon: CheckCircle, label: 'Hábitos' },
+    { v: 'meals', icon: Utensils, label: 'Comidas' },
+    { v: 'expenses', icon: Wallet, label: 'Gastos' },
+    { v: 'daily-expenses', icon: Calendar, label: 'Diario' },
+    { v: 'planning', icon: Layout, label: 'Plan' },
+  ]
+
+  const activeView = selectedHabitId ? 'habits' : view
+
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-100 font-sans selection:bg-indigo-500 selection:text-white relative overflow-hidden">
-      {/* Background Gradients/Blobs */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-900/20 rounded-full blur-[120px]"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-cyan-900/10 rounded-full blur-[120px]"></div>
-      </div>
+    <div className="min-h-screen bg-[#131f18] text-slate-100">
 
-      <div className={`mx-auto px-4 py-6 md:py-12 pb-28 md:pb-14 relative z-10 transition-all duration-300 ${view === 'expenses' ? 'max-w-7xl' : 'max-w-5xl'}`}>
-        <header className="mb-4 md:mb-10 text-center relative">
-          <div className="absolute top-0 right-0 flex items-center gap-1">
-            {view === 'habits' && !selectedHabitId && (
-              <button
-                onClick={exportBackupJSON}
-                className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-                title="Exportar backup JSON"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              </button>
-            )}
-            <button
-              onClick={signOut}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
-              title="Cerrar sesión"
-            >
-              <LogOut size={20} />
-            </button>
-          </div>
-          <h1 className="text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
-            Mis Hábitos & Gastos
-          </h1>
-        </header>
-
+      {/* Content area with bottom padding for nav */}
+      <div className="pb-20">
         {view === 'planning' ? (
           <ErrorBoundary>
             <Suspense fallback={<LazySpinner />}>
@@ -439,222 +390,268 @@ function AppContent() {
             </Suspense>
           </ErrorBoundary>
         ) : (
+          /* ── Habits View ── */
           <>
-            <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6 mb-8">
-              <form onSubmit={addHabit} className="space-y-4">
-                <div className="flex gap-3">
+            {/* Sticky Header */}
+            <header className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md px-4 pb-4 border-b border-primary/10">
+              <div className="flex items-center justify-between pt-4 mb-4">
+                <h1 className="text-2xl font-bold tracking-tight">Mis Hábitos</h1>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={exportBackupJSON}
+                    className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center"
+                    title="Exportar backup"
+                  >
+                    <Download size={18} className="text-slate-400" />
+                  </button>
+                  <button
+                    onClick={signOut}
+                    className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center"
+                    title="Cerrar sesión"
+                  >
+                    <LogOut size={18} className="text-slate-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Add Habit Form */}
+              <form onSubmit={addHabit} className="space-y-3">
+                <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={newHabitTitle}
                     onChange={(e) => setNewHabitTitle(e.target.value)}
                     placeholder="¿Qué nuevo hábito quieres comenzar?"
-                    className="flex-1 bg-slate-900/50 border border-slate-700 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all placeholder:text-slate-500"
+                    className="flex-1 bg-white/5 border-0 rounded-xl py-3.5 px-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40"
                   />
                   <button
                     type="submit"
                     disabled={!newHabitTitle.trim()}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+                    className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95 transition-transform"
                   >
-                    <Plus size={20} />
-                    <span className="hidden sm:inline">Agregar</span>
+                    <Plus size={22} className="text-[#131f18]" />
                   </button>
                 </div>
 
-                <div className="flex gap-4 items-center text-sm text-slate-400">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="habitType"
-                      checked={habitType === 'boolean'}
-                      onChange={() => setHabitType('boolean')}
-                      className="text-indigo-500 focus:ring-indigo-500 bg-slate-900 border-slate-700"
-                    />
-                    <span>Simple (Sí/No)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="habitType"
-                      checked={habitType === 'counter'}
-                      onChange={() => setHabitType('counter')}
-                      className="text-indigo-500 focus:ring-indigo-500 bg-slate-900 border-slate-700"
-                    />
-                    <span>Contador (Pasos, Litros...)</span>
-                  </label>
+                {/* Segmented control */}
+                <div className="flex p-1 bg-white/5 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setHabitType('boolean')}
+                    className={`flex-1 text-center py-2 text-xs font-semibold rounded-lg transition-all ${
+                      habitType === 'boolean' ? 'bg-primary text-[#131f18]' : 'text-slate-400'
+                    }`}
+                  >
+                    Simple (Sí/No)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHabitType('counter')}
+                    className={`flex-1 text-center py-2 text-xs font-semibold rounded-lg transition-all ${
+                      habitType === 'counter' ? 'bg-primary text-[#131f18]' : 'text-slate-400'
+                    }`}
+                  >
+                    Contador
+                  </button>
+                </div>
 
+                {/* Category dropdown */}
+                <div className="relative">
                   <select
                     value={habitCategory}
                     onChange={(e) => setHabitCategory(e.target.value)}
-                    className="bg-slate-900/50 border border-slate-700 text-slate-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-white/5 border-0 rounded-xl py-3 px-4 text-sm appearance-none text-slate-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
                   >
                     <option value="General">General</option>
-                    <option value="Salud">Salud 🍎</option>
-                    <option value="Trabajo">Trabajo 💼</option>
-                    <option value="Estudio">Estudio 📚</option>
-                    <option value="Espiritualidad">Espiritualidad 🧘</option>
-                    <option value="Otro">Otro ⚡</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Trabajo">Trabajo</option>
+                    <option value="Estudio">Estudio</option>
+                    <option value="Espiritualidad">Espiritualidad</option>
+                    <option value="Otro">Otro</option>
                   </select>
+                  <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
 
+                {/* Counter extra fields */}
                 {habitType === 'counter' && (
-                  <div className="flex gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex gap-3">
                     <div className="flex-1">
-                      <label className="block text-xs text-slate-500 mb-1">Meta Diaria</label>
+                      <label className="block text-xs text-slate-500 mb-1 ml-1">Meta diaria</label>
                       <input
                         type="number"
                         min="0"
                         value={habitGoal}
                         onChange={(e) => setHabitGoal(e.target.value)}
                         placeholder="Ej. 10000"
-                        className="w-full bg-slate-900/50 border border-slate-700 text-slate-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                        className="w-full bg-white/5 border-0 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40"
                       />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-xs text-slate-500 mb-1">Unidad</label>
+                      <label className="block text-xs text-slate-500 mb-1 ml-1">Unidad</label>
                       <input
                         type="text"
                         value={habitUnit}
                         onChange={(e) => setHabitUnit(e.target.value)}
                         placeholder="Ej. pasos"
-                        className="w-full bg-slate-900/50 border border-slate-700 text-slate-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+                        className="w-full bg-white/5 border-0 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40"
                       />
                     </div>
                   </div>
                 )}
               </form>
-            </div>
+            </header>
 
-            <div className="space-y-4">
+            {/* Habits List */}
+            <main className="px-4 py-4 space-y-3">
               {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-                  <p className="text-slate-400">Cargando tus hábitos...</p>
+                <div className="flex justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                 </div>
               ) : habits.length === 0 ? (
-                <div className="text-center py-16 bg-slate-800/30 rounded-2xl border border-slate-700/30 border-dashed">
-                  <Calendar size={48} className="mx-auto text-slate-600 mb-4" />
-                  <h3 className="text-xl font-semibold text-slate-300 mb-2">No hay hábitos aún</h3>
-                  <p className="text-slate-500">¡Comienza agregando tu primer objetivo arriba!</p>
+                <div className="text-center py-16 border-2 border-dashed border-primary/10 rounded-xl mt-4">
+                  <Calendar size={40} className="mx-auto text-primary/30 mb-3" />
+                  <h3 className="font-semibold text-slate-300 mb-1">No hay hábitos aún</h3>
+                  <p className="text-sm text-slate-500">¡Agrega tu primer hábito arriba!</p>
                 </div>
               ) : (
-                <ul className="space-y-3">
-                  {habits.map((habit, index) => (
-                    <li
+                habits.map((habit, index) => {
+                  const { IconComp, colorClass } = getHabitVisuals(habit)
+                  const isCompleted = habit.today_state === 'completed'
+                  const isCounter = habit.type === 'counter'
+                  const pct = isCounter ? Math.min(((habit.today_value || 0) / habit.goal) * 100, 100) : 0
+                  const progressColor = colorClass.includes('blue') ? '#60a5fa'
+                    : colorClass.includes('amber') ? '#fbbf24'
+                    : colorClass.includes('red') ? '#f87171'
+                    : colorClass.includes('purple') ? '#c084fc'
+                    : '#2ecc70'
+
+                  return isCounter ? (
+                    /* Counter habit card */
+                    <div
                       key={habit.id}
                       onClick={() => setSelectedHabitId(habit.id)}
                       draggable
                       onDragStart={() => handleDragStart(index)}
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDragEnd={handleDragEnd}
-                      className="group bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl p-4 flex items-center justify-between transition-all duration-200 hover:shadow-lg hover:border-slate-600 hover:-translate-y-0.5 cursor-pointer"
+                      className="bg-primary/5 border border-primary/10 p-5 rounded-xl cursor-pointer active:scale-[0.99] transition-transform"
                     >
-                      <div className="flex items-center gap-4 flex-1">
-                        {/* Status Icon / Button */}
-                        <div onClick={(e) => toggleHabitDay(e, habit)}>
-                          {habit.type === 'counter' ? (
-                            <div className="flex flex-col items-center justify-center w-12 cursor-pointer group/counter">
-                              <div className="text-[10px] text-indigo-300 font-bold mb-0.5">
-                                {habit.today_value || 0}
-                              </div>
-                              <div className="h-8 w-8 rounded-full bg-slate-700/50 border border-slate-600 relative overflow-hidden group-hover/counter:border-indigo-500/50 transition-colors">
-                                <div
-                                  className="absolute bottom-0 left-0 w-full bg-indigo-500 transition-all duration-300"
-                                  style={{ height: `${Math.min(((habit.today_value || 0) / habit.goal) * 100, 100)}%` }}
-                                ></div>
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/counter:opacity-100 transition-opacity bg-black/20 text-white font-bold text-lg">
-                                  +
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <button
-                              className={`h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 ${habit.today_state === 'completed'
-                                ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg shadow-green-500/20 scale-105'
-                                : 'bg-slate-700/50 text-slate-500 hover:bg-slate-700 hover:text-slate-300 border border-slate-600 hover:border-slate-500'
-                                }`}
-                            >
-                              {habit.today_state === 'completed' ? <CheckCircle size={22} /> : <Circle size={22} />}
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className={`text-lg font-medium transition-colors truncate ${habit.today_state === 'completed' && habit.type !== 'counter' ? 'text-green-100/70 line-through decoration-green-500/30' : 'text-slate-200 group-hover:text-white'}`}>
-                              {habit.title}
-                            </h3>
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex gap-3 items-start">
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
+                            <IconComp size={22} />
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-base">{habit.title}</h3>
                             {habit.category && habit.category !== 'General' && (
-                              <span className="text-[10px] shrink-0 px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 border border-slate-600">
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider mt-1">
                                 {habit.category}
                               </span>
                             )}
                           </div>
-                          {habit.type === 'counter' && (
-                            <div className="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-indigo-500 rounded-full transition-all duration-500"
-                                style={{ width: `${Math.min(((habit.today_value || 0) / habit.goal) * 100, 100)}%` }}
-                              ></div>
-                            </div>
-                          )}
-                          <div className="flex justify-between items-center mt-1">
-                            <p className="text-xs text-slate-500">
-                              {habit.type === 'counter'
-                                ? `${habit.today_value || 0} / ${habit.goal} ${habit.unit}`
-                                : (habit.today_state === 'completed' ? '¡Completado hoy!' : 'Pendiente hoy')}
-                            </p>
-                          </div>
+                        </div>
+                        <div
+                          className="text-right cursor-pointer"
+                          onClick={(e) => { e.stopPropagation(); toggleHabitDay(e, habit) }}
+                        >
+                          <span className="text-2xl font-bold" style={{ color: progressColor }}>
+                            {habit.today_value || 0}
+                          </span>
+                          <p className="text-[10px] text-slate-500 uppercase font-bold">{habit.unit}</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs text-slate-500">
+                          <span>Progreso</span>
+                          <span>{habit.today_value || 0} / {habit.goal} {habit.unit}</span>
+                        </div>
+                        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{ width: `${pct}%`, backgroundColor: progressColor }}
+                          />
                         </div>
                       </div>
 
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          deleteHabit(habit.id)
-                        }}
-                        className="text-slate-500 hover:text-red-400 p-2 rounded-lg hover:bg-red-500/10 transition-all md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 opacity-100"
-                        title="Eliminar hábito"
+                        onClick={(e) => { e.stopPropagation(); deleteHabit(habit.id) }}
+                        className="mt-3 text-slate-600 hover:text-red-400 transition-colors"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={14} />
                       </button>
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                  ) : (
+                    /* Boolean habit card */
+                    <div
+                      key={habit.id}
+                      onClick={() => setSelectedHabitId(habit.id)}
+                      draggable
+                      onDragStart={() => handleDragStart(index)}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDragEnd={handleDragEnd}
+                      className="bg-primary/5 border border-primary/10 p-4 rounded-xl flex items-center gap-3 cursor-pointer active:scale-[0.99] transition-transform"
+                    >
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
+                        <IconComp size={22} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className={`font-semibold text-base ${isCompleted ? 'text-slate-400 line-through' : ''}`}>
+                          {habit.title}
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {isCompleted ? '¡Completado hoy!' : 'Pendiente hoy'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteHabit(habit.id) }}
+                          className="text-slate-600 hover:text-red-400 transition-colors p-1"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                        <button
+                          onClick={(e) => toggleHabitDay(e, habit)}
+                          className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${
+                            isCompleted
+                              ? 'bg-primary border-primary text-[#131f18]'
+                              : 'border-slate-600 text-transparent'
+                          }`}
+                        >
+                          <Check size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })
               )}
-            </div>
+            </main>
           </>
         )}
       </div>
 
-      {/* Bottom Navigation Bar */}
+      {/* Bottom Navigation */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-xl border-t border-slate-800/80"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="fixed bottom-0 left-0 right-0 z-50 bg-[#131f18] border-t border-primary/10 px-2 pt-2 pb-safe"
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 8px)' }}
       >
-        <div className="flex items-center justify-around px-1 py-2">
-          {[
-            { v: 'habits', icon: CheckCircle, label: 'Hábitos' },
-            { v: 'meals', icon: Utensils, label: 'Comidas' },
-            { v: 'expenses', icon: Wallet, label: 'Gastos' },
-            { v: 'daily-expenses', icon: Calendar, label: 'Diario' },
-            { v: 'planning', icon: Layout, label: 'Plan' },
-          ].map(({ v, icon: Icon, label }) => {
-            const isActive = view === v
+        <div className="flex justify-between items-end">
+          {navTabs.map(({ v, icon: Icon, label }) => {
+            const isActive = activeView === v
             return (
               <button
                 key={v}
-                onClick={() => {
-                  setView(v)
-                  setSelectedHabitId(null)
-                }}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl transition-all duration-200 flex-1 min-w-0 ${
-                  isActive ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-300'
-                }`}
+                onClick={() => { setView(v); setSelectedHabitId(null) }}
+                className="flex flex-col items-center gap-1 flex-1 min-w-0 relative py-1"
               >
-                <div className={`p-1.5 rounded-xl transition-all duration-200 ${isActive ? 'bg-indigo-500/15' : ''}`}>
-                  <Icon size={20} />
-                </div>
-                <span className={`text-[10px] font-medium transition-colors truncate w-full text-center ${isActive ? 'text-indigo-300' : 'text-slate-600'}`}>
+                {isActive && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
+                )}
+                <Icon
+                  size={22}
+                  className={isActive ? 'text-primary' : 'text-slate-500'}
+                />
+                <span className={`text-[10px] font-medium ${isActive ? 'text-primary font-bold' : 'text-slate-500'}`}>
                   {label}
                 </span>
               </button>

@@ -398,7 +398,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
 
     if (!expenses || expenses.length === 0) {
         return (
-            <div className="text-center py-20 bg-slate-800/30 rounded-2xl border border-slate-700/50">
+            <div className="text-center py-20 bg-primary/5 rounded-2xl border border-primary/10">
                 <AlertCircle className="mx-auto text-slate-500 mb-4" size={48} />
                 <h3 className="text-xl font-medium text-slate-300">No hay datos suficientes</h3>
                 <p className="text-slate-500">Añade gastos para ver el análisis.</p>
@@ -416,9 +416,9 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
     const CustomTooltip = ({ active, payload, label }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-xl z-50">
+                <div className="bg-white/[0.03] border border-primary/10 p-3 rounded-xl shadow-xl z-50">
                     <p className="text-slate-300 font-medium mb-1">{label || payload[0].name}</p>
-                    <p className="text-indigo-400 font-bold">
+                    <p className="text-primary font-bold">
                         ${payload[0].value.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                     </p>
                 </div>
@@ -432,9 +432,9 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
 
             {/* KPI Cards Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
+                        <div className="p-3 bg-primary/10 text-primary rounded-xl">
                             <Wallet size={24} />
                         </div>
                         <div>
@@ -446,9 +446,9 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                     </div>
                 </div>
 
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                        <div className="p-3 bg-primary/10 text-primary rounded-xl">
                             <TrendingUp size={24} />
                         </div>
                         <div>
@@ -468,7 +468,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                     </div>
                 </div>
 
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-xl">
                             <Calendar size={24} />
@@ -483,7 +483,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                     </div>
                 </div>
 
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
                             <CreditCard size={24} />
@@ -503,7 +503,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
             </div>
 
             {/* BUDGETS SECTION */}
-            <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+            <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl shadow-lg">
                 <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
                     <Target size={20} className="text-emerald-500" />
                     Presupuestos Mensuales
@@ -521,7 +521,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                         // Mejor mostrar todas para permitir definir presupuesto.
 
                         return (
-                            <div key={cat.id || cat.name} className="bg-slate-900/40 p-4 rounded-xl border border-slate-700/50 relative group">
+                            <div key={cat.id || cat.name} className="bg-primary/5 p-4 rounded-xl border border-primary/10 relative group">
                                 <div className="flex justify-between items-start mb-2">
                                     <div className="flex items-center gap-2">
                                         <span className="text-xl">{cat.icon || '📦'}</span>
@@ -532,7 +532,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                                             setEditingBudgetCategory(cat.name);
                                             setNewBudgetAmount(limit ? limit.toString() : '');
                                         }}
-                                        className="text-slate-500 hover:text-indigo-400 p-1 opacity-0 group-hover:opacity-100 transition-all"
+                                        className="text-slate-500 hover:text-primary p-1 opacity-0 group-hover:opacity-100 transition-all"
                                     >
                                         <Edit2 size={14} />
                                     </button>
@@ -544,13 +544,13 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                                             type="number"
                                             value={newBudgetAmount}
                                             onChange={(e) => setNewBudgetAmount(e.target.value)}
-                                            className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                            className="w-full bg-white/5 border border-slate-600 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-primary"
                                             placeholder="Monto límite..."
                                             autoFocus
                                         />
                                         <button
                                             onClick={() => handleSaveBudget(cat.name)}
-                                            className="bg-indigo-600 hover:bg-indigo-500 text-white p-1 rounded"
+                                            className="bg-primary hover:bg-primary/90 text-white p-1 rounded"
                                         >
                                             <Save size={14} />
                                         </button>
@@ -582,7 +582,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                                                 />
                                             </div>
                                         ) : (
-                                            <div className="h-2 w-full bg-slate-800 rounded-full"></div>
+                                            <div className="h-2 w-full bg-white/5 rounded-full"></div>
                                         )}
 
                                         {limit > 0 && (
@@ -603,7 +603,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
 
             {/* Proyección de Gastos Futuros (Base Variable + Cuotas) */}
             {futureProjections && futureProjections.length > 0 && (
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl shadow-lg">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                         <h3 className="text-lg font-semibold text-slate-200 flex items-center gap-2">
                             <Calendar size={20} className="text-amber-500" />
@@ -611,11 +611,11 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                         </h3>
 
                         {/* Toggle Switch */}
-                        <div className="flex items-center bg-slate-900/50 p-1 rounded-lg border border-slate-700/50">
+                        <div className="flex items-center bg-white/5 p-1 rounded-lg border border-primary/10">
                             <button
                                 onClick={() => setShowProjection(true)}
                                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${showProjection
-                                    ? 'bg-indigo-500 text-white shadow-lg'
+                                    ? 'bg-primary text-white shadow-lg'
                                     : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
@@ -624,7 +624,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                             <button
                                 onClick={() => setShowProjection(false)}
                                 className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${!showProjection
-                                    ? 'bg-indigo-500 text-white shadow-lg'
+                                    ? 'bg-primary text-white shadow-lg'
                                     : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
@@ -642,8 +642,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                             // Pero para mantener consistencia visual dejaremos el card.
 
                             return (
-                                <div key={index} className="flex-shrink-0 bg-slate-900 border border-slate-700 rounded-xl p-4 w-48 text-center shadow-md hover:border-amber-500/50 transition-colors">
-                                    <div className={`text-xs font-bold py-1 px-3 rounded-full mb-3 inline-block capitalize ${index === 0 ? 'bg-indigo-500/20 text-indigo-300' : 'bg-slate-800 text-slate-300'
+                                <div key={index} className="flex-shrink-0 bg-white/[0.03] border border-primary/10 rounded-xl p-4 w-48 text-center shadow-md hover:border-amber-500/50 transition-colors">
+                                    <div className={`text-xs font-bold py-1 px-3 rounded-full mb-3 inline-block capitalize ${index === 0 ? 'bg-primary/20 text-primary' : 'bg-white/5 text-slate-300'
                                         }`}>
                                         {item.label}
                                     </div>
@@ -661,9 +661,9 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
             )}
 
             {/* DEBT CALCULATOR */}
-            <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+            <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl shadow-lg">
                 <div className="flex items-center gap-3 mb-6">
-                    <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
+                    <div className="p-2 bg-primary/10 text-primary rounded-lg">
                         <Users size={20} />
                     </div>
                     <h3 className="text-lg font-semibold text-slate-200">Calculadora de Divisiones</h3>
@@ -678,7 +678,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                                 <select
                                     value={payerA}
                                     onChange={(e) => setPayerA(e.target.value)}
-                                    className="w-full bg-slate-900 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                                    className="w-full bg-white/[0.03] border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary"
                                 >
                                     <option value="">Seleccionar...</option>
                                     {payers.map(p => (
@@ -692,7 +692,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                                         placeholder="Nombre..."
                                         value={manualPayerA}
                                         onChange={(e) => setManualPayerA(e.target.value)}
-                                        className="w-full mt-2 bg-slate-900/50 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 animate-in fade-in slide-in-from-top-1"
+                                        className="w-full mt-2 bg-white/5 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary animate-in fade-in slide-in-from-top-1"
                                     />
                                 )}
                             </div>
@@ -701,7 +701,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                                 <select
                                     value={payerB}
                                     onChange={(e) => setPayerB(e.target.value)}
-                                    className="w-full bg-slate-900 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500"
+                                    className="w-full bg-white/[0.03] border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary"
                                 >
                                     <option value="">Seleccionar...</option>
                                     {payers.map(p => (
@@ -715,14 +715,14 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                                         placeholder="Nombre..."
                                         value={manualPayerB}
                                         onChange={(e) => setManualPayerB(e.target.value)}
-                                        className="w-full mt-2 bg-slate-900/50 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 animate-in fade-in slide-in-from-top-1"
+                                        className="w-full mt-2 bg-white/5 border border-slate-600 text-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-primary animate-in fade-in slide-in-from-top-1"
                                     />
                                 )}
                             </div>
                         </div>
 
                         {(!payerA || !payerB) && (
-                            <div className="text-center p-4 bg-slate-900/30 rounded-xl border border-dashed border-slate-700 text-slate-500 text-sm">
+                            <div className="text-center p-4 bg-primary/5 rounded-xl border border-dashed border-primary/10 text-slate-500 text-sm">
                                 Selecciona dos personas para calcular balances.
                             </div>
                         )}
@@ -737,8 +737,8 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                     {/* Results */}
                     {debtCalculation && (
                         <div className="flex-1 space-y-4">
-                            <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 p-4">
-                                <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-slate-700/50">
+                            <div className="bg-white/5 rounded-xl border border-primary/10 p-4">
+                                <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-primary/10">
                                     <div>
                                         <span className="text-slate-500 text-xs uppercase block mb-1">Pagó {payerA === 'OTHER' ? manualPayerA : payerA}</span>
                                         <span className="text-slate-200 font-bold">${debtCalculation.paidA.toLocaleString()}</span>
@@ -790,7 +790,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                             </div>
 
                             {/* Detailed Expenses Breakdown */}
-                            <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 p-4 max-h-[400px] overflow-y-auto">
+                            <div className="bg-white/5 rounded-xl border border-primary/10 p-4 max-h-[400px] overflow-y-auto">
                                 <h4 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
                                     <List size={16} className="text-indigo-400" />
                                     Detalle de Gastos Compartidos
@@ -855,7 +855,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                 {/* 1. Categorías (Pie) */}
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl shadow-lg">
                     <h3 className="text-lg font-semibold text-slate-200 mb-6">Distribución por Categorías</h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -871,7 +871,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                 </div>
 
                 {/* 2. Monthly Evolution (Bar) */}
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl shadow-lg">
                     <h3 className="text-lg font-semibold text-slate-200 mb-6">Evolución Mensual</h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -889,7 +889,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                 </div>
 
                 {/* 3. Weekday Radar */}
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl shadow-lg">
                     <h3 className="text-lg font-semibold text-slate-200 mb-6">Gasto por Día de Semana</h3>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
@@ -905,7 +905,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                 </div>
 
                 {/* 4. Currency + Share Breakdown (Composite) */}
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg flex flex-col">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl shadow-lg flex flex-col">
                     <h3 className="text-lg font-semibold text-slate-200 mb-4">Composición</h3>
                     <div className="flex-1 grid grid-cols-2 gap-4">
                         {/* Currency */}
@@ -949,7 +949,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                 </div>
 
                 {/* 5. Top 5 Gastos */}
-                <div className="bg-slate-800/50 border border-slate-700/50 p-6 rounded-2xl shadow-lg lg:col-span-2">
+                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl shadow-lg lg:col-span-2">
                     <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
                         <ArrowUpRight size={20} className="text-red-400" />
                         Mayores Gastos del Periodo

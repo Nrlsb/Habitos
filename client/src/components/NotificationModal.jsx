@@ -21,7 +21,7 @@ const NotificationModal = ({
             case 'error':
                 return <XCircle className="text-red-400" size={32} />;
             default:
-                return <Info className="text-indigo-400" size={32} />;
+                return <Info className="text-primary" size={32} />;
         }
     };
 
@@ -41,7 +41,7 @@ const NotificationModal = ({
             showCloseButton={false}
         >
             <div className="flex flex-col items-center text-center">
-                <div className="mb-4 p-3 bg-slate-800 rounded-full border border-slate-700">
+                <div className="mb-4 p-3 bg-primary/10 rounded-full border border-primary/20">
                     {getIcon()}
                 </div>
 
@@ -57,7 +57,7 @@ const NotificationModal = ({
 
                 <button
                     onClick={handleConfirm}
-                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/20"
+                    className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-xl font-medium transition-all shadow-lg shadow-primary/20"
                 >
                     {confirmText}
                 </button>

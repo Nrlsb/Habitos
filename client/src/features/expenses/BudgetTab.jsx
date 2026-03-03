@@ -96,9 +96,9 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
             {/* Income Configuration */}
-            <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
+            <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
                 <h3 className="text-xl font-bold text-slate-200 mb-6 flex items-center gap-2">
-                    <Wallet className="text-indigo-400" size={24} />
+                    <Wallet className="text-primary" size={24} />
                     Configuración de Ingresos
                 </h3>
 
@@ -112,7 +112,7 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
                                 value={income}
                                 onChange={(e) => setIncome(e.target.value)}
                                 placeholder="0.00"
-                                className="w-full bg-slate-900/50 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all tabular-nums"
+                                className="w-full bg-white/5 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl pl-8 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all tabular-nums"
                             />
                         </div>
                     </div>
@@ -120,8 +120,8 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
                         type="submit"
                         disabled={isSaving || !income}
                         className={`px-8 py-3 rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg ${saveStatus === 'success'
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20'
+                            ? 'bg-primary text-white'
+                            : 'bg-primary hover:bg-primary/90 text-white shadow-primary/20'
                             } disabled:opacity-50`}
                     >
                         {isSaving ? 'Guardando...' : saveStatus === 'success' ? (
@@ -141,9 +141,9 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
 
             {/* Budget Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 shadow-lg">
+                <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 shadow-lg">
                     <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider block mb-2">Disponible Total</span>
-                    <div className={`text-2xl font-bold tabular-nums ${remainingBudget >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                    <div className={`text-2xl font-bold tabular-nums ${remainingBudget >= 0 ? 'text-primary' : 'text-red-400'}`}>
                         ${remainingBudget.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                     </div>
                     <p className="text-slate-500 text-[10px] mt-2 italic">
@@ -151,14 +151,14 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
                     </p>
                 </div>
 
-                <div className="bg-indigo-900/20 border border-indigo-500/20 rounded-2xl p-6 shadow-lg">
-                    <span className="text-indigo-300 text-xs font-semibold uppercase tracking-wider block mb-2 flex items-center gap-1">
+                <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6 shadow-lg">
+                    <span className="text-primary text-xs font-semibold uppercase tracking-wider block mb-2 flex items-center gap-1">
                         <TrendingUp size={14} /> Gasto Diario Sugerido
                     </span>
                     <div className="text-2xl font-bold text-white tabular-nums">
                         ${dailyBudget.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                     </div>
-                    <p className="text-indigo-400/60 text-[10px] mt-2">
+                    <p className="text-primary/60 text-[10px] mt-2">
                         Basado en {daysRemaining} días restantes
                     </p>
                 </div>
@@ -177,28 +177,28 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
             </div>
 
             {/* Progress Visualization */}
-            <div className="bg-slate-800/40 border border-slate-700/50 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+            <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 shadow-xl relative overflow-hidden">
                 <h4 className="text-lg font-bold text-slate-200 mb-6">Estado del Presupuesto</h4>
 
                 <div className="space-y-6">
                     <div>
                         <div className="flex justify-between text-sm mb-2">
                             <span className="text-slate-400">Consumo del Ingreso</span>
-                            <span className={`font-bold ${progressPercentage > 90 ? 'text-red-400' : 'text-indigo-400'}`}>
+                            <span className={`font-bold ${progressPercentage > 90 ? 'text-red-400' : 'text-primary'}`}>
                                 {progressPercentage.toFixed(1)}%
                             </span>
                         </div>
-                        <div className="h-4 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-700">
+                        <div className="h-4 w-full bg-white/[0.03] rounded-full overflow-hidden border border-primary/10">
                             <div
                                 style={{ width: `${progressPercentage}%` }}
-                                className={`h-full transition-all duration-1000 ease-out rounded-full bg-gradient-to-r ${progressPercentage > 90 ? 'from-red-500 to-orange-500' : 'from-indigo-500 to-cyan-500'
+                                className={`h-full transition-all duration-1000 ease-out rounded-full bg-gradient-to-r ${progressPercentage > 90 ? 'from-red-500 to-orange-500' : 'from-primary to-cyan-500'
                                     } shadow-[0_0_15px_rgba(99,102,241,0.3)]`}
                             ></div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/30">
+                        <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-primary/10">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400">
                                     <ArrowRight size={16} />
@@ -207,9 +207,9 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
                             </div>
                             <span className="text-slate-200 font-bold font-mono">${fixedExpensesARS.toLocaleString('es-AR')}</span>
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/30">
+                        <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-primary/10">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
+                                <div className="p-2 bg-primary/20 rounded-lg text-primary">
                                     <DollarSign size={16} />
                                 </div>
                                 <span className="text-slate-300 text-sm">Gastos Variables</span>

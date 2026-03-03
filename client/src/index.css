@@ -1,9 +1,16 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@theme {
+  --color-primary: #2ecc70;
+  --color-app-bg: #131f18;
+}
 
 @layer base {
   body {
-    background-color: #0f172a;
+    background-color: #131f18;
     overscroll-behavior: none;
+    font-family: 'Inter', sans-serif;
   }
 }
 
