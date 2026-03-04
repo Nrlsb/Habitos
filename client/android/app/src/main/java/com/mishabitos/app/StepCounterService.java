@@ -68,7 +68,7 @@ public class StepCounterService extends Service implements SensorEventListener {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         Sensor stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         if (stepSensor != null) {
-            sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_NORMAL);
+            sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_UI);
         }
 
         return START_STICKY; // El sistema lo reinicia si lo mata
@@ -140,14 +140,15 @@ public class StepCounterService extends Service implements SensorEventListener {
     private Notification buildNotification(int steps) {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         int goal = prefs.getInt(KEY_STEPS_GOAL, 8000);
-        String text = formatNumber(steps) + " / " + formatNumber(goal) + " pasos hoy";
+        String text = (steps < 0) ? "Sensor de pasos no disponible" : formatNumber(steps) + " / " + formatNumber(goal) + " pasos hoy";
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Mis Hábitos")
+            .setContentTitle("Contador de Pasos")
             .setContentText(text)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setOngoing(true)
             .setSilent(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .build();
     }
 

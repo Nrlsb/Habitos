@@ -49,13 +49,23 @@ export function usePedometer(habits, setHabits, getLocalDateString) {
         // Solicitar permiso ACTIVITY_RECOGNITION antes de arrancar el servicio
         try {
           const { CapacitorPedometer } = await import('@capgo/capacitor-pedometer')
+          
+          // Solicitar permisos de actividad
           const perm = await CapacitorPedometer.requestPermissions()
           if (perm.activityRecognition === 'denied') {
-            console.warn('Pedometer permission denied')
-            return
+            console.warn('Pedometer activity permission denied')
+          }
+
+          // En Android 13+, las notificaciones requieren permiso explícito para servicios foreground
+          if (Capacitor.getPlatform() === 'android') {
+            const { LocalNotifications } = await import('@capacitor/local-notifications')
+            const notifPerm = await LocalNotifications.requestPermissions()
+            if (notifPerm.display === 'denied') {
+              console.warn('Notification permission denied - Foreground service may fail')
+            }
           }
         } catch (e) {
-          // Permiso ya concedido o no disponible, continuar
+          console.error('Error requesting permissions', e)
         }
 
         // Guardar el goal en SharedPreferences para que el widget lo muestre
