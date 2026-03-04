@@ -247,7 +247,7 @@ const DailyExpenses = () => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             {/* Header / Date Navigation */}
-            <div className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md border-b border-primary/10 px-4 py-4 flex items-center justify-between">
+            <div className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md border-b border-primary/10 px-4 pb-4 flex items-center justify-between" style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}>
                 <button
                     onClick={handlePrevDay}
                     className="p-2 hover:bg-primary/10 rounded-xl text-slate-400 hover:text-primary transition-colors"
@@ -308,271 +308,271 @@ const DailyExpenses = () => {
 
                 {/* Quick Add Form */}
                 <div className={`bg-primary/5 border ${editingGroup ? 'border-amber-500/30' : 'border-primary/10'} rounded-2xl p-5 transition-colors`}>
-                        <h3 className="text-slate-100 font-bold text-lg mb-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                {editingGroup ? (
-                                    <>
-                                        <Edit2 size={18} className="text-amber-400" />
-                                        <span className="text-amber-400">Editar Gasto</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Plus size={18} className="text-primary" />
-                                        <span>Agregar Gasto Rápido</span>
-                                    </>
-                                )}
-                            </div>
-                            {editingGroup && (
-                                <button onClick={resetForm} className="text-xs text-slate-500 hover:text-white underline">
-                                    Cancelar
-                                </button>
+                    <h3 className="text-slate-100 font-bold text-lg mb-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            {editingGroup ? (
+                                <>
+                                    <Edit2 size={18} className="text-amber-400" />
+                                    <span className="text-amber-400">Editar Gasto</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Plus size={18} className="text-primary" />
+                                    <span>Agregar Gasto Rápido</span>
+                                </>
                             )}
-                        </h3>
+                        </div>
+                        {editingGroup && (
+                            <button onClick={resetForm} className="text-xs text-slate-500 hover:text-white underline">
+                                Cancelar
+                            </button>
+                        )}
+                    </h3>
 
-                        {planillas.length === 0 ? (
-                            <div className="text-center p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20">
-                                <p className="text-sm text-slate-400 mb-2">No tienes planillas activas.</p>
-                                <p className="text-xs text-slate-500">Crea una en la pestaña "Mis Planillas" para comenzar.</p>
-                            </div>
-                        ) : (
-                            <form onSubmit={handleAddExpense} className="space-y-3">
-                                {/* Multi-Planilla Selector */}
-                                <div className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPlanillaDropdown(!showPlanillaDropdown)}
-                                        className="w-full bg-white/5 border border-primary/10 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 text-left flex justify-between items-center"
-                                    >
-                                        <span className="truncate">
-                                            {selectedPlanillaIds.length === 0
-                                                ? "Seleccionar Planillas"
-                                                : selectedPlanillaIds.length === 1
-                                                    ? planillas.find(p => p.id === selectedPlanillaIds[0])?.nombre
-                                                    : `${selectedPlanillaIds.length} planillas seleccionadas`
-                                            }
-                                        </span>
-                                        <ChevronRight size={16} className={`transition-transform ${showPlanillaDropdown ? 'rotate-90' : ''}`} />
-                                    </button>
+                    {planillas.length === 0 ? (
+                        <div className="text-center p-4 bg-primary/5 rounded-xl border border-dashed border-primary/20">
+                            <p className="text-sm text-slate-400 mb-2">No tienes planillas activas.</p>
+                            <p className="text-xs text-slate-500">Crea una en la pestaña "Mis Planillas" para comenzar.</p>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleAddExpense} className="space-y-3">
+                            {/* Multi-Planilla Selector */}
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPlanillaDropdown(!showPlanillaDropdown)}
+                                    className="w-full bg-white/5 border border-primary/10 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 text-left flex justify-between items-center"
+                                >
+                                    <span className="truncate">
+                                        {selectedPlanillaIds.length === 0
+                                            ? "Seleccionar Planillas"
+                                            : selectedPlanillaIds.length === 1
+                                                ? planillas.find(p => p.id === selectedPlanillaIds[0])?.nombre
+                                                : `${selectedPlanillaIds.length} planillas seleccionadas`
+                                        }
+                                    </span>
+                                    <ChevronRight size={16} className={`transition-transform ${showPlanillaDropdown ? 'rotate-90' : ''}`} />
+                                </button>
 
-                                    {showPlanillaDropdown && (
-                                        <div className="absolute z-10 w-full mt-1 bg-[#1a2e20] border border-primary/20 rounded-xl shadow-xl max-h-48 overflow-y-auto">
-                                            {planillas.map(p => (
-                                                <div
-                                                    key={p.id}
-                                                    onClick={() => togglePlanillaSelection(p.id)}
-                                                    className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 cursor-pointer"
-                                                >
-                                                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedPlanillaIds.includes(p.id) ? 'bg-primary border-primary' : 'border-slate-500'}`}>
-                                                        {selectedPlanillaIds.includes(p.id) && <Plus size={12} className="text-[#131f18]" />}
-                                                    </div>
-                                                    <span className="text-sm text-slate-200">{p.nombre}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Overlay to close dropdown */}
                                 {showPlanillaDropdown && (
-                                    <div className="fixed inset-0 z-0" onClick={() => setShowPlanillaDropdown(false)}></div>
+                                    <div className="absolute z-10 w-full mt-1 bg-[#1a2e20] border border-primary/20 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                                        {planillas.map(p => (
+                                            <div
+                                                key={p.id}
+                                                onClick={() => togglePlanillaSelection(p.id)}
+                                                className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 cursor-pointer"
+                                            >
+                                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedPlanillaIds.includes(p.id) ? 'bg-primary border-primary' : 'border-slate-500'}`}>
+                                                    {selectedPlanillaIds.includes(p.id) && <Plus size={12} className="text-[#131f18]" />}
+                                                </div>
+                                                <span className="text-sm text-slate-200">{p.nombre}</span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 )}
+                            </div>
 
-                                {/* Description */}
-                                <div>
+                            {/* Overlay to close dropdown */}
+                            {showPlanillaDropdown && (
+                                <div className="fixed inset-0 z-0" onClick={() => setShowPlanillaDropdown(false)}></div>
+                            )}
+
+                            {/* Description */}
+                            <div>
+                                <input
+                                    type="text"
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    placeholder="Descripción"
+                                    className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500"
+                                />
+                            </div>
+
+                            {/* Amount & Currency */}
+                            <div className="flex gap-2">
+                                <div className="flex-1">
                                     <input
-                                        type="text"
-                                        value={description}
-                                        onChange={(e) => setDescription(e.target.value)}
-                                        placeholder="Descripción"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={amount}
+                                        onChange={(e) => setAmount(e.target.value)}
+                                        placeholder="0.00"
                                         className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500"
                                     />
                                 </div>
+                                <select
+                                    value={currency}
+                                    onChange={(e) => setCurrency(e.target.value)}
+                                    className="bg-white/5 border border-primary/10 text-slate-300 text-sm rounded-xl px-2 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                                >
+                                    <option value="ARS">ARS</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
 
-                                {/* Amount & Currency */}
-                                <div className="flex gap-2">
+                            {/* Category Selection */}
+                            <div>
+                                <select
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                    className="w-full bg-white/5 border border-primary/10 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
+                                >
+                                    {categories.map(cat => (
+                                        <option key={cat.value} value={cat.value}>{cat.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Extra Options: Shared & Installments */}
+                            <div className="flex gap-3">
+                                <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-white/5 p-2 rounded-xl border border-primary/10 hover:border-primary/30 transition-colors">
+                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-primary border-primary' : 'border-slate-500 bg-white/5'}`}>
+                                        {esCompartido && <Plus size={10} className="text-[#131f18]" />}
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={esCompartido}
+                                        onChange={(e) => setEsCompartido(e.target.checked)}
+                                        className="hidden"
+                                    />
+                                    <span className="text-xs text-slate-400 group-hover:text-slate-300">Compartido</span>
+                                </label>
+
+                                <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-white/5 p-2 rounded-xl border border-primary/10 hover:border-primary/30 transition-colors">
+                                    <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-primary border-primary' : 'border-slate-500 bg-white/5'}`}>
+                                        {enCuotas && <Plus size={10} className="text-[#131f18]" />}
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={enCuotas}
+                                        onChange={(e) => setEnCuotas(e.target.checked)}
+                                        className="hidden"
+                                    />
+                                    <span className="text-xs text-slate-400 group-hover:text-slate-300">Cuotas</span>
+                                </label>
+                            </div>
+
+                            {esCompartido && (
+                                <div className="animate-in fade-in slide-in-from-top-1">
+                                    <input
+                                        type="text"
+                                        value={paidBy}
+                                        onChange={(e) => setPaidBy(e.target.value)}
+                                        placeholder="Pagado por (opcional)"
+                                        className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500"
+                                    />
+
+                                    {/* Division Personalizada */}
+                                    <div className="mt-3 p-3 bg-white/5 rounded-xl border border-primary/10">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="text-xs font-medium text-slate-300">División Personalizada</h4>
+                                            <button
+                                                type="button"
+                                                onClick={addSplitDetail}
+                                                className="text-[10px] flex items-center gap-1 text-primary hover:text-primary/80 transition-colors bg-primary/10 px-2 py-1 rounded"
+                                            >
+                                                <Plus size={10} /> Añadir
+                                            </button>
+                                        </div>
+
+                                        {splitDetails.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {/* Headers */}
+                                                <div className="flex gap-2 px-1 mb-1">
+                                                    <span className="flex-1 text-[10px] text-slate-500 font-medium">Persona</span>
+                                                    <span className="w-20 text-[10px] text-slate-500 font-medium text-right pr-2">Monto</span>
+                                                    <span className="w-5"></span>
+                                                </div>
+
+                                                {splitDetails.map((detail, index) => (
+                                                    <div key={index} className="flex gap-2 items-center animate-in fade-in slide-in-from-left-2">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Persona (ej. Lucas)"
+                                                            value={detail.name}
+                                                            onChange={(e) => updateSplitDetail(index, 'name', e.target.value)}
+                                                            className="flex-1 bg-white/5 border border-primary/10 text-slate-200 text-[10px] rounded p-1.5 focus:border-primary focus:outline-none"
+                                                        />
+                                                        <div className="relative w-20">
+                                                            <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]">$</span>
+                                                            <input
+                                                                type="number"
+                                                                placeholder="0"
+                                                                value={detail.amount}
+                                                                onChange={(e) => updateSplitDetail(index, 'amount', parseFloat(e.target.value) || 0)}
+                                                                className="w-full bg-white/5 border border-primary/10 text-slate-200 text-[10px] rounded pl-3 pr-1 py-1.5 focus:border-primary focus:outline-none text-right"
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeSplitDetail(index)}
+                                                            className="text-slate-500 hover:text-red-400 p-1"
+                                                        >
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                <div className="pt-2 border-t border-primary/10 text-right text-[10px] text-slate-500">
+                                                    Asignado: <span className="text-slate-300">${splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0).toFixed(2)}</span>
+                                                    {amount && (
+                                                        <span className="ml-2">
+                                                            Resto: <span className="text-primary">${(parseFloat(amount) - splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0)).toFixed(2)}</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="text-[10px] text-slate-500 italic">Automático (50/50)</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {enCuotas && (
+                                <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
                                     <div className="flex-1">
+                                        <label className="text-[10px] text-slate-500 ml-1 mb-0.5 block">Actual</label>
                                         <input
                                             type="number"
-                                            step="0.01"
-                                            min="0"
-                                            value={amount}
-                                            onChange={(e) => setAmount(e.target.value)}
-                                            placeholder="0.00"
-                                            className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500"
+                                            min="1"
+                                            value={cuotaActual}
+                                            onChange={(e) => setCuotaActual(e.target.value)}
+                                            placeholder="1"
+                                            className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
                                         />
                                     </div>
-                                    <select
-                                        value={currency}
-                                        onChange={(e) => setCurrency(e.target.value)}
-                                        className="bg-white/5 border border-primary/10 text-slate-300 text-sm rounded-xl px-2 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                    >
-                                        <option value="ARS">ARS</option>
-                                        <option value="USD">USD</option>
-                                    </select>
-                                </div>
-
-                                {/* Category Selection */}
-                                <div>
-                                    <select
-                                        value={category}
-                                        onChange={(e) => setCategory(e.target.value)}
-                                        className="w-full bg-white/5 border border-primary/10 text-slate-300 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40"
-                                    >
-                                        {categories.map(cat => (
-                                            <option key={cat.value} value={cat.value}>{cat.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Extra Options: Shared & Installments */}
-                                <div className="flex gap-3">
-                                    <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-white/5 p-2 rounded-xl border border-primary/10 hover:border-primary/30 transition-colors">
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${esCompartido ? 'bg-primary border-primary' : 'border-slate-500 bg-white/5'}`}>
-                                            {esCompartido && <Plus size={10} className="text-[#131f18]" />}
-                                        </div>
+                                    <div className="flex-1">
+                                        <label className="text-[10px] text-slate-500 ml-1 mb-0.5 block">Total</label>
                                         <input
-                                            type="checkbox"
-                                            checked={esCompartido}
-                                            onChange={(e) => setEsCompartido(e.target.checked)}
-                                            className="hidden"
+                                            type="number"
+                                            min="1"
+                                            value={totalCuotas}
+                                            onChange={(e) => setTotalCuotas(e.target.value)}
+                                            placeholder="Total"
+                                            className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
                                         />
-                                        <span className="text-xs text-slate-400 group-hover:text-slate-300">Compartido</span>
-                                    </label>
-
-                                    <label className="flex items-center gap-2 cursor-pointer group flex-1 bg-white/5 p-2 rounded-xl border border-primary/10 hover:border-primary/30 transition-colors">
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${enCuotas ? 'bg-primary border-primary' : 'border-slate-500 bg-white/5'}`}>
-                                            {enCuotas && <Plus size={10} className="text-[#131f18]" />}
-                                        </div>
-                                        <input
-                                            type="checkbox"
-                                            checked={enCuotas}
-                                            onChange={(e) => setEnCuotas(e.target.checked)}
-                                            className="hidden"
-                                        />
-                                        <span className="text-xs text-slate-400 group-hover:text-slate-300">Cuotas</span>
-                                    </label>
-                                </div>
-
-                                {esCompartido && (
-                                    <div className="animate-in fade-in slide-in-from-top-1">
-                                        <input
-                                            type="text"
-                                            value={paidBy}
-                                            onChange={(e) => setPaidBy(e.target.value)}
-                                            placeholder="Pagado por (opcional)"
-                                            className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500"
-                                        />
-
-                                        {/* Division Personalizada */}
-                                        <div className="mt-3 p-3 bg-white/5 rounded-xl border border-primary/10">
-                                            <div className="flex justify-between items-center mb-2">
-                                                <h4 className="text-xs font-medium text-slate-300">División Personalizada</h4>
-                                                <button
-                                                    type="button"
-                                                    onClick={addSplitDetail}
-                                                    className="text-[10px] flex items-center gap-1 text-primary hover:text-primary/80 transition-colors bg-primary/10 px-2 py-1 rounded"
-                                                >
-                                                    <Plus size={10} /> Añadir
-                                                </button>
-                                            </div>
-
-                                            {splitDetails.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    {/* Headers */}
-                                                    <div className="flex gap-2 px-1 mb-1">
-                                                        <span className="flex-1 text-[10px] text-slate-500 font-medium">Persona</span>
-                                                        <span className="w-20 text-[10px] text-slate-500 font-medium text-right pr-2">Monto</span>
-                                                        <span className="w-5"></span>
-                                                    </div>
-
-                                                    {splitDetails.map((detail, index) => (
-                                                        <div key={index} className="flex gap-2 items-center animate-in fade-in slide-in-from-left-2">
-                                                            <input
-                                                                type="text"
-                                                                placeholder="Persona (ej. Lucas)"
-                                                                value={detail.name}
-                                                                onChange={(e) => updateSplitDetail(index, 'name', e.target.value)}
-                                                                className="flex-1 bg-white/5 border border-primary/10 text-slate-200 text-[10px] rounded p-1.5 focus:border-primary focus:outline-none"
-                                                            />
-                                                            <div className="relative w-20">
-                                                                <span className="absolute left-1.5 top-1/2 -translate-y-1/2 text-slate-500 text-[10px]">$</span>
-                                                                <input
-                                                                    type="number"
-                                                                    placeholder="0"
-                                                                    value={detail.amount}
-                                                                    onChange={(e) => updateSplitDetail(index, 'amount', parseFloat(e.target.value) || 0)}
-                                                                    className="w-full bg-white/5 border border-primary/10 text-slate-200 text-[10px] rounded pl-3 pr-1 py-1.5 focus:border-primary focus:outline-none text-right"
-                                                                />
-                                                            </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => removeSplitDetail(index)}
-                                                                className="text-slate-500 hover:text-red-400 p-1"
-                                                            >
-                                                                <Trash2 size={12} />
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                    <div className="pt-2 border-t border-primary/10 text-right text-[10px] text-slate-500">
-                                                        Asignado: <span className="text-slate-300">${splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0).toFixed(2)}</span>
-                                                        {amount && (
-                                                            <span className="ml-2">
-                                                                Resto: <span className="text-primary">${(parseFloat(amount) - splitDetails.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0)).toFixed(2)}</span>
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <p className="text-[10px] text-slate-500 italic">Automático (50/50)</p>
-                                            )}
-                                        </div>
                                     </div>
+                                </div>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting || !description || !amount || selectedPlanillaIds.length === 0}
+                                className={`w-full ${editingGroup ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20 text-[#131f18]' : 'bg-primary hover:bg-primary/90 shadow-primary/20 text-[#131f18]'} font-bold py-3.5 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-2`}
+                            >
+                                {isSubmitting ? (
+                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                ) : (
+                                    <>
+                                        {editingGroup ? <Edit2 size={18} /> : <Plus size={18} />}
+                                        {editingGroup ? 'Guardar Cambios' : 'Agregar'}
+                                    </>
                                 )}
-
-                                {enCuotas && (
-                                    <div className="flex gap-2 animate-in fade-in slide-in-from-top-1">
-                                        <div className="flex-1">
-                                            <label className="text-[10px] text-slate-500 ml-1 mb-0.5 block">Actual</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={cuotaActual}
-                                                onChange={(e) => setCuotaActual(e.target.value)}
-                                                placeholder="1"
-                                                className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <label className="text-[10px] text-slate-500 ml-1 mb-0.5 block">Total</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={totalCuotas}
-                                                onChange={(e) => setTotalCuotas(e.target.value)}
-                                                placeholder="Total"
-                                                className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40"
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting || !description || !amount || selectedPlanillaIds.length === 0}
-                                    className={`w-full ${editingGroup ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20 text-[#131f18]' : 'bg-primary hover:bg-primary/90 shadow-primary/20 text-[#131f18]'} font-bold py-3.5 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-2`}
-                                >
-                                    {isSubmitting ? (
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                    ) : (
-                                        <>
-                                            {editingGroup ? <Edit2 size={18} /> : <Plus size={18} />}
-                                            {editingGroup ? 'Guardar Cambios' : 'Agregar'}
-                                        </>
-                                    )}
-                                </button>
-                            </form>
-                        )}
-                    </div>
+                            </button>
+                        </form>
+                    )}
+                </div>
 
                 {/* Expense List */}
                 <div className="bg-primary/5 border border-primary/10 rounded-2xl overflow-hidden">

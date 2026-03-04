@@ -566,7 +566,7 @@ function Expenses() {
         return (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {/* Header */}
-                <header className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md border-b border-primary/10 px-4 py-4 flex items-center justify-between">
+                <header className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md border-b border-primary/10 px-4 pb-4 pt-safe flex items-center justify-between" style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}>
                     <div className="flex items-center gap-3">
                         <Wallet size={22} className="text-primary" />
                         <h1 className="text-xl font-bold tracking-tight">Mis Gastos</h1>
@@ -657,7 +657,7 @@ function Expenses() {
 
     // VIEW: EXPENSE SHEET
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 min-h-screen overflow-x-hidden pb-24">
             <NotificationModal
                 isOpen={notification.isOpen}
                 onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
@@ -925,13 +925,14 @@ function Expenses() {
 
             <button
                 onClick={() => setSelectedPlanillaId(null)}
-                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 font-medium"
+                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-6 font-medium px-4"
+                style={{ paddingTop: 'max(env(safe-area-inset-top), 12px)' }}
             >
                 <ArrowLeft size={20} />
-                <span>Volver a Planillas</span>
+                <span>Planillas</span>
             </button>
 
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto px-4 overflow-x-hidden">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-3">
                         <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200">
@@ -945,7 +946,7 @@ function Expenses() {
                     </div>
 
                     {!currentPlanilla?.is_shared_with_me && (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                             <button
                                 onClick={() => setIsExportModalOpen(true)}
                                 className="flex items-center gap-2 bg-emerald-900/30 hover:bg-emerald-900/50 text-primary px-4 py-2 rounded-xl border border-primary/20 transition-all font-medium"
@@ -1141,33 +1142,33 @@ function Expenses() {
                 </div>
 
                 {/* TABS NAVIGATION */}
-                <div className="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-full md:w-fit border border-primary/10 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-1 mb-6 bg-slate-800/50 p-1 rounded-xl w-full border border-primary/10">
                     <button
                         onClick={() => setActiveTab('list')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'list' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-1 min-w-0 ${activeTab === 'list' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
-                        <List size={18} />
+                        <List size={16} />
                         Lista
                     </button>
                     <button
                         onClick={() => setActiveTab('analysis')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'analysis' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-1 min-w-0 ${activeTab === 'analysis' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
-                        <PieChart size={18} />
+                        <PieChart size={16} />
                         Análisis
                     </button>
                     <button
                         onClick={() => setActiveTab('subscriptions')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'subscriptions' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-1 min-w-0 ${activeTab === 'subscriptions' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
-                        <RefreshCcw size={18} />
+                        <RefreshCcw size={16} />
                         Suscripciones
                     </button>
                     <button
                         onClick={() => setActiveTab('budget')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-1 min-w-0 ${activeTab === 'budget' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
-                        <Wallet size={18} />
+                        <Wallet size={16} />
                         Presupuesto
                     </button>
                 </div>
@@ -1471,7 +1472,7 @@ function Expenses() {
                         {/* SEARCH + CSV TOOLBAR */}
                         <div className="flex gap-3 mb-4">
                             <div className="relative flex-1">
-                                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
                                 <input
                                     type="text"
                                     value={searchQuery}
@@ -1491,7 +1492,7 @@ function Expenses() {
                                 title="Exportar a CSV"
                                 className="flex items-center gap-2 px-4 py-2.5 bg-emerald-900/30 hover:bg-emerald-900/50 text-primary rounded-xl border border-primary/20 transition-all font-medium text-sm disabled:opacity-40 disabled:cursor-not-allowed"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                                 <span className="hidden sm:inline">CSV</span>
                             </button>
                         </div>

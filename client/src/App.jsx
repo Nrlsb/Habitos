@@ -83,7 +83,7 @@ function AppContent() {
         try {
           const { SplashScreen } = await import('@capacitor/splash-screen')
           await SplashScreen.hide()
-        } catch (e) {}
+        } catch (e) { }
       }
       hideSplash()
     }
@@ -99,7 +99,7 @@ function AppContent() {
             setView('expenses');
           }
         });
-      } catch (e) {}
+      } catch (e) { }
     };
     setupDeepLinks();
   }, [view, user])
@@ -115,7 +115,7 @@ function AppContent() {
             setView('expenses');
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     };
     checkLaunchUrl();
   }, []);
@@ -126,7 +126,7 @@ function AppContent() {
       try {
         const { LocalNotifications } = await import('@capacitor/local-notifications')
         await LocalNotifications.requestPermissions()
-      } catch (e) {}
+      } catch (e) { }
     }
     requestNotificationPermission()
   }, [])
@@ -155,7 +155,7 @@ function AppContent() {
           })
         }
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   useEffect(() => {
@@ -187,7 +187,7 @@ function AppContent() {
       })
       const changed = ordered.some((h, i) => h.id !== habits[i]?.id)
       if (changed) setHabits(ordered)
-    } catch (e) {}
+    } catch (e) { }
   }, [habits.length, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDragStart = (index) => { dragIndexRef.current = index }
@@ -298,7 +298,7 @@ function AppContent() {
     try {
       const { Haptics, ImpactStyle } = await import('@capacitor/haptics')
       await Haptics.impact({ style: ImpactStyle.Light })
-    } catch (e) {}
+    } catch (e) { }
 
     const today = getLocalDateString()
     const isCompleted = habit.today_state === 'completed'
@@ -393,8 +393,8 @@ function AppContent() {
           /* ── Habits View ── */
           <>
             {/* Sticky Header */}
-            <header className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md px-4 pb-4 border-b border-primary/10">
-              <div className="flex items-center justify-between pt-4 mb-4">
+            <header className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md px-4 pb-4 border-b border-primary/10" style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}>
+              <div className="flex items-center justify-between mb-4">
                 <h1 className="text-2xl font-bold tracking-tight">Mis Hábitos</h1>
                 <div className="flex items-center gap-2">
                   <button
@@ -438,18 +438,16 @@ function AppContent() {
                   <button
                     type="button"
                     onClick={() => setHabitType('boolean')}
-                    className={`flex-1 text-center py-2 text-xs font-semibold rounded-lg transition-all ${
-                      habitType === 'boolean' ? 'bg-primary text-[#131f18]' : 'text-slate-400'
-                    }`}
+                    className={`flex-1 text-center py-2 text-xs font-semibold rounded-lg transition-all ${habitType === 'boolean' ? 'bg-primary text-[#131f18]' : 'text-slate-400'
+                      }`}
                   >
                     Simple (Sí/No)
                   </button>
                   <button
                     type="button"
                     onClick={() => setHabitType('counter')}
-                    className={`flex-1 text-center py-2 text-xs font-semibold rounded-lg transition-all ${
-                      habitType === 'counter' ? 'bg-primary text-[#131f18]' : 'text-slate-400'
-                    }`}
+                    className={`flex-1 text-center py-2 text-xs font-semibold rounded-lg transition-all ${habitType === 'counter' ? 'bg-primary text-[#131f18]' : 'text-slate-400'
+                      }`}
                   >
                     Contador
                   </button>
@@ -521,9 +519,9 @@ function AppContent() {
                   const pct = isCounter ? Math.min(((habit.today_value || 0) / habit.goal) * 100, 100) : 0
                   const progressColor = colorClass.includes('blue') ? '#60a5fa'
                     : colorClass.includes('amber') ? '#fbbf24'
-                    : colorClass.includes('red') ? '#f87171'
-                    : colorClass.includes('purple') ? '#c084fc'
-                    : '#2ecc70'
+                      : colorClass.includes('red') ? '#f87171'
+                        : colorClass.includes('purple') ? '#c084fc'
+                          : '#2ecc70'
 
                   return isCounter ? (
                     /* Counter habit card */
@@ -612,11 +610,10 @@ function AppContent() {
                         </button>
                         <button
                           onClick={(e) => toggleHabitDay(e, habit)}
-                          className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${
-                            isCompleted
+                          className={`w-8 h-8 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${isCompleted
                               ? 'bg-primary border-primary text-[#131f18]'
                               : 'border-slate-600 text-transparent'
-                          }`}
+                            }`}
                         >
                           <Check size={16} />
                         </button>
