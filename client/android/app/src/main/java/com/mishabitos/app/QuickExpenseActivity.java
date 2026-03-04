@@ -285,7 +285,8 @@ public class QuickExpenseActivity extends Activity {
                 JSONObject jsonParam = new JSONObject();
                 jsonParam.put("amount", finalAmount);
                 jsonParam.put("description", finalDescription);
-                jsonParam.put("created_at", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(new Date()));
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
+                jsonParam.put("created_at", sdf.format(new Date()));
                 jsonParam.put("category", category);
                 jsonParam.put("currency", "ARS");
                 jsonParam.put("planilla_id", planillaId);

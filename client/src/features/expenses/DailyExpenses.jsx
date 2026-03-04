@@ -5,6 +5,15 @@ import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Wallet, Calendar as CalendarIcon, ArrowRight, Trash2, Edit2 } from 'lucide-react';
 import { getDolarRate } from '../../services/dolarApi';
 
+// Helper: genera ISO string con offset local (ej: 2026-03-04T20:52:00-03:00)
+const toLocalISOString = (date) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    const offset = -date.getTimezoneOffset();
+    const sign = offset >= 0 ? '+' : '-';
+    const absOffset = Math.abs(offset);
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}${sign}${pad(Math.floor(absOffset / 60))}:${pad(absOffset % 60)}`;
+};
+
 const DailyExpenses = () => {
     const {
         dailyExpenses,
@@ -210,8 +219,9 @@ const DailyExpenses = () => {
 
             // Create expense for each selected planilla
             const promises = selectedPlanillaIds.map(id => {
-                // Ensure date is sent as local midnight/current time but for the selected date
-                const finalDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                // Usar la fecha seleccionada con la hora actual
+                const now = new Date();
+                const finalDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
 
                 return addExpense(id, {
                     description,
@@ -224,8 +234,8 @@ const DailyExpenses = () => {
                     enCuotas,
                     cuotaActual: enCuotas ? parseInt(cuotaActual) : null,
                     totalCuotas: enCuotas ? parseInt(totalCuotas) : null,
-                    // Use local date converted to ISO to preserve the "day"
-                    date: finalDate.toISOString()
+                    // Usar ISO con offset local para preservar la zona horaria
+                    date: toLocalISOString(finalDate)
                 });
             });
 
