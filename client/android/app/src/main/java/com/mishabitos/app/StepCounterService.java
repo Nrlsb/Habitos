@@ -43,7 +43,11 @@ public class StepCounterService extends Service implements SensorEventListener {
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
-        startForeground(NOTIF_ID, buildNotification(0));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIF_ID, buildNotification(0), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH);
+        } else {
+            startForeground(NOTIF_ID, buildNotification(0));
+        }
     }
 
     @Override

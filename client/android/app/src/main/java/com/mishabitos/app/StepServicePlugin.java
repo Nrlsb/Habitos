@@ -18,12 +18,16 @@ public class StepServicePlugin extends Plugin {
     public void startService(PluginCall call) {
         Context ctx = getContext();
         Intent intent = new Intent(ctx, StepCounterService.class);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            ctx.startForegroundService(intent);
-        } else {
-            ctx.startService(intent);
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ctx.startForegroundService(intent);
+            } else {
+                ctx.startService(intent);
+            }
+            call.resolve();
+        } catch (Exception e) {
+            call.reject("Error starting service: " + e.getMessage());
         }
-        call.resolve();
     }
 
     @PluginMethod
