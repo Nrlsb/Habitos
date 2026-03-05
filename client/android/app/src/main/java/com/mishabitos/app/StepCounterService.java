@@ -15,6 +15,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.Log;
 
 import androidx.core.app.NotificationCompat;
 
@@ -23,6 +24,8 @@ import java.util.Date;
 import java.util.Locale;
 
 public class StepCounterService extends Service implements SensorEventListener {
+
+    private static final String TAG = "StepCounterSvc";
 
     static final String PREFS_NAME = "StepCounterPrefs";
     static final String KEY_STEPS_TODAY = "steps_today";
@@ -42,6 +45,7 @@ public class StepCounterService extends Service implements SensorEventListener {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d(TAG, "onCreate() - Servicio creado");
         createNotificationChannel();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIF_ID, buildNotification(0), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH);
@@ -52,6 +56,7 @@ public class StepCounterService extends Service implements SensorEventListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d(TAG, "onStartCommand() - Servicio iniciando");
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         currentDate = getTodayDate();
         String savedDate = prefs.getString(KEY_STEP_DATE, "");
@@ -73,8 +78,12 @@ public class StepCounterService extends Service implements SensorEventListener {
         Sensor stepSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         if (stepSensor != null) {
             sensorManager.registerListener(this, stepSensor, SensorManager.SENSOR_DELAY_UI);
+            Log.d(TAG, "Sensor TYPE_STEP_COUNTER registrado exitosamente");
+        } else {
+            Log.e(TAG, "ERROR: Sensor TYPE_STEP_COUNTER NO DISPONIBLE en este dispositivo");
         }
 
+        Log.d(TAG, "onStartCommand() completado, baseline=" + sensorBaseline + ", date=" + currentDate);
         return START_STICKY; // El sistema lo reinicia si lo mata
     }
 
@@ -96,6 +105,7 @@ public class StepCounterService extends Service implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() != Sensor.TYPE_STEP_COUNTER) return;
+        Log.d(TAG, "onSensorChanged - sensorValue=" + (long) event.values[0] + ", baseline=" + sensorBaseline);
 
         long sensorValue = (long) event.values[0];
         String todayDate = getTodayDate();
