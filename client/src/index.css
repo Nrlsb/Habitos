@@ -4,6 +4,21 @@
 @theme {
   --color-primary: #2ecc70;
   --color-app-bg: #131f18;
+  --shadow-glow: 0 0 20px rgba(46, 204, 112, 0.3);
+  --shadow-glow-strong: 0 0 30px rgba(46, 204, 112, 0.5);
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-slide-up: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-up {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
 }
 
 @layer base {
@@ -11,6 +26,15 @@
     background-color: #131f18;
     overscroll-behavior: none;
     font-family: 'Inter', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  /* Permite selección en inputs y textareas */
+  input, textarea {
+    user-select: auto;
+    -webkit-user-select: auto;
   }
 }
 
@@ -23,5 +47,28 @@
   }
   .pt-safe {
     padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Glassmorphism utilities */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-panel-primary {
+    background: rgba(46, 204, 112, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(46, 204, 112, 0.15);
+  }
+  
+  /* Utilities for active states on mobile */
+  .active-scale {
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .active-scale:active {
+    transform: scale(0.96);
   }
 }

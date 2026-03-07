@@ -99,28 +99,28 @@ const Meals = () => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
             {/* Header / Date Navigation */}
-            <div className="flex items-center justify-between mb-6 bg-primary/5 p-4 rounded-2xl border border-primary/10 backdrop-blur-sm sticky top-0 z-20">
+            <div className="flex items-center justify-between mb-8 bg-[#131f18]/80 backdrop-blur-xl p-4 md:p-5 rounded-[32px] border border-white/5 shadow-glass sticky top-safe z-20 mx-4 md:mx-0 mt-4">
                 <button
                     onClick={handlePrevDay}
-                    className="p-2 hover:bg-primary/10 rounded-xl text-slate-400 hover:text-white transition-colors"
+                    className="p-2.5 hover:bg-white/5 active-scale rounded-2xl text-slate-400 hover:text-white transition-all shadow-inner"
                 >
                     <ChevronLeft size={24} />
                 </button>
 
                 <div className="text-center">
-                    <h2 className="text-lg font-semibold text-slate-200 capitalize">
+                    <h2 className="text-lg font-bold text-slate-100 capitalize">
                         {format(selectedDate, "EEEE d 'de' MMMM", { locale: es })}
                     </h2>
-                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
                         {isToday ? 'Hoy' : 'Histórico'}
                     </p>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                     {!isToday && (
                         <button
                             onClick={() => setSelectedDate(new Date())}
-                            className="p-2 hover:bg-primary/10 rounded-xl text-primary hover:text-primary transition-colors text-xs font-bold uppercase border border-primary/20"
+                            className="px-3 py-2 h-10 bg-primary/10 rounded-2xl text-primary text-xs font-bold uppercase border border-primary/20 active-scale transition-all"
                         >
                             HOY
                         </button>
@@ -128,7 +128,7 @@ const Meals = () => {
                     <button
                         onClick={handleNextDay}
                         disabled={isToday}
-                        className={`p-2 rounded-xl transition-colors ${isToday ? 'text-slate-700 cursor-not-allowed' : 'hover:bg-primary/10 text-slate-400 hover:text-white'}`}
+                        className={`p-2.5 rounded-2xl transition-all shadow-inner ${isToday ? 'text-slate-700 cursor-not-allowed opacity-50' : 'hover:bg-white/5 active-scale text-slate-400 hover:text-white'}`}
                     >
                         <ChevronRight size={24} />
                     </button>
@@ -141,20 +141,20 @@ const Meals = () => {
                     <p className="text-sm">Cargando comidas...</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mx-4 md:mx-0">
                     {sections.map((section) => (
-                        <div key={section.id} className="bg-primary/5 border border-primary/10 rounded-2xl p-5 backdrop-blur-sm flex flex-col h-full focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="p-2 bg-white/5 rounded-lg border border-primary/10">
+                        <div key={section.id} className="glass-panel border-white/5 shadow-glass rounded-[32px] p-6 flex flex-col h-full focus-within:border-primary/40 focus-within:shadow-[var(--shadow-glow)] transition-all duration-300">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-3 bg-white/5 rounded-2xl shadow-inner text-white">
                                     {section.icon}
                                 </div>
-                                <h3 className="text-slate-200 font-medium">{section.label}</h3>
+                                <h3 className="text-slate-100 font-bold text-lg">{section.label}</h3>
                             </div>
                             <textarea
                                 value={meals[section.id]}
                                 onChange={(e) => updateMeal(section.id, e.target.value)}
                                 placeholder={section.placeholder}
-                                className="w-full flex-1 bg-white/5 border border-primary/10 rounded-xl p-3 text-slate-200 text-sm focus:outline-none focus:border-primary/50 resize-none min-h-[100px] placeholder:text-slate-600"
+                                className="w-full flex-1 bg-white/5 border border-white/5 rounded-2xl p-4 text-slate-100 text-base focus:outline-none focus:border-primary/40 resize-none min-h-[120px] placeholder:text-slate-500 transition-all shadow-inner"
                             />
                         </div>
                     ))}
@@ -162,19 +162,18 @@ const Meals = () => {
             )}
 
             {/* Save Button Floating or Fixed */}
-            <div className="fixed bottom-6 right-6 md:relative md:bottom-auto md:right-auto md:mt-8 md:flex md:justify-end z-30">
+            <div className="fixed bottom-safe right-4 mb-24 md:mb-0 md:relative md:bottom-auto md:right-auto md:mt-8 md:flex md:justify-end z-30">
                 <button
                     onClick={handleSave}
                     disabled={saving || loading}
-                    className="bg-primary hover:bg-primary text-white px-6 py-3 rounded-xl font-medium shadow-lg shadow-primary/30 flex items-center gap-2 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="bg-primary hover:bg-primary/90 text-[#131f18] px-6 py-4 rounded-[24px] font-bold shadow-[var(--shadow-glow-strong)] flex items-center gap-2 transition-all active-scale disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {saving ? (
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <div className="w-6 h-6 border-2 border-[#131f18]/30 border-t-[#131f18] rounded-full animate-spin"></div>
                     ) : (
-                        <Save size={20} />
+                        <Save size={24} />
                     )}
-                    <span className="hidden md:inline">Guardar Cambios</span>
-                    <span className="md:hidden">Guardar</span>
+                    <span className="hidden md:inline text-lg">Guardar Cambios</span>
                 </button>
             </div>
         </div>

@@ -257,7 +257,7 @@ const DailyExpenses = () => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
             {/* Header / Date Navigation */}
-            <div className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md border-b border-primary/10 px-4 pb-4 flex items-center justify-between" style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}>
+            <div className="sticky top-0 z-10 bg-[#131f18]/80 backdrop-blur-xl border-b border-white/5 px-4 pb-4 flex items-center justify-between pt-safe">
                 <button
                     onClick={handlePrevDay}
                     className="p-2 hover:bg-primary/10 rounded-xl text-slate-400 hover:text-primary transition-colors"
@@ -297,7 +297,7 @@ const DailyExpenses = () => {
 
             <div className="px-4 py-4 space-y-4">
                 {/* Total Card */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-6 shadow-xl shadow-primary/20">
+                <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-primary to-primary/80 p-6 shadow-[var(--shadow-glow-strong)]">
                     <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
                     <div className="absolute -left-4 -bottom-4 w-24 h-24 bg-black/5 rounded-full blur-2xl"></div>
                     <div className="relative z-10">
@@ -317,7 +317,7 @@ const DailyExpenses = () => {
                 </div>
 
                 {/* Quick Add Form */}
-                <div className={`bg-primary/5 border ${editingGroup ? 'border-amber-500/30' : 'border-primary/10'} rounded-2xl p-5 transition-colors`}>
+                <div className={`glass-panel border ${editingGroup ? 'border-amber-500/30 shadow-[0_0_20px_rgba(245,158,11,0.2)]' : 'border-white/5 shadow-glass'} rounded-[32px] p-6 transition-all duration-300`}>
                     <h3 className="text-slate-100 font-bold text-lg mb-4 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             {editingGroup ? (
@@ -394,7 +394,7 @@ const DailyExpenses = () => {
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Descripción"
-                                    className="w-full bg-white/5 border border-primary/10 text-slate-100 text-sm rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500"
+                                    className="w-full bg-white/5 border border-white/5 text-slate-100 text-base rounded-2xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500 transition-all"
                                 />
                             </div>
 
@@ -569,14 +569,17 @@ const DailyExpenses = () => {
                             <button
                                 type="submit"
                                 disabled={isSubmitting || !description || !amount || selectedPlanillaIds.length === 0}
-                                className={`w-full ${editingGroup ? 'bg-amber-500 hover:bg-amber-400 shadow-amber-500/20 text-[#131f18]' : 'bg-primary hover:bg-primary/90 shadow-primary/20 text-[#131f18]'} font-bold py-3.5 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-2`}
+                                className={`w-full flex justify-center items-center gap-2 mt-4 py-4 font-bold text-lg rounded-2xl transition-all active-scale disabled:opacity-50 disabled:cursor-not-allowed ${editingGroup
+                                        ? 'bg-amber-500 text-[#131f18] hover:bg-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]'
+                                        : 'bg-primary text-[#131f18] hover:bg-primary/90 hover:shadow-[var(--shadow-glow-strong)]'
+                                    }`}
                             >
                                 {isSubmitting ? (
-                                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <div className="w-5 h-5 border-2 border-[#131f18]/30 border-t-[#131f18] rounded-full animate-spin"></div>
                                 ) : (
                                     <>
-                                        {editingGroup ? <Edit2 size={18} /> : <Plus size={18} />}
-                                        {editingGroup ? 'Guardar Cambios' : 'Agregar'}
+                                        {editingGroup ? <Edit2 size={20} /> : <Plus size={20} />}
+                                        {editingGroup ? 'Guardar Cambios' : 'Agregar Gasto Rápido'}
                                     </>
                                 )}
                             </button>
@@ -585,10 +588,10 @@ const DailyExpenses = () => {
                 </div>
 
                 {/* Expense List */}
-                <div className="bg-primary/5 border border-primary/10 rounded-2xl overflow-hidden">
-                    <div className="p-4 border-b border-primary/10 flex justify-between items-center">
-                        <h3 className="text-slate-200 font-semibold">Movimientos</h3>
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-lg font-medium">
+                <div className="glass-panel border-white/5 shadow-glass rounded-[32px] overflow-hidden">
+                    <div className="p-5 border-b border-white/5 flex justify-between items-center bg-white/5">
+                        <h3 className="text-slate-200 font-semibold text-lg">Movimientos</h3>
+                        <span className="text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-xl font-bold">
                             {groupedExpenses.length} reg.
                         </span>
                     </div>
@@ -604,9 +607,9 @@ const DailyExpenses = () => {
                             <p className="text-sm">No hay gastos en esta fecha.</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-primary/5 max-h-[70vh] overflow-y-auto">
+                        <div className="divide-y divide-white/5 max-h-[70vh] overflow-y-auto">
                             {groupedExpenses.map((expense) => (
-                                <div key={expense.id} className="p-4 hover:bg-primary/5 transition-colors flex items-center justify-between group">
+                                <div key={expense.id} className="p-5 hover:bg-white/5 transition-colors flex items-center justify-between group active-scale cursor-pointer">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
                                             {expense.category ? expense.category.charAt(0) : (expense.currency === 'USD' ? 'U' : '$')}

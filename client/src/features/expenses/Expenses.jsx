@@ -566,7 +566,7 @@ function Expenses() {
         return (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {/* Header */}
-                <header className="sticky top-0 z-10 bg-[#131f18]/90 backdrop-blur-md border-b border-primary/10 px-4 pb-4 pt-safe flex items-center justify-between" style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}>
+                <header className="sticky top-0 z-10 bg-[#131f18]/80 backdrop-blur-xl border-b border-white/5 px-4 pb-4 flex items-center justify-between pt-safe">
                     <div className="flex items-center gap-3">
                         <Wallet size={22} className="text-primary" />
                         <h1 className="text-xl font-bold tracking-tight">Mis Gastos</h1>
@@ -586,14 +586,14 @@ function Expenses() {
                                 value={newPlanillaName}
                                 onChange={(e) => setNewPlanillaName(e.target.value)}
                                 placeholder="Ej: Enero 2026"
-                                className="flex-1 bg-white/5 border-0 text-slate-100 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-slate-500"
+                                className="flex-1 bg-white/5 border border-white/5 text-slate-100 rounded-2xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500 transition-all"
                             />
                             <button
                                 type="submit"
                                 disabled={!newPlanillaName.trim()}
-                                className="w-14 h-14 bg-primary rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95 transition-transform"
+                                className="min-w-[56px] w-14 h-auto bg-primary rounded-2xl flex items-center justify-center shrink-0 shadow-[var(--shadow-glow)] disabled:opacity-50 active-scale transition-all hover:bg-primary/90"
                             >
-                                <Plus size={22} className="text-[#131f18]" />
+                                <Plus size={24} className="text-[#131f18]" />
                             </button>
                         </form>
                     </section>
@@ -609,10 +609,10 @@ function Expenses() {
                                 <div
                                     key={planilla.id}
                                     onClick={() => setSelectedPlanillaId(planilla.id)}
-                                    className="bg-primary/5 border border-primary/10 hover:border-primary/30 rounded-xl p-4 flex items-center justify-between cursor-pointer transition-all active:scale-[0.99]"
+                                    className="glass-panel border-white/5 shadow-glass rounded-[24px] p-5 flex items-center justify-between cursor-pointer transition-all active-scale hover:bg-white/5"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${planilla.is_shared_with_me ? 'bg-blue-400/15 text-blue-400' : 'bg-primary/15 text-primary'}`}>
+                                        <div className={`h-14 w-14 rounded-2xl flex items-center justify-center shadow-inner ${planilla.is_shared_with_me ? 'bg-blue-400/15 text-blue-400' : 'bg-primary/15 text-primary'}`}>
                                             {planilla.is_shared_with_me ? <Users size={22} /> : <Wallet size={22} />}
                                         </div>
                                         <div>
@@ -1118,17 +1118,17 @@ function Expenses() {
                 </div>
 
                 {/* TOTAL HEADER */}
-                <div className="bg-primary/5 backdrop-blur-md border border-primary/10 rounded-2xl p-6 mb-8 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity duration-700 group-hover:opacity-75"></div>
+                <div className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-primary to-primary/80 p-6 mb-8 shadow-[var(--shadow-glow-strong)] group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 transition-opacity duration-700 group-hover:opacity-75"></div>
                     <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
-                            <div className="p-3 bg-primary/20 rounded-xl text-primary">
+                            <div className="p-3 bg-white/20 backdrop-blur-sm shadow-inner rounded-2xl text-[#131f18]">
                                 <Wallet size={24} />
                             </div>
                             <div>
-                                <span className="text-slate-400 text-sm font-medium uppercase tracking-wider">Gasto Personal Total</span>
-                                <div className="text-3xl font-bold text-white tabular-nums mt-1">
-                                    ARS <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">${totalPersonalARS.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                <span className="text-[#131f18]/70 text-xs font-bold uppercase tracking-wider block mb-0.5">Gasto Personal Total</span>
+                                <div className="text-3xl font-bold text-[#131f18] tabular-nums">
+                                    ARS <span>${totalPersonalARS.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             </div>
                         </div>
@@ -1194,8 +1194,8 @@ function Expenses() {
                 ) : (
                     <>
                         {/* ADD NEW EXPENSE FORM */}
-                        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 mb-8 shadow-lg backdrop-blur-sm">
-                            <h3 className="text-lg font-semibold text-slate-200 mb-6 flex items-center gap-2">
+                        <div className="glass-panel border-white/5 rounded-[32px] p-6 mb-8 shadow-glass transition-all duration-300">
+                            <h3 className="text-xl font-bold text-slate-100 mb-6 flex items-center gap-2">
                                 <Plus size={20} className="text-primary" />
                                 {editingId ? 'Editar Gasto' : 'Añadir Nuevo Gasto'}
                             </h3>
@@ -1208,7 +1208,7 @@ function Expenses() {
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
                                             placeholder="Ej: Compra en el supermercado"
-                                            className="w-full bg-white/5 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-slate-600"
+                                            className="w-full bg-white/5 border border-white/5 text-slate-100 rounded-2xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-slate-500 text-base"
                                         />
                                     </div>
                                     <div className="md:col-span-3">
@@ -1425,8 +1425,8 @@ function Expenses() {
                                 )}
 
                                 <div className="flex gap-3">
-                                    <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-primary/20 active:scale-95 flex-1 md:flex-none md:min-w-[120px]">
-                                        {editingId ? 'Actualizar' : 'Añadir Gasto'}
+                                    <button type="submit" className="bg-primary hover:bg-primary/90 text-[#131f18] px-6 py-4 rounded-2xl font-bold transition-all shadow-[var(--shadow-glow)] active-scale flex-1 md:flex-none md:min-w-[150px]">
+                                        {editingId ? 'Actualizar Gasto' : 'Añadir Gasto'}
                                     </button>
                                     {editingId && (
                                         <button type="button" onClick={resetForm} className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-medium transition-colors">
@@ -1461,9 +1461,9 @@ function Expenses() {
                                 </button>
                                 <button
                                     onClick={() => setIsExportModalOpen(true)}
-                                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded-lg text-xs font-medium shadow-lg shadow-indigo-900/20 transition-colors"
+                                    className="flex items-center gap-2 bg-primary text-[#131f18] px-4 py-2 rounded-xl text-sm font-bold shadow-[var(--shadow-glow)] transition-all active-scale"
                                 >
-                                    <ArrowRightCircle size={16} />
+                                    <ArrowRightCircle size={18} />
                                     Copiar Seleccionados
                                 </button>
                             </div>
@@ -1478,7 +1478,7 @@ function Expenses() {
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
                                     placeholder="Buscar por descripción o categoría..."
-                                    className="w-full pl-9 pr-4 py-2.5 bg-slate-800/60 border border-slate-700 text-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-slate-500 text-sm"
+                                    className="w-full pl-10 pr-4 py-4 bg-white/5 border border-white/5 text-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-slate-500 text-base shadow-inner"
                                 />
                                 {searchQuery && (
                                     <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
@@ -1586,11 +1586,11 @@ function Expenses() {
                                                 <div className="flex gap-2">
                                                     {expense.is_shared ? (
                                                         <div className="flex items-center gap-2">
-                                                            <span className="bg-cyan-500/10 text-cyan-400 text-xs px-2.5 py-1 rounded-full font-medium border border-cyan-500/20">Compartido</span>
-                                                            {expense.payer_name && <span className="text-[10px] text-slate-500">Pagado por: <span className="text-slate-300">{expense.payer_name}</span></span>}
+                                                            <span className="bg-cyan-500/10 text-cyan-400 text-xs px-3 py-1.5 rounded-xl font-bold border border-cyan-500/20">Compartido</span>
+                                                            {expense.payer_name && <span className="text-[10px] text-slate-400">Pagado por: <span className="text-slate-200 font-medium">{expense.payer_name}</span></span>}
                                                         </div>
                                                     ) : (
-                                                        <span className="bg-slate-700 text-slate-400 text-xs px-2.5 py-1 rounded-full font-medium border border-slate-600">Personal</span>
+                                                        <span className="bg-white/5 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold border border-white/10">Personal</span>
                                                     )}
                                                 </div>
                                             </div>

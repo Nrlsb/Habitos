@@ -397,12 +397,12 @@ function HabitStats({ habitId, onBack }) {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <button
                 onClick={onBack}
-                className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4 group"
+                className="flex items-center gap-3 text-slate-400 hover:text-white transition-all mb-6 group active-scale w-fit"
             >
-                <div className="p-2 rounded-full bg-white/5 group-hover:bg-primary/10 transition-colors">
-                    <ArrowLeft size={20} />
+                <div className="p-3 rounded-2xl bg-white/5 group-hover:bg-primary/10 transition-colors shadow-inner">
+                    <ArrowLeft size={24} />
                 </div>
-                <span className="font-medium">Volver a mis hábitos</span>
+                <span className="font-bold">Volver atrás</span>
             </button>
 
             <header className="mb-8">
@@ -454,68 +454,68 @@ function HabitStats({ habitId, onBack }) {
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
-                    <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-3">
-                        <CheckCircle size={24} />
+                <div className="glass-panel border-white/5 p-6 rounded-[32px] flex flex-col items-center justify-center text-center hover:bg-white/5 transition-all duration-300 shadow-glass">
+                    <div className="h-14 w-14 rounded-[20px] bg-primary/20 flex items-center justify-center text-primary mb-4 shadow-[var(--shadow-glow)]">
+                        <CheckCircle size={28} />
                     </div>
-                    <span className="text-3xl font-bold text-white mb-1">{successfulCompletions.length}</span>
-                    <span className="text-sm text-slate-400">Total Completado</span>
+                    <span className="text-4xl font-bold text-white mb-1">{successfulCompletions.length}</span>
+                    <span className="text-sm font-medium text-slate-400">Total Completado</span>
                     {isStepHabit && (
-                        <div className="mt-2 pt-2 border-t border-primary/10 w-full text-center">
-                            <span className="text-primary font-medium text-lg">
+                        <div className="mt-3 pt-3 border-t border-white/10 w-full text-center">
+                            <span className="text-primary font-bold text-xl">
                                 {calculateKm(habit.completions.reduce((acc, curr) => acc + (curr.value || 0), 0))}
                             </span>
-                            <span className="text-xs text-slate-500 ml-1">Km Totales</span>
+                            <span className="text-xs text-slate-500 font-bold uppercase ml-1">Km Totales</span>
                         </div>
                     )}
                 </div>
 
-                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
-                    <div className="h-12 w-12 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-400 mb-3">
-                        <Trophy size={24} />
+                <div className="glass-panel border-white/5 p-6 rounded-[32px] flex flex-col items-center justify-center text-center hover:bg-white/5 transition-all duration-300 shadow-glass">
+                    <div className="h-14 w-14 rounded-[20px] bg-yellow-500/20 flex items-center justify-center text-yellow-400 mb-4 shadow-[var(--shadow-glow)]">
+                        <Trophy size={28} />
                     </div>
-                    <span className="text-3xl font-bold text-white mb-1">{longestStreak}</span>
-                    <span className="text-sm text-slate-400">Mejor Racha (días)</span>
+                    <span className="text-4xl font-bold text-white mb-1">{longestStreak}</span>
+                    <span className="text-sm font-medium text-slate-400">Mejor Racha (días)</span>
                 </div>
 
-                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
-                    <div className="h-12 w-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mb-3">
-                        <Flame size={24} />
+                <div className="glass-panel border-white/5 p-6 rounded-[32px] flex flex-col items-center justify-center text-center hover:bg-white/5 transition-all duration-300 shadow-glass">
+                    <div className="h-14 w-14 rounded-[20px] bg-green-500/20 flex items-center justify-center text-green-400 mb-4 shadow-[var(--shadow-glow)]">
+                        <Flame size={28} />
                     </div>
-                    <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(successfulCompletions, 7)}%</span>
-                    <span className="text-sm text-slate-400">Últimos 7 días</span>
+                    <span className="text-4xl font-bold text-white mb-1">{calculateCompletionRate(successfulCompletions, 7)}%</span>
+                    <span className="text-sm font-medium text-slate-400">Últimos 7 días</span>
                     {renderTrend(stats7)}
                 </div>
 
-                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
-                    <div className="h-12 w-12 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 mb-3">
-                        <CalendarIcon size={24} />
+                <div className="glass-panel border-white/5 p-6 rounded-[32px] flex flex-col items-center justify-center text-center hover:bg-white/5 transition-all duration-300 shadow-glass">
+                    <div className="h-14 w-14 rounded-[20px] bg-blue-500/20 flex items-center justify-center text-blue-400 mb-4 shadow-[var(--shadow-glow)]">
+                        <CalendarIcon size={28} />
                     </div>
-                    <span className="text-3xl font-bold text-white mb-1">{calculateCompletionRate(successfulCompletions, 30)}%</span>
-                    <span className="text-sm text-slate-400">Últimos 30 días</span>
+                    <span className="text-4xl font-bold text-white mb-1">{calculateCompletionRate(successfulCompletions, 30)}%</span>
+                    <span className="text-sm font-medium text-slate-400">Últimos 30 días</span>
                     {renderTrend(stats30)}
                 </div>
 
                 {habit.type === 'counter' && personalRecord && (
-                    <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
-                        <div className="h-12 w-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 mb-3">
-                            <Trophy size={24} />
+                    <div className="glass-panel border-white/5 p-6 rounded-[32px] flex flex-col items-center justify-center text-center hover:bg-white/5 transition-all duration-300 shadow-glass">
+                        <div className="h-14 w-14 rounded-[20px] bg-purple-500/20 flex items-center justify-center text-purple-400 mb-4 shadow-[var(--shadow-glow)]">
+                            <Trophy size={28} />
                         </div>
-                        <span className="text-2xl font-bold text-white mb-1">{personalRecord.value}</span>
+                        <span className="text-3xl font-bold text-white mb-1">{personalRecord.value}</span>
                         <div className="flex flex-col">
-                            <span className="text-sm text-slate-400">Récord Personal</span>
-                            <span className="text-[10px] text-slate-500">{new Date(personalRecord.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+                            <span className="text-sm font-medium text-slate-400">Récord Personal</span>
+                            <span className="text-[10px] uppercase font-bold text-slate-500">{new Date(personalRecord.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
                         </div>
                     </div>
                 )}
 
-                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl flex flex-col items-center justify-center text-center hover:bg-primary/5/60 transition-colors">
-                    <div className="h-12 w-12 rounded-full bg-pink-500/20 flex items-center justify-center text-pink-400 mb-3">
-                        <TrendingUp size={24} />
+                <div className="glass-panel border-white/5 p-6 rounded-[32px] flex flex-col items-center justify-center text-center hover:bg-white/5 transition-all duration-300 shadow-glass">
+                    <div className="h-14 w-14 rounded-[20px] bg-pink-500/20 flex items-center justify-center text-pink-400 mb-4 shadow-[var(--shadow-glow)]">
+                        <TrendingUp size={28} />
                     </div>
-                    <span className="text-2xl font-bold text-white mb-1">{projection.total}</span>
-                    <span className="text-sm text-slate-400">Proyección {new Date().getFullYear()}</span>
-                    <span className="text-[10px] text-slate-500">Basado en prom. {projection.avg}/día</span>
+                    <span className="text-3xl font-bold text-white mb-1">{projection.total}</span>
+                    <span className="text-sm font-medium text-slate-400">Proyección {new Date().getFullYear()}</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-500 mt-1">Basado en prom. {projection.avg}/día</span>
                 </div>
             </div>
 
@@ -561,21 +561,21 @@ function HabitStats({ habitId, onBack }) {
             )}
 
             {/* Heatmap Section */}
-            <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl overflow-x-auto">
-                <h3 className="text-lg font-semibold text-slate-200 mb-4">Consistencia Anual</h3>
-                <div className="flex gap-1 min-w-max pb-2">
-                    <div className="grid grid-rows-7 grid-flow-col gap-1">
+            <div className="glass-panel border-white/5 p-6 md:p-8 rounded-[32px] overflow-x-auto shadow-glass">
+                <h3 className="text-xl font-bold text-slate-100 mb-6">Consistencia Anual</h3>
+                <div className="flex gap-1.5 min-w-max pb-2">
+                    <div className="grid grid-rows-7 grid-flow-col gap-1.5">
                         {heatmapData.map((day) => {
                             let color = 'bg-white/5'
-                            if (day.level === 1) color = 'bg-green-900/40' // very low
-                            if (day.level === 2) color = 'bg-green-700/60' // low
-                            if (day.level === 3) color = 'bg-green-500/80' // medium
-                            if (day.level === 4) color = 'bg-green-400'    // high
+                            if (day.level === 1) color = 'bg-green-900/40 shadow-inner'
+                            if (day.level === 2) color = 'bg-green-700/60 shadow-[var(--shadow-glow)]'
+                            if (day.level === 3) color = 'bg-green-500/80 shadow-[var(--shadow-glow)]'
+                            if (day.level === 4) color = 'bg-green-400 shadow-[var(--shadow-glow-strong)]'
 
                             return (
                                 <div
                                     key={day.date}
-                                    className={`w-3 h-3 rounded-sm ${color}`}
+                                    className={`w-4 h-4 rounded-[4px] border border-white/5 transition-colors hover:scale-110 cursor-pointer ${color}`}
                                     title={`${day.date}: ${day.level > 0 ? 'Activo' : 'Sin actividad'}`}
                                 ></div>
                             )
@@ -587,39 +587,39 @@ function HabitStats({ habitId, onBack }) {
             {/* Analytics Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Day of Week Chart */}
-                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
-                    <h3 className="text-lg font-semibold text-slate-200 mb-4">Día más Productivo</h3>
+                <div className="glass-panel border-white/5 p-6 md:p-8 rounded-[32px] shadow-glass">
+                    <h3 className="text-xl font-bold text-slate-100 mb-6">Día más Productivo</h3>
                     <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={calculateDayOfWeekStats(successfulCompletions, habit.completions, habit.type)}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.5} />
+                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 13, fontWeight: 'bold' }} tickLine={false} axisLine={false} dy={10} />
+                                <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fontWeight: 'bold' }} tickLine={false} axisLine={false} allowDecimals={false} dx={-10} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                                    cursor={{ fill: '#334155', opacity: 0.4 }}
+                                    contentStyle={{ backgroundColor: '#131f18', borderColor: '#334155', color: '#f1f5f9', borderRadius: '16px', fontWeight: 'bold' }}
+                                    cursor={{ fill: '#334155', opacity: 0.2 }}
                                     formatter={(value, name, props) => [value, props.payload.tooltip]}
                                 />
-                                <Bar dataKey="value" fill="#818cf8" radius={[4, 4, 0, 0]} name={habit.type === 'counter' ? 'Promedio' : 'Completados'} />
+                                <Bar dataKey="value" fill="#818cf8" radius={[8, 8, 8, 8]} name={habit.type === 'counter' ? 'Promedio' : 'Completados'} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
                 {/* Monthly Chart */}
-                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
-                    <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Mensual ({new Date().getFullYear()})</h3>
+                <div className="glass-panel border-white/5 p-6 md:p-8 rounded-[32px] shadow-glass">
+                    <h3 className="text-xl font-bold text-slate-100 mb-6">Progreso Mensual ({new Date().getFullYear()})</h3>
                     <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                             <BarChart data={calculateMonthlyStats(successfulCompletions)}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#94a3b8" tick={{ fontSize: 12 }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.5} />
+                                <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 13, fontWeight: 'bold' }} tickLine={false} axisLine={false} dy={10} />
+                                <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fontWeight: 'bold' }} tickLine={false} axisLine={false} allowDecimals={false} dx={-10} />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                                    cursor={{ fill: '#334155', opacity: 0.4 }}
+                                    contentStyle={{ backgroundColor: '#131f18', borderColor: '#334155', color: '#f1f5f9', borderRadius: '16px', fontWeight: 'bold' }}
+                                    cursor={{ fill: '#334155', opacity: 0.2 }}
                                 />
-                                <Bar dataKey="count" fill="#22d3ee" radius={[4, 4, 0, 0]} name="Completados" />
+                                <Bar dataKey="count" fill="#22d3ee" radius={[8, 8, 8, 8]} name="Completados" />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -627,37 +627,39 @@ function HabitStats({ habitId, onBack }) {
             </div>
 
             {habit.type === 'counter' && chartData.length > 0 && mounted && (
-                <div className="bg-primary/5 border border-primary/10 p-6 rounded-2xl">
-                    <h3 className="text-lg font-semibold text-slate-200 mb-4">Progreso Reciente</h3>
+                <div className="glass-panel border-white/5 p-6 md:p-8 rounded-[32px] shadow-glass">
+                    <h3 className="text-xl font-bold text-slate-100 mb-6">Progreso Reciente</h3>
                     <div className="h-64 w-full min-w-0">
                         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                            <LineChart data={chartData}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+                            <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} opacity={0.5} />
                                 <XAxis
                                     dataKey="date"
                                     stroke="#94a3b8"
-                                    tick={{ fontSize: 12 }}
+                                    tick={{ fontSize: 13, fontWeight: 'bold' }}
                                     tickLine={false}
                                     axisLine={false}
+                                    dy={10}
                                 />
                                 <YAxis
                                     stroke="#94a3b8"
-                                    tick={{ fontSize: 12 }}
+                                    tick={{ fontSize: 12, fontWeight: 'bold' }}
                                     tickLine={false}
                                     axisLine={false}
+                                    dx={-10}
                                 />
                                 <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#f1f5f9' }}
-                                    itemStyle={{ color: '#818cf8' }}
-                                    cursor={{ stroke: '#4f46e5', strokeWidth: 2 }}
+                                    contentStyle={{ backgroundColor: '#131f18', borderColor: '#334155', color: '#f1f5f9', borderRadius: '16px', fontWeight: 'bold' }}
+                                    itemStyle={{ color: '#818cf8', fontWeight: 'bold' }}
+                                    cursor={{ stroke: '#4f46e5', strokeWidth: 2, opacity: 0.5 }}
                                 />
                                 <Line
                                     type="monotone"
                                     dataKey="value"
-                                    stroke="#6366f1"
-                                    strokeWidth={3}
-                                    dot={{ fill: '#6366f1', strokeWidth: 2 }}
-                                    activeDot={{ r: 6, fill: '#818cf8' }}
+                                    stroke="#818cf8"
+                                    strokeWidth={4}
+                                    dot={{ fill: '#818cf8', strokeWidth: 2, r: 4 }}
+                                    activeDot={{ r: 8, fill: '#818cf8', strokeWidth: 0, shadowBlur: 10, shadowColor: '#818cf8' }}
                                 />
                             </LineChart>
                         </ResponsiveContainer>
@@ -672,26 +674,26 @@ function HabitStats({ habitId, onBack }) {
                 habitGoal={habit.goal}
             />
 
-            <div className="bg-white/5 backdrop-blur-sm border border-primary/10 rounded-2xl p-6">
-                <h3 className="text-xl font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                    <CalendarIcon size={20} className="text-primary" />
+            <div className="glass-panel border-white/5 rounded-[32px] p-6 md:p-8 shadow-glass">
+                <h3 className="text-xl font-bold text-slate-100 mb-6 flex items-center gap-3">
+                    <CalendarIcon size={24} className="text-primary" />
                     Historial Reciente
                 </h3>
                 {habit.completions.length === 0 ? (
-                    <p className="text-slate-500 italic">No hay actividad registrada aún.</p>
+                    <p className="text-slate-500 italic font-medium">No hay actividad registrada aún.</p>
                 ) : (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-3">
                         {habit.completions.slice(0, 30).map(completion => {
                             const isFailed = completion.state === 'failed'
                             const colorClass = isFailed
-                                ? 'bg-red-500/10 text-red-300 border-red-500/20'
+                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
                                 : 'bg-primary/10 text-primary border-primary/20'
 
                             return (
-                                <div key={completion.completed_date || completion} className={`${colorClass} px-3 py-1 rounded-lg text-sm border`}>
+                                <div key={completion.completed_date || completion} className={`${colorClass} px-4 py-2 rounded-[16px] text-sm font-bold border shadow-inner`}>
                                     {new Date(completion.completed_date || completion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                                     {completion.value > 0 && (
-                                        <span className="ml-2 text-xs opacity-70 border-l pl-2 border-white/20">
+                                        <span className="ml-2 text-xs opacity-80 border-l pl-2 border-current">
                                             {completion.value} {habit.unit || ''}
                                             {isStepHabit && ` • ${calculateKm(completion.value)} km`}
                                         </span>
@@ -747,63 +749,63 @@ function CompletionModal({ date, habit, initialValue, initialState, onClose, onS
     }
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-200">
-                <h3 className="text-xl font-bold text-white mb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <div className="glass-panel border-white/5 rounded-[32px] p-6 w-full max-w-sm shadow-[var(--shadow-glow-strong)] animate-in zoom-in-95 duration-200">
+                <h3 className="text-2xl font-bold text-white mb-6">
                     {new Date(date).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </h3>
 
                 {habit.type === 'counter' ? (
                     <div className="mb-6">
-                        <label className="block text-sm font-medium text-slate-400 mb-2">
+                        <label className="block text-sm font-bold text-slate-400 mb-3 ml-1">
                             Cantidad ({habit.unit})
                         </label>
                         <input
                             type="number"
                             value={val}
                             onChange={(e) => setVal(e.target.value)}
-                            className="w-full bg-white/5 border border-primary/10 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+                            className="w-full bg-black/20 border border-white/10 rounded-2xl px-5 py-4 text-white text-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none shadow-inner transition-all"
                             placeholder={`Meta: ${habit.goal}`}
                             autoFocus
                         />
                     </div>
                 ) : (
-                    <div className="mb-6 space-y-4">
-                        <div className="flex bg-white/[0.03] rounded-lg p-1 border border-primary/10">
+                    <div className="mb-6 space-y-6">
+                        <div className="flex bg-black/20 rounded-[20px] p-1.5 border border-white/5 shadow-inner">
                             <button
                                 onClick={() => setStatus('completed')}
-                                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${status === 'completed'
-                                    ? 'bg-green-600 text-white shadow-lg'
+                                className={`flex-1 py-3 px-3 rounded-[16px] text-sm font-bold transition-all ${status === 'completed'
+                                    ? 'bg-green-500 text-black shadow-[var(--shadow-glow)]'
                                     : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
                                 <span className="flex items-center justify-center gap-2">
-                                    <CheckCircle size={16} /> Cumplido
+                                    <CheckCircle size={18} /> Cumplido
                                 </span>
                             </button>
                             <button
                                 onClick={() => setStatus('failed')}
-                                className={`flex-1 py-1.5 px-3 rounded-md text-sm font-medium transition-all ${status === 'failed'
-                                    ? 'bg-red-600 text-white shadow-lg'
+                                className={`flex-1 py-3 px-3 rounded-[16px] text-sm font-bold transition-all ${status === 'failed'
+                                    ? 'bg-red-500 text-black shadow-[var(--shadow-glow)]'
                                     : 'text-slate-400 hover:text-slate-200'
                                     }`}
                             >
                                 <span className="flex items-center justify-center gap-2">
-                                    <TrendingDown size={16} /> No Cumplido
+                                    <TrendingDown size={18} /> Fallado
                                 </span>
                             </button>
                         </div>
 
                         {status === 'failed' && (
                             <div className="animate-in fade-in slide-in-from-top-2">
-                                <label className="block text-xs text-slate-400 mb-2">
+                                <label className="block text-sm font-bold text-slate-400 mb-3 ml-1">
                                     Registrar consumo/fallo (Opcional)
                                 </label>
                                 <input
                                     type="number"
                                     value={val}
                                     onChange={(e) => setVal(e.target.value)}
-                                    className="w-full bg-white/5 border border-primary/10 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none placeholder:text-slate-600"
+                                    className="w-full bg-black/20 border border-white/10 rounded-2xl px-5 py-4 text-white text-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none shadow-inner placeholder:text-slate-600 transition-all"
                                     placeholder="Ej. Cantidad consumida..."
                                     autoFocus
                                 />
@@ -812,18 +814,18 @@ function CompletionModal({ date, habit, initialValue, initialState, onClose, onS
                     </div>
                 )}
 
-                <div className="flex justify-end gap-3">
+                <div className="flex justify-end gap-3 mt-8">
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-primary/10 transition-colors"
+                        className="px-5 py-3 rounded-2xl text-slate-400 font-bold hover:text-white hover:bg-white/5 transition-colors active-scale"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleSave}
-                        className={`px-4 py-2 rounded-lg text-white font-medium transition-colors shadow-lg ${status === 'failed' && habit.type !== 'counter'
-                            ? 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
-                            : 'bg-primary hover:bg-primary/90 shadow-primary/25'
+                        className={`px-6 py-3 rounded-2xl text-black font-bold transition-all shadow-[var(--shadow-glow)] active-scale ${status === 'failed' && habit.type !== 'counter'
+                            ? 'bg-red-500 hover:bg-red-400'
+                            : 'bg-primary hover:bg-primary/90'
                             }`}
                     >
                         Guardar
