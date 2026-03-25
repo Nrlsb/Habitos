@@ -66,5 +66,6 @@ app.use('/api/categories',      require('./routes/categories')(supabase, authent
 app.use('/api/budgets',         require('./routes/budgets')(supabase, authenticateUser));
 app.use('/api/subscriptions',   require('./routes/subscriptions')(supabase, authenticateUser));
 app.use('/api/bna',             require('./routes/bna')());
+app.use('/api/parse-pdf',       require('./routes/parsePdf')(authenticateUser));
 
 app.listen(port, () => console.log(`Server running on port ${port}`));

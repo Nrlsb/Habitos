@@ -171,7 +171,7 @@ function AppContent() {
     }
   }, [habits])
 
-  usePedometer(habits, setHabits, getLocalDateString)
+  usePedometer(habits, setHabits, getLocalDateString, session, API_URL)
 
   useEffect(() => {
     if (!habits.length || !user) return

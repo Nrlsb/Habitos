@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from './ExpensesContext';
 import { getDolarRate } from '../../services/dolarApi';
-import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle, ChevronLeft, ChevronRight, Calendar, RefreshCcw } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle, ChevronLeft, ChevronRight, Calendar, RefreshCcw, FileText } from 'lucide-react';
 import ExpensesAnalysis from './ExpensesAnalysis';
 import Subscriptions from './Subscriptions';
 import BudgetTab from './BudgetTab';
 import NotificationModal from '../../components/NotificationModal';
+import PDFImporter from './PDFImporter';
 
 function Expenses() {
     const {
@@ -60,6 +61,7 @@ function Expenses() {
 
     // Rollover State
     const [isRolloverModalOpen, setIsRolloverModalOpen] = useState(false);
+    const [isPDFImporterOpen, setIsPDFImporterOpen] = useState(false);
     const [rolloverCandidates, setRolloverCandidates] = useState([]);
     const [selectedRolloverIds, setSelectedRolloverIds] = useState(new Set());
     const [isLoadingRollover, setIsLoadingRollover] = useState(false);
@@ -665,6 +667,17 @@ function Expenses() {
                 message={notification.message}
                 type={notification.type}
             />
+
+            {/* PDF Importer Modal */}
+            {isPDFImporterOpen && (
+                <PDFImporter
+                    planillaId={selectedPlanillaId}
+                    planillaNombre={currentPlanilla?.nombre}
+                    onClose={() => setIsPDFImporterOpen(false)}
+                    onImported={() => getExpenses(selectedPlanillaId)}
+                />
+            )}
+
             {/* Share Modal */}
             {isShareModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -947,6 +960,13 @@ function Expenses() {
 
                     {!currentPlanilla?.is_shared_with_me && (
                         <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                                onClick={() => setIsPDFImporterOpen(true)}
+                                className="flex items-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary px-4 py-2 rounded-xl border border-primary/20 transition-all font-medium"
+                            >
+                                <FileText size={18} />
+                                Importar PDF
+                            </button>
                             <button
                                 onClick={() => setIsExportModalOpen(true)}
                                 className="flex items-center gap-2 bg-emerald-900/30 hover:bg-emerald-900/50 text-primary px-4 py-2 rounded-xl border border-primary/20 transition-all font-medium"
