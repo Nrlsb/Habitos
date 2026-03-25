@@ -167,26 +167,40 @@ module.exports = (authenticateUser) => {
             if (!req.file) return res.status(400).json({ error: 'No se recibió ningún PDF' });
 
             // Debug: Log the imported module to identify the correct export pattern
+            console.log('--- PDF Parsing Debug ---');
             console.log('pdf-parse module type:', typeof pdfParse);
-            if (typeof pdfParse !== 'function') {
-                console.log('pdf-parse keys:', Object.keys(pdfParse || {}));
+            if (pdfParse && typeof pdfParse === 'function') {
+                console.log('pdf-parse is a function/class. Name:', pdfParse.name);
+            } else if (pdfParse) {
+                console.log('pdf-parse keys:', Object.keys(pdfParse));
             }
 
             // Fallback strategy to find the function in the imported module
-            const parseFn = (typeof pdfParse === 'function') ? pdfParse : (pdfParse?.PDFParse || pdfParse?.pdfParse || pdfParse?.default);
+            let parseFn = (typeof pdfParse === 'function') ? pdfParse : (pdfParse?.PDFParse || pdfParse?.pdfParse || pdfParse?.default);
+
+            if (typeof parseFn !== 'function' && pdfParse) {
+                // If still not found, try to find ANY function in the object (last resort)
+                parseFn = Object.values(pdfParse).find(v => typeof v === 'function');
+            }
 
             if (typeof parseFn !== 'function') {
-                // If still not found, try to find ANY function in the object (last resort)
-                const anyFn = Object.values(pdfParse || {}).find(v => typeof v === 'function');
-                if (anyFn) {
-                    console.log('Found a function in pdf-parse module as a fallback.');
-                    const data = await anyFn(req.file.buffer);
-                    return handleData(data, res);
-                }
                 throw new Error('No se pudo encontrar la función de parseo en el módulo pdf-parse. Los campos disponibles son: ' + Object.keys(pdfParse || {}).join(', '));
             }
 
-            const data = await parseFn(req.file.buffer);
+            let data;
+            try {
+                // Try as a regular function first
+                data = await parseFn(req.file.buffer);
+            } catch (invocationErr) {
+                // If it's a class and needs 'new'
+                if (invocationErr.message.includes("Class constructors cannot be invoked without 'new'")) {
+                    console.log('Retrying pdf-parse with "new"...');
+                    data = await new parseFn(req.file.buffer);
+                } else {
+                    throw invocationErr;
+                }
+            }
+
             handleData(data, res);
         } catch (err) {
             console.error('PDF parse error:', err);
