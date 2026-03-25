@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const pdfParseModule = require('pdf-parse');
-const pdfParse = pdfParseModule.default || pdfParseModule;
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -167,6 +165,7 @@ module.exports = (authenticateUser) => {
         try {
             if (!req.file) return res.status(400).json({ error: 'No se recibió ningún PDF' });
 
+            const { default: pdfParse } = await import('pdf-parse');
             const data = await pdfParse(req.file.buffer);
             const text = data.text;
 
