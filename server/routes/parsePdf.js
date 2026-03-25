@@ -166,7 +166,20 @@ module.exports = (authenticateUser) => {
         try {
             if (!req.file) return res.status(400).json({ error: 'No se recibió ningún PDF' });
 
-            const data = await pdfParse(req.file.buffer);
+            // Debug: Log the imported module to identify the correct export pattern
+            console.log('pdf-parse module type:', typeof pdfParse);
+            if (typeof pdfParse !== 'function') {
+                console.log('pdf-parse keys:', Object.keys(pdfParse || {}));
+            }
+
+            // Fallback strategy to find the function in the imported module
+            const parseFn = (typeof pdfParse === 'function') ? pdfParse : (pdfParse?.default || pdfParse?.pdfParse);
+
+            if (typeof parseFn !== 'function') {
+                throw new Error('No se pudo encontrar la función de parseo en el módulo pdf-parse. El tipo detectado es: ' + typeof pdfParse);
+            }
+
+            const data = await parseFn(req.file.buffer);
             const text = data.text;
 
             if (!text || text.trim().length < 10) {
