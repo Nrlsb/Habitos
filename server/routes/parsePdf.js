@@ -173,33 +173,43 @@ module.exports = (authenticateUser) => {
             }
 
             // Fallback strategy to find the function in the imported module
-            const parseFn = (typeof pdfParse === 'function') ? pdfParse : (pdfParse?.default || pdfParse?.pdfParse);
+            const parseFn = (typeof pdfParse === 'function') ? pdfParse : (pdfParse?.PDFParse || pdfParse?.pdfParse || pdfParse?.default);
 
             if (typeof parseFn !== 'function') {
-                throw new Error('No se pudo encontrar la función de parseo en el módulo pdf-parse. El tipo detectado es: ' + typeof pdfParse);
+                // If still not found, try to find ANY function in the object (last resort)
+                const anyFn = Object.values(pdfParse || {}).find(v => typeof v === 'function');
+                if (anyFn) {
+                    console.log('Found a function in pdf-parse module as a fallback.');
+                    const data = await anyFn(req.file.buffer);
+                    return handleData(data, res);
+                }
+                throw new Error('No se pudo encontrar la función de parseo en el módulo pdf-parse. Los campos disponibles son: ' + Object.keys(pdfParse || {}).join(', '));
             }
 
             const data = await parseFn(req.file.buffer);
-            const text = data.text;
-
-            if (!text || text.trim().length < 10) {
-                return res.status(422).json({ error: 'No se pudo extraer texto del PDF. Es posible que esté escaneado como imagen.' });
-            }
-
-            const bank = detectBank(text);
-            const transactions = parseGeneric(text);
-
-            res.json({
-                bank,
-                totalPages: data.numpages,
-                rawTextPreview: text.slice(0, 500),
-                transactions
-            });
+            handleData(data, res);
         } catch (err) {
             console.error('PDF parse error:', err);
             res.status(500).json({ error: 'Error al procesar el PDF: ' + err.message });
         }
     });
+
+    function handleData(data, res) {
+        const text = data.text;
+        if (!text || text.trim().length < 10) {
+            return res.status(422).json({ error: 'No se pudo extraer texto del PDF. Es posible que esté escaneado como imagen.' });
+        }
+
+        const bank = detectBank(text);
+        const transactions = parseGeneric(text);
+
+        res.json({
+            bank,
+            totalPages: data.numpages,
+            rawTextPreview: text.slice(0, 500),
+            transactions
+        });
+    }
 
     return router;
 };
