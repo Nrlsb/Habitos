@@ -24,7 +24,7 @@ const withTimeout = (promise, ms) =>
  */
 export function usePedometer(habits, setHabits, getLocalDateString, session, API_URL) {
   const stepHabitKey = habits
-    .filter(h => h.type === 'counter' && h.unit?.toLowerCase().includes('pasos'))
+    .filter(h => h.type === 'counter' && h.unit?.toLowerCase().includes('paso'))
     .map(h => h.id)
     .join(',')
 
@@ -36,7 +36,7 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
     if (!stepHabitKey) return
 
     const stepHabit = habits.find(
-      h => h.type === 'counter' && h.unit?.toLowerCase().includes('pasos')
+      h => h.type === 'counter' && h.unit?.toLowerCase().includes('paso')
     )
 
     const persistSteps = async (habitId, totalSteps) => {
@@ -57,13 +57,13 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
     const updateHabits = (totalSteps) => {
       let changedHabitId = null
       setHabits(prev => prev.map(h => {
-        if (h.type === 'counter' && h.unit?.toLowerCase().includes('pasos')) {
+        if (h.type === 'counter' && h.unit?.toLowerCase().includes('paso')) {
           if (h.today_value === totalSteps) return h
           changedHabitId = h.id
           return {
             ...h,
             today_value: totalSteps,
-            today_state: totalSteps >= h.goal ? 'completed' : 'none'
+            today_state: totalSteps >= (h.goal || 0) ? 'completed' : 'none'
           }
         }
         return h
@@ -112,7 +112,8 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
           console.error('[PEDOMETER] Error en lectura inicial:', e)
         }
 
-        // 5. Polling cada 30s
+        // 5. Polling cada 10s (mejorado para evitar fugas)
+        if (pollRef.current) clearInterval(pollRef.current)
         pollRef.current = setInterval(async () => {
           try {
             const { steps: s, date: d } = await withTimeout(StepService.getStepCount(), 5000)
@@ -120,7 +121,7 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
               updateHabits(s)
             }
           } catch (e) { /* ignore */ }
-        }, 30000)
+        }, 10000)
       } catch (e) {
         console.error('[PEDOMETER] StepService no disponible:', e)
       }

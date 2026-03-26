@@ -48,7 +48,8 @@ public class StepCounterService extends Service implements SensorEventListener {
         Log.d(TAG, "onCreate() - Servicio creado");
         createNotificationChannel();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIF_ID, buildNotification(0), android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH);
+            startForeground(NOTIF_ID, buildNotification(0),
+                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH);
         } else {
             startForeground(NOTIF_ID, buildNotification(0));
         }
@@ -64,10 +65,10 @@ public class StepCounterService extends Service implements SensorEventListener {
         if (!savedDate.equals(currentDate)) {
             // Nuevo día: reiniciar baseline y pasos
             prefs.edit()
-                .putString(KEY_STEP_DATE, currentDate)
-                .putInt(KEY_STEPS_TODAY, 0)
-                .putLong(KEY_SENSOR_BASELINE, -1)
-                .apply();
+                    .putString(KEY_STEP_DATE, currentDate)
+                    .putInt(KEY_STEPS_TODAY, 0)
+                    .putLong(KEY_SENSOR_BASELINE, -1)
+                    .apply();
             sensorBaseline = -1;
         } else {
             sensorBaseline = prefs.getLong(KEY_SENSOR_BASELINE, -1);
@@ -104,7 +105,8 @@ public class StepCounterService extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() != Sensor.TYPE_STEP_COUNTER) return;
+        if (event.sensor.getType() != Sensor.TYPE_STEP_COUNTER)
+            return;
         Log.d(TAG, "onSensorChanged - sensorValue=" + (long) event.values[0] + ", baseline=" + sensorBaseline);
 
         long sensorValue = (long) event.values[0];
@@ -116,10 +118,10 @@ public class StepCounterService extends Service implements SensorEventListener {
             currentDate = todayDate;
             sensorBaseline = sensorValue;
             prefs.edit()
-                .putString(KEY_STEP_DATE, currentDate)
-                .putLong(KEY_SENSOR_BASELINE, sensorBaseline)
-                .putInt(KEY_STEPS_TODAY, 0)
-                .apply();
+                    .putString(KEY_STEP_DATE, currentDate)
+                    .putLong(KEY_SENSOR_BASELINE, sensorBaseline)
+                    .putInt(KEY_STEPS_TODAY, 0)
+                    .apply();
             updateNotification(0);
             triggerWidgetUpdate(0);
             return;
@@ -139,7 +141,8 @@ public class StepCounterService extends Service implements SensorEventListener {
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) { }
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
@@ -154,38 +157,40 @@ public class StepCounterService extends Service implements SensorEventListener {
     private Notification buildNotification(int steps) {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         int goal = prefs.getInt(KEY_STEPS_GOAL, 8000);
-        String text = (steps < 0) ? "Sensor de pasos no disponible" : formatNumber(steps) + " / " + formatNumber(goal) + " pasos hoy";
+        String text = (steps < 0) ? "Sensor de pasos no disponible"
+                : formatNumber(steps) + " / " + formatNumber(goal) + " pasos hoy";
         return new NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Contador de Pasos")
-            .setContentText(text)
-            .setSmallIcon(R.mipmap.ic_launcher)
-            .setOngoing(true)
-            .setSilent(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .build();
+                .setContentTitle("Contador de Pasos")
+                .setContentText(text)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setOngoing(true)
+                .setSilent(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .build();
     }
 
     private void updateNotification(int steps) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        if (nm != null) nm.notify(NOTIF_ID, buildNotification(steps));
+        if (nm != null)
+            nm.notify(NOTIF_ID, buildNotification(steps));
     }
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                CHANNEL_ID,
-                "Contador de pasos",
-                NotificationManager.IMPORTANCE_LOW
-            );
+                    CHANNEL_ID,
+                    "Contador de pasos",
+                    NotificationManager.IMPORTANCE_LOW);
             channel.setDescription("Servicio de conteo de pasos en segundo plano");
             NotificationManager nm = getSystemService(NotificationManager.class);
-            if (nm != null) nm.createNotificationChannel(channel);
+            if (nm != null)
+                nm.createNotificationChannel(channel);
         }
     }
 
     private String getTodayDate() {
-        return new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        return new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date());
     }
 
     private String formatNumber(int n) {
