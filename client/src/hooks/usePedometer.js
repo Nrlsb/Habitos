@@ -39,14 +39,15 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
       h => h.type === 'counter' && h.unit?.toLowerCase().includes('paso')
     )
 
-    const persistSteps = async (habitId, totalSteps) => {
+    const persistSteps = async (habitId, totalSteps, goal) => {
       if (!session?.access_token || !API_URL) return
       if (lastSavedRef.current === totalSteps) return
       try {
+        const stateStr = totalSteps >= (goal || 0) ? 'completed' : 'none'
         const response = await fetch(`${API_URL}/api/habits/${habitId}/toggle`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
-          body: JSON.stringify({ date: getLocalDateString(), value: totalSteps, state: 'completed' })
+          body: JSON.stringify({ date: getLocalDateString(), value: totalSteps, state: stateStr })
         })
         if (response.ok) lastSavedRef.current = totalSteps
       } catch (e) {
@@ -55,11 +56,14 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
     }
 
     const updateHabits = (totalSteps) => {
-      let changedHabitId = null
+      if (!stepHabit) return
+
+      // Evitamos el bug del context calling persistSteps antes del setHabits
+      persistSteps(stepHabit.id, totalSteps, stepHabit.goal)
+
       setHabits(prev => prev.map(h => {
         if (h.type === 'counter' && h.unit?.toLowerCase().includes('paso')) {
           if (h.today_value === totalSteps) return h
-          changedHabitId = h.id
           return {
             ...h,
             today_value: totalSteps,
@@ -68,9 +72,6 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
         }
         return h
       }))
-      if (changedHabitId) {
-        persistSteps(changedHabitId, totalSteps)
-      }
     }
 
     const setup = async () => {
