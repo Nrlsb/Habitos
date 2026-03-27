@@ -168,10 +168,14 @@ module.exports = (supabase, authenticateUser) => {
                 .eq('key', 'last_heartbeat')
                 .maybeSingle();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Error fetching status:', error.message);
+                return res.json({ value: 'N/A', updated_at: null });
+            }
             res.json(data || { value: 'N/A', updated_at: null });
         } catch (err) {
-            res.status(500).json({ error: err.message });
+            console.error('Unexpected error in /status:', err.message);
+            res.json({ value: 'N/A', updated_at: null });
         }
     });
 
