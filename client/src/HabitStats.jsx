@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext'
 import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle, Settings, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import Calendar from './Calendar'
+import WalkingMap from './features/activity/WalkingMap'
 
 function HabitStats({ habitId, onBack }) {
     const formatDate = (date) => {
@@ -20,6 +21,7 @@ function HabitStats({ habitId, onBack }) {
 
     const [userHeight, setUserHeight] = useState(() => localStorage.getItem('userHeight') || '170')
     const [showHeightSettings, setShowHeightSettings] = useState(false)
+    const [walkSessions, setWalkSessions] = useState([])
     const { session } = useAuth()
 
     useEffect(() => {
@@ -42,16 +44,31 @@ function HabitStats({ habitId, onBack }) {
     const fetchHabitDetails = async () => {
         try {
             const response = await fetch(`${API_URL}/api/habits/${habitId}`, {
-                headers: {
-                    'Authorization': `Bearer ${session.access_token}`
-                }
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
             })
             const data = await response.json()
             setHabit(data)
+
+            // Si es un hábito de pasos, buscar sesiones de caminata
+            if (data.unit?.toLowerCase().includes('paso')) {
+                fetchWalkSessions()
+            }
         } catch (error) {
             console.error('Error fetching habit details:', error)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const fetchWalkSessions = async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/activities`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            })
+            const data = await response.json()
+            setWalkSessions(data)
+        } catch (error) {
+            console.error('Error fetching walk sessions:', error)
         }
     }
 
@@ -452,6 +469,20 @@ function HabitStats({ habitId, onBack }) {
                 )}
                 <p className="text-sm text-slate-500 mt-2">Creado el {new Date(habit.created_at).toLocaleDateString('es-ES')}</p>
             </header>
+
+            {isStepHabit && walkSessions.length > 0 && (
+                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
+                    <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                        <TrendingUp size={20} className="text-primary" />
+                        Último recorrido detectado
+                    </h3>
+                    <WalkingMap path={walkSessions[0].path} height="300px" />
+                    <div className="flex justify-between text-xs text-slate-500 font-bold uppercase tracking-wider px-2">
+                        <span>Distancia: {(walkSessions[0].distance / 1000).toFixed(2)} km</span>
+                        <span>Fecha: {new Date(walkSessions[0].start_time).toLocaleString('es-ES')}</span>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="glass-panel border-white/5 p-6 rounded-[32px] flex flex-col items-center justify-center text-center hover:bg-white/5 transition-all duration-300 shadow-glass">

@@ -7,6 +7,7 @@ import {
 import { toast } from 'sonner'
 import { Capacitor } from '@capacitor/core'
 import { usePedometer } from './hooks/usePedometer'
+import { useActivityDetection } from './hooks/useActivityDetection'
 import { ExpensesProvider } from './features/expenses/ExpensesContext'
 import { PlanningProvider } from './features/planning/PlanningContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -74,6 +75,8 @@ function AppContent() {
   const [habitCategory, setHabitCategory] = useState('General')
   const [showAddModal, setShowAddModal] = useState(false)
   const [lastSync, setLastSync] = useState('')
+
+  const activity = useActivityDetection(session, API_URL)
 
   const dragIndexRef = useRef(null)
 
@@ -192,6 +195,15 @@ function AppContent() {
   }, [habits])
 
   usePedometer(habits, setHabits, getLocalDateString, session, API_URL)
+
+  useEffect(() => {
+    if (!habits.length || !Capacitor.isNativePlatform()) return
+
+    const hasWalkingHabit = habits.some(h => h.unit?.toLowerCase().includes('paso'))
+    if (hasWalkingHabit && !activity.isTracking) {
+      activity.startTracking()
+    }
+  }, [habits, activity.isTracking]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!habits.length || !user) return
