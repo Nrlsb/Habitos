@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const pdfParse = require('pdf-parse');
+const pdfParse = require('pdf-parse'); // Keeping for potential types/fallbacks, but we'll use pdfjs-dist directly
+
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -236,43 +237,35 @@ module.exports = (authenticateUser) => {
         try {
             if (!req.file) return res.status(400).json({ error: 'No se recibió ningún PDF' });
 
-            // Debug: Log the imported module to identify the correct export pattern
-            console.log('--- PDF Parsing Debug ---');
-            console.log('pdf-parse module type:', typeof pdfParse);
-            if (pdfParse && typeof pdfParse === 'function') {
-                console.log('pdf-parse is a function/class. Name:', pdfParse.name);
-            } else if (pdfParse) {
-                console.log('pdf-parse keys:', Object.keys(pdfParse));
+            // New robust PDF extraction using pdfjs-dist directly
+            // This avoids the "verbosity" error in the pdf-parse v2.x fork
+            const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+            const dataBuffer = new Uint8Array(req.file.buffer);
+
+            const loadingTask = pdfjs.getDocument({
+                data: dataBuffer,
+                useSystemFonts: true,
+                disableFontFace: true,
+                verbosity: 0
+            });
+
+            const pdf = await loadingTask.promise;
+            let fullText = '';
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const textContent = await page.getTextContent();
+                const pageText = textContent.items.map(item => item.str).join(' ');
+                fullText += pageText + '\n';
             }
 
-            // Fallback strategy to find the function in the imported module
-            let parseFn = (typeof pdfParse === 'function') ? pdfParse : (pdfParse?.PDFParse || pdfParse?.pdfParse || pdfParse?.default);
-
-            if (typeof parseFn !== 'function' && pdfParse) {
-                // If still not found, try to find ANY function in the object (last resort)
-                parseFn = Object.values(pdfParse).find(v => typeof v === 'function');
-            }
-
-            if (typeof parseFn !== 'function') {
-                throw new Error('No se pudo encontrar la función de parseo en el módulo pdf-parse. Los campos disponibles son: ' + Object.keys(pdfParse || {}).join(', '));
-            }
-
-            let data;
-            try {
-                // Try as a regular function first
-                data = await parseFn(req.file.buffer);
-            } catch (invocationErr) {
-                // If it's a class and needs 'new', call instance.pdf(buffer)
-                if (invocationErr.message.includes("Class constructors cannot be invoked without 'new'")) {
-                    console.log('Retrying pdf-parse with "new" + .pdf()...');
-                    const instance = new parseFn();
-                    data = await instance.pdf(req.file.buffer);
-                } else {
-                    throw invocationErr;
-                }
-            }
+            const data = {
+                text: fullText,
+                numpages: pdf.numPages
+            };
 
             handleData(data, res);
+
         } catch (err) {
             console.error('PDF parse error:', err);
             res.status(500).json({ error: 'Error al procesar el PDF: ' + err.message });
