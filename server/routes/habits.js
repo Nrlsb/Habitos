@@ -39,6 +39,45 @@ module.exports = (supabase, authenticateUser) => {
         res.json(habitsWithStatus);
     });
 
+    // Get completions (filtered by user)
+    router.get('/completions/all', authenticateUser, async (req, res) => {
+        const { data, error } = await supabase
+            .from('habit_completions')
+            .select('*, habits!inner(user_id)')
+            .eq('habits.user_id', req.user.id);
+
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data.map(({ habits, ...rest }) => rest));
+    });
+
+    // Get last heartbeat status
+    router.get('/status', authenticateUser, async (req, res) => {
+        try {
+            // Seleccionamos todo para evitar fallos si falta alguna columna específica (como updated_at)
+            const { data, error } = await supabase
+                .from('app_status')
+                .select('*')
+                .eq('key', 'last_heartbeat')
+                .maybeSingle();
+
+            if (error) {
+                console.error('Error in /status query:', error.message);
+                return res.json({ value: 'N/A', updated_at: null });
+            }
+
+            // Si no hay datos, devolvemos N/A
+            if (!data) return res.json({ value: 'N/A', updated_at: null });
+
+            res.json({
+                value: data.value || 'N/A',
+                updated_at: data.updated_at || null
+            });
+        } catch (err) {
+            console.error('CRITICAL: Unexpected error in /status route:', err.message);
+            res.json({ value: 'Error', updated_at: null, debug: err.message }); // Añadimos debug
+        }
+    });
+
     // Get a single habit with completions
     router.get('/:id', authenticateUser, async (req, res) => {
         const { id } = req.params;
@@ -147,45 +186,6 @@ module.exports = (supabase, authenticateUser) => {
         }
     });
 
-    // Get completions (filtered by user)
-    router.get('/completions/all', authenticateUser, async (req, res) => {
-        const { data, error } = await supabase
-            .from('habit_completions')
-            .select('*, habits!inner(user_id)')
-            .eq('habits.user_id', req.user.id);
-
-        if (error) return res.status(500).json({ error: error.message });
-        res.json(data.map(({ habits, ...rest }) => rest));
-    });
-
-
-    // Get last heartbeat status
-    router.get('/status', authenticateUser, async (req, res) => {
-        try {
-            // Seleccionamos todo para evitar fallos si falta alguna columna específica (como updated_at)
-            const { data, error } = await supabase
-                .from('app_status')
-                .select('*')
-                .eq('key', 'last_heartbeat')
-                .maybeSingle();
-
-            if (error) {
-                console.error('Error in /status query:', error.message);
-                return res.json({ value: 'N/A', updated_at: null });
-            }
-
-            // Si no hay datos, devolvemos N/A
-            if (!data) return res.json({ value: 'N/A', updated_at: null });
-
-            res.json({
-                value: data.value || 'N/A',
-                updated_at: data.updated_at || null
-            });
-        } catch (err) {
-            console.error('CRITICAL: Unexpected error in /status route:', err.message);
-            res.json({ value: 'Error', updated_at: null, debug: err.message }); // Añadimos debug
-        }
-    });
 
     return router;
 };
