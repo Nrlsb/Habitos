@@ -90,6 +90,76 @@ function shouldSkipLine(desc) {
     return false;
 }
 
+// Month abbreviations used by Galicia (and other Argentine banks)
+const MONTH_MAP = {
+    'ene': '01', 'feb': '02', 'mar': '03', 'abr': '04',
+    'may': '05', 'jun': '06', 'jul': '07', 'ago': '08',
+    'sep': '09', 'oct': '10', 'nov': '11', 'dic': '12'
+};
+
+// Parse DD-Mon-YY or DD-Mon-YYYY → ISO date
+function parseDateGalicia(dateStr) {
+    const m = dateStr.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
+    if (!m) return null;
+    const day = m[1].padStart(2, '0');
+    const month = MONTH_MAP[m[2].toLowerCase()];
+    if (!month) return null;
+    let year = parseInt(m[3]);
+    if (year < 100) year += 2000;
+    return `${year}-${month}-${day}`;
+}
+
+/**
+ * Galicia Mastercard parser.
+ * Lines look like:
+ *   DD-Mon-YY  DESCRIPTION [(USA,USD, X,XX)]  [CUOTA NN/NN]  NNNNN  AMOUNT_ARS_OR_USD
+ * The comprobante is always a 5-digit number right before the final amount.
+ */
+function parseGalicia(text) {
+    const transactions = [];
+    const lines = text.split('\n');
+
+    // date: DD-Mon-YY  |  description (lazy)  |  5-digit comprobante  |  amount  |  optional 2nd amount
+    const pattern = /^(\d{1,2}-[A-Za-z]{3}-\d{2,4})\s+(.+?)\s+(\d{5})\s+([\d.,]+)(?:\s+([\d.,]+))?$/;
+
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+
+        const m = line.match(pattern);
+        if (!m) continue;
+
+        const date = parseDateGalicia(m[1]);
+        if (!date) continue;
+
+        let description = m[2].trim();
+        const amountStr = m[4];
+        const amountStr2 = m[5]; // present for some USD rows
+
+        // Detect USD: description contains "(USA,USD," or similar foreign currency marker
+        const isUSD = /\([A-Z]{3},USD,/.test(description);
+
+        // Clean description: remove the (XXX,USD/ARS, amount) annotation and cuota suffix
+        description = description.replace(/\s*\([^)]*,\s*[\d.,]+\)\s*$/, '').trim();
+        description = description.replace(/\s+\d{1,3}\/\d{1,3}$/, '').trim(); // remove cuota e.g. 11/12
+
+        const amount = parseArgAmount(amountStr2 && isUSD ? amountStr2 : amountStr);
+        const currency = isUSD ? 'USD' : 'ARS';
+
+        if (!date || !description || !amount || amount <= 0) continue;
+        if (shouldSkipLine(description)) continue;
+
+        const isDup = transactions.some(t =>
+            t.date === date && t.description === description && t.amount === amount
+        );
+        if (!isDup) {
+            transactions.push({ date, description, amount, currency });
+        }
+    }
+
+    return transactions;
+}
+
 /**
  * Generic line-by-line parser that looks for patterns:
  *   DD/MM[/YYYY]  description...  amount
@@ -215,7 +285,7 @@ module.exports = (authenticateUser) => {
         }
 
         const bank = detectBank(text);
-        const transactions = parseGeneric(text);
+        const transactions = bank === 'galicia' ? parseGalicia(text) : parseGeneric(text);
 
         res.json({
             bank,

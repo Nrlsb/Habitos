@@ -8,7 +8,8 @@
       "Bash(ls C:UsersUsuarioDesktopProyectosHabitosserver*.js C:UsersUsuarioDesktopProyectosHabitosserver*.mjs)",
       "Bash(npm install:*)",
       "Bash(node --input-type=module --eval \"import\\(''''./src/features/expenses/PDFImporter.jsx''''\\)\")",
-      "Bash(node -e \"require\\(''./routes/parsePdf''\\)\")"
+      "Bash(node -e \"require\\(''./routes/parsePdf''\\)\")",
+      "Bash(node -e \":*)"
     ]
   }
 }
