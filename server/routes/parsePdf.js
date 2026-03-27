@@ -262,10 +262,11 @@ module.exports = (authenticateUser) => {
                 // Try as a regular function first
                 data = await parseFn(req.file.buffer);
             } catch (invocationErr) {
-                // If it's a class and needs 'new'
+                // If it's a class and needs 'new', call instance.pdf(buffer)
                 if (invocationErr.message.includes("Class constructors cannot be invoked without 'new'")) {
-                    console.log('Retrying pdf-parse with "new"...');
-                    data = await new parseFn(req.file.buffer);
+                    console.log('Retrying pdf-parse with "new" + .pdf()...');
+                    const instance = new parseFn();
+                    data = await instance.pdf(req.file.buffer);
                 } else {
                     throw invocationErr;
                 }
