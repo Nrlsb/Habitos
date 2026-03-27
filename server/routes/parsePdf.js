@@ -233,12 +233,29 @@ function parseGeneric(text) {
 }
 
 module.exports = (authenticateUser) => {
+    // New route for parsing raw text (from OCR)
+    router.post('/text', authenticateUser, async (req, res) => {
+        try {
+            const { text } = req.body;
+            if (!text) return res.status(400).json({ error: 'No se recibió texto para procesar' });
+
+            handleData({ text, numpages: 1 }, res);
+        } catch (err) {
+            console.error('Text parse error:', err);
+            res.status(500).json({ error: 'Error al procesar el texto: ' + err.message });
+        }
+    });
+
     router.post('/', authenticateUser, upload.single('pdf'), async (req, res) => {
         try {
+            // If text is provided in the body (even if a file was sent), prioritize it or handle it
+            if (req.body.text) {
+                return handleData({ text: req.body.text, numpages: 1 }, res);
+            }
+
             if (!req.file) return res.status(400).json({ error: 'No se recibió ningún PDF' });
 
             // New robust PDF extraction using pdfjs-dist directly
-            // This avoids the "verbosity" error in the pdf-parse v2.x fork
             const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
             const dataBuffer = new Uint8Array(req.file.buffer);
 
@@ -259,12 +276,7 @@ module.exports = (authenticateUser) => {
                 fullText += pageText + '\n';
             }
 
-            const data = {
-                text: fullText,
-                numpages: pdf.numPages
-            };
-
-            handleData(data, res);
+            handleData({ text: fullText, numpages: pdf.numPages }, res);
 
         } catch (err) {
             console.error('PDF parse error:', err);

@@ -11,6 +11,25 @@ const CATEGORIES = [
     "Ocio", "Salud", "Ropa", "Educación", "Otros"
 ];
 
+// Helper to load tesseract dynamically
+let TesseractPromise = null;
+const getTesseract = () => {
+    if (!TesseractPromise) TesseractPromise = import('tesseract.js');
+    return TesseractPromise;
+};
+
+// Helper for pdfjs
+let PDFJSPromise = null;
+const getPDFJS = () => {
+    if (!PDFJSPromise) {
+        PDFJSPromise = import('pdfjs-dist').then(async (pdfjs) => {
+            pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+            return pdfjs;
+        });
+    }
+    return PDFJSPromise;
+};
+
 // Auto-assign a category based on keywords in the description
 function guessCategoryFromDescription(desc) {
     if (!desc) return 'General';
@@ -40,6 +59,8 @@ export default function PDFImporter({ planillaId, planillaNombre, onClose, onImp
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [isImporting, setIsImporting] = useState(false);
     const [importProgress, setImportProgress] = useState(0);
+    const [isOCRLoading, setIsOCRLoading] = useState(false);
+    const [ocrFile, setOcrFile] = useState(null);
 
     const handleFile = useCallback(async (file) => {
         if (!file || file.type !== 'application/pdf') {
@@ -62,32 +83,102 @@ export default function PDFImporter({ planillaId, planillaNombre, onClose, onImp
             });
 
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Error al procesar el PDF');
 
-            setDetectedBank(data.bank);
-
-            if (!data.transactions || data.transactions.length === 0) {
-                setError('No se detectaron transacciones en el PDF. Es posible que el formato no sea compatible o el archivo esté escaneado como imagen.');
-                return;
+            if (!res.ok) {
+                // If it's the "it might be an image" error, we store the file for OCR
+                if (res.status === 422 || (data.error && data.error.includes('imagen'))) {
+                    setOcrFile(file);
+                }
+                throw new Error(data.error || 'Error al procesar el PDF');
             }
 
-            // Enrich with auto-category
-            const enriched = data.transactions.map((t, i) => ({
-                ...t,
-                id: i,
-                category: guessCategoryFromDescription(t.description),
-                currency: 'ARS',
-                include: true
-            }));
-
-            setTransactions(enriched);
-            setSelectedIds(new Set(enriched.map(t => t.id)));
+            processParsedData(data);
         } catch (err) {
             setError(err.message);
         } finally {
             setIsLoading(false);
         }
     }, [session]);
+
+    const handleOCR = async () => {
+        if (!ocrFile) return;
+        setIsOCRLoading(true);
+        setError(null);
+        setImportProgress(0);
+
+        try {
+            const pdfjs = await getPDFJS();
+            const { createWorker } = await getTesseract();
+
+            const arrayBuffer = await ocrFile.arrayBuffer();
+            const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+
+            let fullText = "";
+            const worker = await createWorker('spa'); // Use Spanish
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                setImportProgress(Math.round(((i - 1) / pdf.numPages) * 100));
+
+                const page = await pdf.getPage(i);
+                const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better OCR
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({ canvasContext: context, viewport }).promise;
+
+                const { data: { text } } = await worker.recognize(canvas);
+                fullText += text + "\n";
+            }
+
+            await worker.terminate();
+            setImportProgress(100);
+
+            // Send text to server
+            const res = await fetch(`${API_URL}/api/parse-pdf/text`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ text: fullText })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error al procesar el resultado del OCR');
+
+            processParsedData(data);
+            setOcrFile(null);
+        } catch (err) {
+            console.error("OCR Error:", err);
+            setError("Error durante el proceso de OCR: " + err.message);
+        } finally {
+            setIsOCRLoading(false);
+        }
+    };
+
+    const processParsedData = (data) => {
+        setDetectedBank(data.bank);
+
+        if (!data.transactions || data.transactions.length === 0) {
+            setError('No se detectaron transacciones en el PDF. Es posible que el formato no sea compatible.');
+            return;
+        }
+
+        // Enrich with auto-category
+        const enriched = data.transactions.map((t, i) => ({
+            ...t,
+            id: i,
+            category: guessCategoryFromDescription(t.description),
+            currency: t.currency || 'ARS',
+            include: true
+        }));
+
+        setTransactions(enriched);
+        setSelectedIds(new Set(enriched.map(t => t.id)));
+    };
 
     const handleDrop = (e) => {
         e.preventDefault();
@@ -238,11 +329,34 @@ export default function PDFImporter({ planillaId, planillaNombre, onClose, onImp
                         </div>
                     )}
 
-                    {/* Error */}
                     {error && (
-                        <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-4 text-sm">
-                            <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                            <p>{error}</p>
+                        <div className="flex flex-col gap-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-4 text-sm">
+                            <div className="flex items-start gap-3">
+                                <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                                <p>{error}</p>
+                            </div>
+
+                            {ocrFile && !isOCRLoading && (
+                                <button
+                                    onClick={handleOCR}
+                                    className="mt-1 bg-red-500/20 hover:bg-red-500/30 text-red-300 font-semibold py-2 px-4 rounded-lg transition-colors border border-red-500/30 self-start text-xs flex items-center gap-2"
+                                >
+                                    <Loader2 size={14} className="animate-spin" />
+                                    Intentar con OCR (Lento pero efectivo)
+                                </button>
+                            )}
+
+                            {isOCRLoading && (
+                                <div className="space-y-2 mt-2">
+                                    <div className="flex items-center gap-2 text-xs text-red-300">
+                                        <Loader2 size={14} className="animate-spin" />
+                                        Leyendo imágenes del PDF... {importProgress}%
+                                    </div>
+                                    <div className="h-1 bg-red-500/20 rounded-full overflow-hidden">
+                                        <div className="h-full bg-red-500/50 transition-all" style={{ width: `${importProgress}%` }} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
