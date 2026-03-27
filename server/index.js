@@ -34,6 +34,7 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 // Service role key bypasses RLS; security is enforced at the route level via req.user.id
+console.log(`[Supabase] Initializing with URL: ${supabaseUrl?.substring(0, 20)}...`);
 const supabase = createClient(supabaseUrl, supabaseServiceKey || supabaseKey);
 const supabaseAdmin = supabase;
 
@@ -56,17 +57,17 @@ const authenticateUser = async (req, res, next) => {
 
 app.get('/', (req, res) => res.send('Habit Tracker Backend'));
 
-app.use('/api/habits',          require('./routes/habits')(supabase, authenticateUser));
-app.use('/api/meals',           require('./routes/meals')(supabase, authenticateUser));
-app.use('/api/planillas',       require('./routes/planillas')(supabase, supabaseAdmin, authenticateUser));
-app.use('/api/expenses',        require('./routes/expenses')(supabase, authenticateUser));
+app.use('/api/habits', require('./routes/habits')(supabase, authenticateUser));
+app.use('/api/meals', require('./routes/meals')(supabase, authenticateUser));
+app.use('/api/planillas', require('./routes/planillas')(supabase, supabaseAdmin, authenticateUser));
+app.use('/api/expenses', require('./routes/expenses')(supabase, authenticateUser));
 app.use('/api/planning-sheets', require('./routes/planning')(supabase, supabaseAdmin, authenticateUser));
-app.use('/api/tasks',           require('./routes/tasks')(supabase, authenticateUser));
-app.use('/api/categories',      require('./routes/categories')(supabase, authenticateUser));
-app.use('/api/budgets',         require('./routes/budgets')(supabase, authenticateUser));
-app.use('/api/subscriptions',   require('./routes/subscriptions')(supabase, authenticateUser));
-app.use('/api/bna',             require('./routes/bna')());
-app.use('/api/parse-pdf',       require('./routes/parsePdf')(authenticateUser));
+app.use('/api/tasks', require('./routes/tasks')(supabase, authenticateUser));
+app.use('/api/categories', require('./routes/categories')(supabase, authenticateUser));
+app.use('/api/budgets', require('./routes/budgets')(supabase, authenticateUser));
+app.use('/api/subscriptions', require('./routes/subscriptions')(supabase, authenticateUser));
+app.use('/api/bna', require('./routes/bna')());
+app.use('/api/parse-pdf', require('./routes/parsePdf')(authenticateUser));
 
 
 // Heartbeat: Update current time in DB every 10 minutes
@@ -75,8 +76,12 @@ const updateHeartbeat = async () => {
         const now = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
         const { error } = await supabaseAdmin
             .from('app_status')
-            .upsert({ key: 'last_heartbeat', value: now }, { onConflict: 'key' });
-        
+            .upsert({
+                key: 'last_heartbeat',
+                value: now,
+                updated_at: new Date().toISOString() // Actualizar fecha explícitamente
+            }, { onConflict: 'key' });
+
         if (error) console.error('Error updating heartbeat:', error.message);
         else console.log(`[Heartbeat] Updated to ${now}`);
     } catch (err) {

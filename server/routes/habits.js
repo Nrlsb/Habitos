@@ -162,20 +162,28 @@ module.exports = (supabase, authenticateUser) => {
     // Get last heartbeat status
     router.get('/status', authenticateUser, async (req, res) => {
         try {
+            // Seleccionamos todo para evitar fallos si falta alguna columna específica (como updated_at)
             const { data, error } = await supabase
                 .from('app_status')
-                .select('value, updated_at')
+                .select('*')
                 .eq('key', 'last_heartbeat')
                 .maybeSingle();
 
             if (error) {
-                console.error('Error fetching status:', error.message);
+                console.error('Error in /status query:', error.message);
                 return res.json({ value: 'N/A', updated_at: null });
             }
-            res.json(data || { value: 'N/A', updated_at: null });
+
+            // Si no hay datos, devolvemos N/A
+            if (!data) return res.json({ value: 'N/A', updated_at: null });
+
+            res.json({
+                value: data.value || 'N/A',
+                updated_at: data.updated_at || null
+            });
         } catch (err) {
-            console.error('Unexpected error in /status:', err.message);
-            res.json({ value: 'N/A', updated_at: null });
+            console.error('CRITICAL: Unexpected error in /status route:', err.message);
+            res.json({ value: 'Error', updated_at: null, debug: err.message }); // Añadimos debug
         }
     });
 
