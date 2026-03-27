@@ -68,4 +68,24 @@ app.use('/api/subscriptions',   require('./routes/subscriptions')(supabase, auth
 app.use('/api/bna',             require('./routes/bna')());
 app.use('/api/parse-pdf',       require('./routes/parsePdf')(authenticateUser));
 
+
+// Heartbeat: Update current time in DB every 10 minutes
+const updateHeartbeat = async () => {
+    try {
+        const now = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+        const { error } = await supabaseAdmin
+            .from('app_status')
+            .upsert({ key: 'last_heartbeat', value: now }, { onConflict: 'key' });
+        
+        if (error) console.error('Error updating heartbeat:', error.message);
+        else console.log(`[Heartbeat] Updated to ${now}`);
+    } catch (err) {
+        console.error('Heartbeat interval error:', err);
+    }
+};
+
+// Start heartbeat and run it every 10 minutes
+updateHeartbeat();
+setInterval(updateHeartbeat, 10 * 60 * 1000);
+
 app.listen(port, () => console.log(`Server running on port ${port}`));

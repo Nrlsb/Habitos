@@ -158,5 +158,22 @@ module.exports = (supabase, authenticateUser) => {
         res.json(data.map(({ habits, ...rest }) => rest));
     });
 
+
+    // Get last heartbeat status
+    router.get('/status', authenticateUser, async (req, res) => {
+        try {
+            const { data, error } = await supabase
+                .from('app_status')
+                .select('value, updated_at')
+                .eq('key', 'last_heartbeat')
+                .maybeSingle();
+
+            if (error) throw error;
+            res.json(data || { value: 'N/A', updated_at: null });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
     return router;
 };

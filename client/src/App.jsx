@@ -73,6 +73,7 @@ function AppContent() {
   const [habitUnit, setHabitUnit] = useState('')
   const [habitCategory, setHabitCategory] = useState('General')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [lastSync, setLastSync] = useState('')
 
   const dragIndexRef = useRef(null)
 
@@ -162,8 +163,22 @@ function AppContent() {
   useEffect(() => {
     if (session?.user && !authLoading) {
       fetchHabits()
+      fetchStatus()
     }
   }, [session, authLoading])
+
+  const fetchStatus = async () => {
+    if (!session) return
+    try {
+      const response = await fetch(`${API_URL}/api/habits/status`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` }
+      })
+      const data = await response.json()
+      if (data && data.value) setLastSync(data.value)
+    } catch (e) {
+      console.error('Error fetching status:', e)
+    }
+  }
 
   useEffect(() => {
     if (habits.length > 0) {
@@ -397,7 +412,14 @@ function AppContent() {
             {/* Sticky Header */}
             <header className="sticky top-0 z-10 bg-[#131f18]/80 backdrop-blur-xl px-4 pb-4 pt-safe border-b border-white/5">
               <div className="flex items-center justify-between mt-2">
-                <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Mis Hábitos</h1>
+                <div className="flex flex-col">
+                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Mis Hábitos</h1>
+                  {lastSync && (
+                    <span className="text-[10px] text-primary/70 font-bold uppercase tracking-widest mt-0.5 ml-1">
+                      Actualizado: {lastSync}
+                    </span>
+                  )}
+                </div>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={exportBackupJSON}
@@ -451,8 +473,8 @@ function AppContent() {
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDragEnd={handleDragEnd}
                       className={`relative overflow-hidden p-5 rounded-[24px] cursor-pointer active-scale transition-all duration-300 border ${isCompleted
-                          ? 'bg-primary/10 border-primary/20 shadow-[var(--shadow-glow)]'
-                          : 'glass-panel border-white/5 shadow-glass hover:bg-white/5'
+                        ? 'bg-primary/10 border-primary/20 shadow-[var(--shadow-glow)]'
+                        : 'glass-panel border-white/5 shadow-glass hover:bg-white/5'
                         }`}
                     >
                       <div className="flex justify-between items-start mb-4">
@@ -512,8 +534,8 @@ function AppContent() {
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDragEnd={handleDragEnd}
                       className={`relative overflow-hidden p-4 rounded-[24px] flex items-center gap-4 cursor-pointer active-scale transition-all duration-300 border ${isCompleted
-                          ? 'bg-primary/10 border-primary/20 shadow-[var(--shadow-glow)]'
-                          : 'glass-panel border-white/5 shadow-glass hover:bg-white/5'
+                        ? 'bg-primary/10 border-primary/20 shadow-[var(--shadow-glow)]'
+                        : 'glass-panel border-white/5 shadow-glass hover:bg-white/5'
                         }`}
                     >
                       <div className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${colorClass}`}>
