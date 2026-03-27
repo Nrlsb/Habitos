@@ -173,6 +173,11 @@ function AppContent() {
       const response = await fetch(`${API_URL}/api/habits/status`, {
         headers: { 'Authorization': `Bearer ${session.access_token}` }
       })
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Status API error (${response.status}):`, errorText);
+        return;
+      }
       const data = await response.json()
       if (data && data.value) setLastSync(data.value)
     } catch (e) {
