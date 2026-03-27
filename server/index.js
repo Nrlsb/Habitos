@@ -73,7 +73,11 @@ app.use('/api/parse-pdf', require('./routes/parsePdf')(authenticateUser));
 // Heartbeat: Update current time in DB every 10 minutes
 const updateHeartbeat = async () => {
     try {
-        const now = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) + ' hs';
+        const now = new Date().toLocaleTimeString('es-AR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'America/Argentina/Buenos_Aires'
+        }) + ' hs';
         const { error } = await supabaseAdmin
             .from('app_status')
             .upsert({
