@@ -76,11 +76,11 @@ function AppContent() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [lastSync, setLastSync] = useState('')
 
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
   const activity = useActivityDetection(session, API_URL)
 
   const dragIndexRef = useRef(null)
-
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
   useEffect(() => {
     if (!authLoading) {
