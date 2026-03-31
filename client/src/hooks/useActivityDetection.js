@@ -14,6 +14,7 @@ export const useActivityDetection = (session, API_URL) => {
     const pathRef = useRef([]);
     const inactivityTimer = useRef(null);
     const isTrackingRef = useRef(false);
+    const startStepsRef = useRef(0);
 
     const resetInactivityTimer = (stopFn) => {
         if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
@@ -45,6 +46,16 @@ export const useActivityDetection = (session, API_URL) => {
             pathRef.current = [];
             setCurrentPath([]);
 
+            // Capturar baseline de pasos al inicio de la caminata
+            if (Capacitor.isNativePlatform()) {
+                try {
+                    const { steps: s } = await StepService.getStepCount();
+                    startStepsRef.current = s || 0;
+                } catch (e) {
+                    startStepsRef.current = 0;
+                }
+            }
+
             watchId.current = await Geolocation.watchPosition({
                 enableHighAccuracy: true,
                 timeout: 10000,
@@ -62,17 +73,12 @@ export const useActivityDetection = (session, API_URL) => {
                         speed: position.coords.speed // in m/s
                     };
 
-                    const isMoving = newPoint.speed != null ? newPoint.speed > 0.5 : true;
-
-                    // Filter out noise (only add if moved > 5 meters or first point)
+                    // Only add if moved > 5 meters or first point
                     if (pathRef.current.length === 0 || calculateDistance(pathRef.current[pathRef.current.length - 1], newPoint) > 5) {
                         pathRef.current = [...pathRef.current, newPoint];
                         setCurrentPath(pathRef.current);
                         setLastPosition(newPoint);
-                    }
-
-                    // Resetear timer solo si hay movimiento real
-                    if (isMoving) {
+                        // Resetear timer solo cuando el usuario realmente se movió (>5m)
                         resetInactivityTimer(stopTrackingRef.current);
                     }
                 }
@@ -125,7 +131,7 @@ export const useActivityDetection = (session, API_URL) => {
         if (Capacitor.isNativePlatform()) {
             try {
                 const { steps: s } = await StepService.getStepCount();
-                steps = s || 0;
+                steps = Math.max(0, (s || 0) - startStepsRef.current);
             } catch (e) {
                 console.warn('No se pudo obtener pasos del pedómetro:', e);
             }
@@ -149,9 +155,12 @@ export const useActivityDetection = (session, API_URL) => {
 
             if (response.ok) {
                 toast.success('Caminata guardada correctamente');
+            } else {
+                toast.error('Error al guardar la caminata');
             }
         } catch (e) {
             console.error('Error saving walk session:', e);
+            toast.error('Error al guardar la caminata');
         }
     };
 

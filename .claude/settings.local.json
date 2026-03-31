@@ -12,7 +12,10 @@
       "Bash(node -e \":*)",
       "Bash(find /c/Users/Usuario/Desktop/Proyectos/Habitos -type f \\\\\\(-name *.sql -o -name schema* -o -name migration* \\\\\\))",
       "Bash(find /c/Users/Usuario/Desktop/Proyectos/Habitos/client/android -type f -name *Step* -o -name *step*)",
-      "Bash(grep -r walk_sessions /c/Users/Usuario/Desktop/Proyectos/Habitos --include=*.md --include=*.txt --include=*.js)"
+      "Bash(grep -r walk_sessions /c/Users/Usuario/Desktop/Proyectos/Habitos --include=*.md --include=*.txt --include=*.js)",
+      "Bash(find C:UsersUsuarioDesktopProyectosHabitosserver -type f \\\\\\(-name *.ts -o -name *.js \\\\\\))",
+      "Bash(find C:UsersUsuarioDesktopProyectosHabitos -type f -name *.java)",
+      "Bash(grep -r \"walk_sessions\\\\|walkSessions\" C:UsersUsuarioDesktopProyectosHabitos --include=*.sql --include=*.js --include=*.jsx --include=*.ts --include=*.tsx)"
     ]
   }
 }
