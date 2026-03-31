@@ -147,7 +147,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            <Toaster position="top-center" richColors />
+            <Toaster position="top-center" richColors swipeDirections={['up', 'left', 'right']} />
             {children}
         </AuthContext.Provider>
     )
