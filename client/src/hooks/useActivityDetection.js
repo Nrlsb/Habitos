@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 
 const StepService = registerPlugin('StepService');
 
-const INACTIVITY_TIMEOUT_MS = 30_000; // 30 s sin movimiento → auto-stop
+const INACTIVITY_TIMEOUT_MS = 5 * 60_000; // 5 min sin movimiento → auto-stop
 
 export const useActivityDetection = (session, API_URL) => {
     const [isTracking, setIsTracking] = useState(false);
@@ -20,7 +20,7 @@ export const useActivityDetection = (session, API_URL) => {
         if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
         inactivityTimer.current = setTimeout(() => {
             if (isTrackingRef.current) {
-                toast.info('Actividad detenida automáticamente por inactividad');
+                toast.info('Caminata guardada automáticamente (5 min sin movimiento)');
                 stopFn();
             }
         }, INACTIVITY_TIMEOUT_MS);

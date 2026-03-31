@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from './context/AuthContext'
-import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle, Settings, TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle, Settings, TrendingUp, TrendingDown, Minus, RefreshCw, MapPin, Footprints, Clock, ChevronDown } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import Calendar from './Calendar'
 import WalkingMap from './features/activity/WalkingMap'
@@ -22,6 +22,7 @@ function HabitStats({ habitId, onBack }) {
     const [userHeight, setUserHeight] = useState(() => localStorage.getItem('userHeight') || '170')
     const [showHeightSettings, setShowHeightSettings] = useState(false)
     const [walkSessions, setWalkSessions] = useState([])
+    const [showAllWalks, setShowAllWalks] = useState(false)
     const { session } = useAuth()
 
     useEffect(() => {
@@ -513,6 +514,66 @@ function HabitStats({ habitId, onBack }) {
                         <p className="text-xs text-slate-500 font-bold uppercase tracking-wider text-center">
                             {new Date(session.start_time).toLocaleString('es-ES')}
                         </p>
+                    </div>
+                )
+            })()}
+
+            {isStepHabit && walkSessions.length > 1 && (() => {
+                const visibleSessions = showAllWalks ? walkSessions.slice(1) : walkSessions.slice(1, 6)
+                return (
+                    <div className="space-y-3 animate-in fade-in duration-500">
+                        <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                            <MapPin size={20} className="text-primary" />
+                            Historial de caminatas
+                            <span className="ml-auto text-xs text-slate-500 font-normal">{walkSessions.length} total</span>
+                        </h3>
+                        <div className="space-y-2">
+                            {visibleSessions.map((ws) => {
+                                const dMin = ws.end_time
+                                    ? Math.round((new Date(ws.end_time) - new Date(ws.start_time)) / 60000)
+                                    : null
+                                return (
+                                    <div key={ws.id} className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex items-center gap-3">
+                                        <div className="flex flex-col flex-1 min-w-0">
+                                            <span className="text-sm font-semibold text-slate-200">
+                                                {new Date(ws.start_time).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                            </span>
+                                            <span className="text-xs text-slate-500">
+                                                {new Date(ws.start_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                                                {ws.end_time && ` — ${new Date(ws.end_time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-3 shrink-0">
+                                            {ws.steps > 0 && (
+                                                <div className="flex flex-col items-center">
+                                                    <span className="text-primary font-bold text-sm">{ws.steps.toLocaleString('es-ES')}</span>
+                                                    <span className="text-[10px] text-slate-500 uppercase">pasos</span>
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-slate-200 font-bold text-sm">{(ws.distance / 1000).toFixed(2)} km</span>
+                                                <span className="text-[10px] text-slate-500 uppercase">GPS</span>
+                                            </div>
+                                            {dMin !== null && (
+                                                <div className="flex flex-col items-center">
+                                                    <span className="text-slate-400 font-bold text-sm">{dMin} min</span>
+                                                    <span className="text-[10px] text-slate-500 uppercase">duración</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                        {walkSessions.length > 6 && (
+                            <button
+                                onClick={() => setShowAllWalks(v => !v)}
+                                className="w-full flex items-center justify-center gap-2 text-sm text-slate-400 hover:text-primary transition-colors py-2"
+                            >
+                                <ChevronDown size={16} className={showAllWalks ? 'rotate-180' : ''} />
+                                {showAllWalks ? 'Ver menos' : `Ver ${walkSessions.length - 6} más`}
+                            </button>
+                        )}
                     </div>
                 )
             })()}
