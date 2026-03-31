@@ -402,7 +402,7 @@ function AppContent() {
     <div className="min-h-screen bg-[#131f18] text-slate-100">
 
       {/* Content area with bottom padding for nav */}
-      <div className="pb-20">
+      <div className="pb-nav-safe">
         {view === 'planning' ? (
           <ErrorBoundary>
             <Suspense fallback={<LazySpinner />}>
@@ -604,7 +604,8 @@ function AppContent() {
       {view === 'habits' && !selectedHabitId && (
         <button
           onClick={() => setShowAddModal(true)}
-          className="fixed right-6 bottom-24 w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-[var(--shadow-glow-strong)] active-scale z-40 animate-fade-in"
+          className="fixed right-6 w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-[var(--shadow-glow-strong)] active-scale z-40 animate-fade-in"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 5rem)' }}
         >
           <Plus size={30} className="text-[#131f18]" />
         </button>
@@ -712,26 +713,25 @@ function AppContent() {
       )}
 
       {/* Bottom Navigation */}
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-[#131f18]/90 backdrop-blur-xl border-t border-white/5 px-2 pt-2 pb-safe"
-      >
-        <div className="flex justify-between items-center h-14 mb-1">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#131f18]/95 backdrop-blur-xl border-t border-white/5 pb-safe">
+        <div className="flex justify-around items-stretch h-16">
           {navTabs.map(({ v, icon: Icon, label }) => {
             const isActive = activeView === v
             return (
               <button
                 key={v}
                 onClick={() => { setView(v); setSelectedHabitId(null) }}
-                className="flex flex-col items-center justify-center flex-1 h-full min-w-0 relative active-scale"
+                className="flex flex-col items-center justify-center flex-1 gap-1 min-w-0 active-scale"
               >
-                <div className={`flex flex-col items-center justify-center w-full transition-all duration-300 ${isActive ? '-translate-y-1' : ''}`}>
-                  <div className={`p-1.5 rounded-full transition-all duration-300 ${isActive ? 'glass-panel-primary text-primary' : 'text-slate-500'}`}>
-                    <Icon size={24} className={isActive ? 'drop-shadow-[var(--shadow-glow)]' : ''} />
-                  </div>
-                  <span className={`text-[10px] font-medium transition-all duration-300 absolute bottom-[-16px] ${isActive ? 'text-primary opacity-100' : 'text-slate-500 opacity-0 translate-y-2'}`}>
-                    {label}
-                  </span>
+                <div className={`flex items-center justify-center w-12 h-8 rounded-2xl transition-all duration-300 ${isActive ? 'bg-primary/15' : ''}`}>
+                  <Icon
+                    size={22}
+                    className={`transition-colors duration-300 ${isActive ? 'text-primary' : 'text-slate-500'}`}
+                  />
                 </div>
+                <span className={`text-[10px] font-semibold leading-none transition-colors duration-300 ${isActive ? 'text-primary' : 'text-slate-600'}`}>
+                  {label}
+                </span>
               </button>
             )
           })}

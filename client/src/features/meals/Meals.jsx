@@ -97,7 +97,7 @@ const Meals = () => {
     ];
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-nav-safe md:pb-0 pt-safe">
             {/* Header / Date Navigation */}
             <div className="flex items-center justify-between mb-8 bg-[#131f18]/80 backdrop-blur-xl p-4 md:p-5 rounded-[32px] border border-white/5 shadow-glass sticky top-safe z-20 mx-4 md:mx-0 mt-4">
                 <button

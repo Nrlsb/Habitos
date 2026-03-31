@@ -48,6 +48,13 @@
   .pt-safe {
     padding-top: env(safe-area-inset-top);
   }
+  .top-safe {
+    top: env(safe-area-inset-top);
+  }
+  /* Padding bottom = nav height (4rem) + gesture nav inset */
+  .pb-nav-safe {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
   
   /* Glassmorphism utilities */
   .glass-panel {

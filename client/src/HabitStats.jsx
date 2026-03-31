@@ -42,6 +42,22 @@ function HabitStats({ habitId, onBack }) {
         }
     }, [habitId, session])
 
+    // Refetch walk sessions when app resumes from background
+    useEffect(() => {
+        if (!session) return
+        let listener = null
+        const setup = async () => {
+            try {
+                const { App } = await import('@capacitor/app')
+                listener = await App.addListener('appStateChange', ({ isActive }) => {
+                    if (isActive) fetchWalkSessions()
+                })
+            } catch (_) {}
+        }
+        setup()
+        return () => { listener?.remove() }
+    }, [session])
+
     const fetchHabitDetails = async () => {
         try {
             const response = await fetch(`${API_URL}/api/habits/${habitId}`, {
