@@ -98,4 +98,6 @@ const updateHeartbeat = async () => {
 updateHeartbeat();
 setInterval(updateHeartbeat, 10 * 60 * 1000);
 
+app.get('/ping', (req, res) => res.json({ ok: true }));
+
 app.listen(port, () => console.log(`Server running on port ${port}`));

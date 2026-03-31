@@ -78,6 +78,14 @@ function AppContent() {
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
+  // Keep Render server alive (free tier sleeps after 15 min inactivity)
+  useEffect(() => {
+    const ping = () => fetch(`${API_URL}/ping`).catch(() => {})
+    ping()
+    const id = setInterval(ping, 10 * 60 * 1000)
+    return () => clearInterval(id)
+  }, [API_URL])
+
   const activity = useActivityDetection(session, API_URL)
 
   const dragIndexRef = useRef(null)

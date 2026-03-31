@@ -84,7 +84,7 @@ export const useActivityDetection = (session, API_URL) => {
             toast.success('Seguimiento de actividad iniciado');
         } catch (e) {
             console.error('Error starting location tracking:', e);
-            toast.error('Error al iniciar el GPS. Asegúrate de tener instalado @capacitor/geolocation');
+            toast.error(`Error GPS: ${e?.message || e?.code || JSON.stringify(e)}`);
         }
     };
 
