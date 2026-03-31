@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { toast } from 'sonner';
+
+const StepService = registerPlugin('StepService');
 
 const INACTIVITY_TIMEOUT_MS = 30_000; // 30 s sin movimiento → auto-stop
 
@@ -119,6 +121,16 @@ export const useActivityDetection = (session, API_URL) => {
         const endTime = new Date(path[path.length - 1].timestamp).toISOString();
         const distance = calculateTotalDistance(path);
 
+        let steps = 0;
+        if (Capacitor.isNativePlatform()) {
+            try {
+                const { steps: s } = await StepService.getStepCount();
+                steps = s || 0;
+            } catch (e) {
+                console.warn('No se pudo obtener pasos del pedómetro:', e);
+            }
+        }
+
         try {
             const response = await fetch(`${API_URL}/api/activities`, {
                 method: 'POST',
@@ -131,7 +143,7 @@ export const useActivityDetection = (session, API_URL) => {
                     end_time: endTime,
                     distance,
                     path,
-                    steps: 0 // Will be updated by pedometer if available
+                    steps
                 })
             });
 

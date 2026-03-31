@@ -470,19 +470,49 @@ function HabitStats({ habitId, onBack }) {
                 <p className="text-sm text-slate-500 mt-2">Creado el {new Date(habit.created_at).toLocaleDateString('es-ES')}</p>
             </header>
 
-            {isStepHabit && walkSessions.length > 0 && (
-                <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
-                    <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                        <TrendingUp size={20} className="text-primary" />
-                        Último recorrido detectado
-                    </h3>
-                    <WalkingMap path={walkSessions[0].path} height="300px" />
-                    <div className="flex justify-between text-xs text-slate-500 font-bold uppercase tracking-wider px-2">
-                        <span>Distancia: {(walkSessions[0].distance / 1000).toFixed(2)} km</span>
-                        <span>Fecha: {new Date(walkSessions[0].start_time).toLocaleString('es-ES')}</span>
+            {isStepHabit && walkSessions.length > 0 && (() => {
+                const session = walkSessions[0]
+                const hasSteps = session.steps > 0
+                const durationMin = session.end_time
+                    ? Math.round((new Date(session.end_time) - new Date(session.start_time)) / 60000)
+                    : null
+                return (
+                    <div className="space-y-4 animate-in fade-in zoom-in-95 duration-500">
+                        <h3 className="text-xl font-bold text-slate-100 flex items-center gap-2">
+                            <TrendingUp size={20} className="text-primary" />
+                            Último recorrido detectado
+                        </h3>
+                        <WalkingMap path={session.path} height="300px" />
+                        <div className="grid grid-cols-2 gap-2">
+                            {hasSteps && (
+                                <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex flex-col items-center">
+                                    <span className="text-primary font-bold text-xl">{session.steps.toLocaleString('es-ES')}</span>
+                                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Pasos</span>
+                                </div>
+                            )}
+                            {hasSteps && (
+                                <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex flex-col items-center">
+                                    <span className="text-primary font-bold text-xl">{calculateKm(session.steps)} km</span>
+                                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Dist. por pasos</span>
+                                </div>
+                            )}
+                            <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center">
+                                <span className="text-slate-200 font-bold text-xl">{(session.distance / 1000).toFixed(2)} km</span>
+                                <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Dist. GPS</span>
+                            </div>
+                            {durationMin !== null && (
+                                <div className="bg-white/5 border border-white/10 rounded-xl p-3 flex flex-col items-center">
+                                    <span className="text-slate-200 font-bold text-xl">{durationMin} min</span>
+                                    <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Duración</span>
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider text-center">
+                            {new Date(session.start_time).toLocaleString('es-ES')}
+                        </p>
                     </div>
-                </div>
-            )}
+                )
+            })()}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="glass-panel border-white/5 p-6 rounded-[32px] flex flex-col items-center justify-center text-center hover:bg-white/5 transition-all duration-300 shadow-glass">
