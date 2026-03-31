@@ -2,12 +2,26 @@ import { useEffect, useRef, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { toast } from 'sonner';
 
+const INACTIVITY_TIMEOUT_MS = 30_000; // 30 s sin movimiento → auto-stop
+
 export const useActivityDetection = (session, API_URL) => {
     const [isTracking, setIsTracking] = useState(false);
     const [currentPath, setCurrentPath] = useState([]);
     const [lastPosition, setLastPosition] = useState(null);
     const watchId = useRef(null);
     const pathRef = useRef([]);
+    const inactivityTimer = useRef(null);
+    const isTrackingRef = useRef(false);
+
+    const resetInactivityTimer = (stopFn) => {
+        if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
+        inactivityTimer.current = setTimeout(() => {
+            if (isTrackingRef.current) {
+                toast.info('Actividad detenida automáticamente por inactividad');
+                stopFn();
+            }
+        }, INACTIVITY_TIMEOUT_MS);
+    };
 
     const startTracking = async () => {
         if (!Capacitor.isNativePlatform()) {
@@ -25,6 +39,7 @@ export const useActivityDetection = (session, API_URL) => {
             }
 
             setIsTracking(true);
+            isTrackingRef.current = true;
             pathRef.current = [];
             setCurrentPath([]);
 
@@ -45,19 +60,24 @@ export const useActivityDetection = (session, API_URL) => {
                         speed: position.coords.speed // in m/s
                     };
 
+                    const isMoving = newPoint.speed != null ? newPoint.speed > 0.5 : true;
+
                     // Filter out noise (only add if moved > 5 meters or first point)
                     if (pathRef.current.length === 0 || calculateDistance(pathRef.current[pathRef.current.length - 1], newPoint) > 5) {
                         pathRef.current = [...pathRef.current, newPoint];
                         setCurrentPath(pathRef.current);
                         setLastPosition(newPoint);
+                    }
 
-                        // Check if we should auto-detect "walking" (speed > 0.5 m/s)
-                        if (newPoint.speed > 0.5 && !isTracking) {
-                            // Already tracking if this is running, but could trigger specific UI
-                        }
+                    // Resetear timer solo si hay movimiento real
+                    if (isMoving) {
+                        resetInactivityTimer(stopTrackingRef.current);
                     }
                 }
             });
+
+            // Arrancar el primer timer de inactividad
+            resetInactivityTimer(stopTrackingRef.current);
 
             toast.success('Seguimiento de actividad iniciado');
         } catch (e) {
@@ -67,11 +87,18 @@ export const useActivityDetection = (session, API_URL) => {
     };
 
     const stopTracking = async () => {
+        if (inactivityTimer.current) {
+            clearTimeout(inactivityTimer.current);
+            inactivityTimer.current = null;
+        }
+
         if (watchId.current) {
             const { Geolocation } = await import('@capacitor/geolocation');
             await Geolocation.clearWatch({ id: watchId.current });
             watchId.current = null;
         }
+
+        isTrackingRef.current = false;
 
         if (pathRef.current.length > 5) {
             await saveWalkSession(pathRef.current);
@@ -79,8 +106,11 @@ export const useActivityDetection = (session, API_URL) => {
 
         setIsTracking(false);
         setLastPosition(null);
-        toast.info('Seguimiento finalizado');
     };
+
+    // Ref estable para que el timeout pueda llamar stopTracking sin capturar una closure vieja
+    const stopTrackingRef = useRef(stopTracking);
+    useEffect(() => { stopTrackingRef.current = stopTracking; });
 
     const saveWalkSession = async (path) => {
         if (!session?.access_token || !API_URL) return;
