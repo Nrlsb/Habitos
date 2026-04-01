@@ -55,6 +55,12 @@
             android:foregroundServiceType="health"
             android:exported="false" />
 
+        <!-- GPS Location Tracking Foreground Service -->
+        <service
+            android:name=".LocationTrackingService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
+
         <!-- Expense Widget -->
         <receiver
             android:name=".ExpenseWidget"
@@ -99,6 +105,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     
     <!-- Geolocation Permissions -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
