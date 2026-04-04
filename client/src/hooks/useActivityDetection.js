@@ -30,6 +30,8 @@ export const useActivityDetection = (session, API_URL) => {
     // ─── Nativo (Android Foreground Service) ─────────────────────────────────
 
     const startTrackingNative = async () => {
+        // Limpiar listeners de sesión anterior antes de iniciar una nueva
+        await removeNativeListeners();
         sessionEndedRef.current = false;
         pathRef.current = [];
         setCurrentPath([]);
@@ -53,6 +55,7 @@ export const useActivityDetection = (session, API_URL) => {
         // Listener de auto-stop por inactividad (5 min sin movimiento)
         stoppedListenerRef.current = await LocationTracking.addListener('trackingStopped', async (data) => {
             toast.info('Caminata guardada automáticamente (5 min sin movimiento)');
+            await removeNativeListeners();
             await handleSessionEnd(data.path || []);
         });
 
