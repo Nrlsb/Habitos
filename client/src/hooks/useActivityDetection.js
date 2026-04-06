@@ -211,11 +211,19 @@ export const useActivityDetection = (session, API_URL) => {
 
         let steps = 0;
         if (Capacitor.isNativePlatform()) {
+            let stepsOk = false;
             try {
                 const { steps: s } = await StepService.getStepCount();
                 steps = Math.max(0, (s || 0) - startStepsRef.current);
+                stepsOk = true;
             } catch {
                 console.warn('No se pudo obtener pasos del pedómetro');
+            }
+
+            // Descartar sesión si no se alcanzaron 250 pasos continuos
+            if (stepsOk && steps < 250) {
+                console.log(`Caminata descartada: ${steps} pasos (mínimo 250)`);
+                return;
             }
         }
 
