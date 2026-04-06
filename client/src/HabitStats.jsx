@@ -3,7 +3,6 @@ import { useAuth } from './context/AuthContext'
 import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle, Settings, TrendingUp, TrendingDown, Minus, RefreshCw, MapPin, Footprints, Clock, ChevronDown } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import Calendar from './Calendar'
-import WalkingMap from './features/activity/WalkingMap'
 
 function HabitStats({ habitId, onBack }) {
     const formatDate = (date) => {
@@ -502,7 +501,6 @@ function HabitStats({ habitId, onBack }) {
                                 <RefreshCw size={16} />
                             </button>
                         </h3>
-                        <WalkingMap path={session.path} height="300px" />
                         <div className="grid grid-cols-2 gap-2">
                             {hasSteps && (
                                 <div className="bg-primary/5 border border-primary/10 rounded-xl p-3 flex flex-col items-center">
