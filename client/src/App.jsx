@@ -2,7 +2,8 @@ import { useState, useEffect, lazy, Suspense, useRef } from 'react'
 import {
   Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut,
   Layout, Utensils, Check, ChevronDown, Ban, Activity, Droplets,
-  Dumbbell, Heart, Briefcase, BookOpen, Star, Download, X
+  Dumbbell, Heart, Briefcase, BookOpen, Star, Download, X,
+  Home, BarChart2, User, ChevronRight, Settings
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Capacitor } from '@capacitor/core'
@@ -53,6 +54,225 @@ const getHabitVisuals = (habit) => {
   }
 }
 
+// ── Dashboard View ──────────────────────────────────────────────────────────
+function DashboardView({ habits, loading, toggleHabitDay, setView, setShowAddModal }) {
+  const completedCount = habits.filter(h => h.today_state === 'completed').length
+  const totalCount = habits.length
+  const pct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+  const circumference = 2 * Math.PI * 26
+
+  const now = new Date()
+  const monthName = now.toLocaleString('es-AR', { month: 'long', year: 'numeric' })
+
+  return (
+    <div className="pb-nav-safe">
+      <header className="px-5 pt-safe pb-2 mt-3">
+        <h1 className="text-[2rem] font-extrabold text-white tracking-tight">Dashboard Principal</h1>
+      </header>
+
+      <div className="px-4 pt-3 space-y-5">
+        {/* Finance card */}
+        <button
+          onClick={() => setView('expenses')}
+          className="w-full text-left p-5 rounded-[20px] border active-scale"
+          style={{ background: 'rgba(46,204,112,0.06)', borderColor: 'rgba(46,204,112,0.18)' }}
+        >
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-slate-400 text-sm capitalize mb-0.5">{monthName}</p>
+              <p className="text-white font-bold text-lg">Mis Finanzas</p>
+            </div>
+            <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: 'rgba(46,204,112,0.15)' }}>
+              <BarChart2 size={20} className="text-primary" />
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-primary text-sm font-semibold">
+            <span>Ver detalles</span>
+            <ChevronRight size={15} />
+          </div>
+        </button>
+
+        {/* Habit completion ring */}
+        {!loading && totalCount > 0 && (
+          <div className="flex items-center gap-4 px-1">
+            <div className="relative w-16 h-16 shrink-0">
+              <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
+                <circle
+                  cx="32" cy="32" r="26" fill="none"
+                  stroke="#2ecc70" strokeWidth="7" strokeLinecap="round"
+                  strokeDasharray={circumference}
+                  strokeDashoffset={circumference * (1 - pct / 100)}
+                  style={{ transition: 'stroke-dashoffset 0.6s ease' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-sm font-bold text-white">{pct}%</span>
+              </div>
+            </div>
+            <div>
+              <p className="text-white font-semibold text-base">{completedCount} de {totalCount} completados</p>
+              <p className="text-slate-500 text-sm">Progreso de hoy</p>
+            </div>
+          </div>
+        )}
+
+        {/* Hábitos de hoy */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-bold text-white">Hábitos de Hoy</h2>
+            <button
+              onClick={() => setView('habits')}
+              className="text-primary text-sm font-semibold flex items-center gap-0.5 active-scale"
+            >
+              Ver todos <ChevronRight size={14} />
+            </button>
+          </div>
+
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <div className="w-7 h-7 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : habits.length === 0 ? (
+            <div className="text-center py-10 border-2 border-dashed border-primary/10 rounded-2xl">
+              <p className="text-slate-500 text-sm">No hay hábitos. ¡Crea el primero!</p>
+              <button
+                onClick={() => { setView('habits'); setShowAddModal(true) }}
+                className="mt-3 text-primary text-sm font-semibold"
+              >
+                + Agregar hábito
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {habits.map(habit => {
+                const { IconComp, colorClass } = getHabitVisuals(habit)
+                const isCompleted = habit.today_state === 'completed'
+                return (
+                  <div
+                    key={habit.id}
+                    className={`flex items-center gap-3 p-4 rounded-[18px] border transition-all duration-200 ${
+                      isCompleted
+                        ? 'border-primary/20'
+                        : 'glass-panel border-white/5'
+                    }`}
+                    style={isCompleted ? { background: 'rgba(46,204,112,0.07)' } : {}}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colorClass}`}>
+                      <IconComp size={18} />
+                    </div>
+                    <p className={`flex-1 font-medium text-[15px] ${isCompleted ? 'text-slate-400 line-through' : 'text-white'}`}>
+                      {habit.title}
+                    </p>
+                    <button
+                      onClick={(e) => toggleHabitDay(e, habit)}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-200 shrink-0 active-scale ${
+                        isCompleted
+                          ? 'bg-primary border-primary text-[#131f18]'
+                          : 'border-slate-600'
+                      }`}
+                    >
+                      {isCompleted && <Check size={14} />}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Perfil View ──────────────────────────────────────────────────────────────
+function PerfilView({ user, signOut, exportBackupJSON, setView }) {
+  const initials = user?.email ? user.email.slice(0, 2).toUpperCase() : 'U'
+
+  const extraViews = [
+    { v: 'meals', icon: Utensils, label: 'Comidas', desc: 'Registro y seguimiento de comidas' },
+    { v: 'daily-expenses', icon: Calendar, label: 'Diario de Gastos', desc: 'Gastos del día a día' },
+    { v: 'planning', icon: Layout, label: 'Planificación', desc: 'Plan financiero y presupuestos' },
+  ]
+
+  return (
+    <div className="pb-nav-safe">
+      <header className="px-5 pt-safe pb-2 mt-3">
+        <h1 className="text-[2rem] font-extrabold text-white tracking-tight">Perfil</h1>
+      </header>
+
+      <div className="px-4 pt-3 space-y-5">
+        {/* User card */}
+        <div
+          className="p-5 rounded-[20px] border flex items-center gap-4"
+          style={{ background: 'rgba(46,204,112,0.05)', borderColor: 'rgba(46,204,112,0.14)' }}
+        >
+          <div className="w-14 h-14 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(46,204,112,0.18)' }}>
+            <span className="text-primary font-extrabold text-xl">{initials}</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-white font-semibold text-base truncate">{user?.email}</p>
+            <p className="text-slate-500 text-sm mt-0.5">Cuenta activa</p>
+          </div>
+        </div>
+
+        {/* Extra features */}
+        <div>
+          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-1">Más funciones</p>
+          <div className="space-y-2">
+            {extraViews.map(({ v, icon: Icon, label, desc }) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className="w-full flex items-center gap-4 p-4 rounded-[16px] glass-panel border-white/5 active-scale text-left"
+              >
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(46,204,112,0.10)' }}>
+                  <Icon size={18} className="text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-[15px]">{label}</p>
+                  <p className="text-slate-500 text-xs mt-0.5">{desc}</p>
+                </div>
+                <ChevronRight size={18} className="text-slate-600 shrink-0" />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Account actions */}
+        <div>
+          <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-1">Cuenta</p>
+          <div className="space-y-2">
+            <button
+              onClick={exportBackupJSON}
+              className="w-full flex items-center gap-4 p-4 rounded-[16px] glass-panel border-white/5 active-scale"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center shrink-0">
+                <Download size={18} className="text-slate-300" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="text-white font-medium text-[15px]">Exportar Backup</p>
+                <p className="text-slate-500 text-xs mt-0.5">Descargar hábitos en JSON</p>
+              </div>
+            </button>
+
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-4 p-4 rounded-[16px] active-scale"
+              style={{ background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.12)' }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(239,68,68,0.10)' }}>
+                <LogOut size={18} className="text-red-400" />
+              </div>
+              <p className="flex-1 text-left text-red-400 font-medium text-[15px]">Cerrar Sesión</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function AppContent() {
   const getLocalDateString = () => {
     const d = new Date()
@@ -63,7 +283,7 @@ function AppContent() {
   }
 
   const { user, session, loading: authLoading, signOut } = useAuth()
-  const [view, setView] = useState('habits')
+  const [view, setView] = useState('inicio')
   const [habits, setHabits] = useState([])
   const [loading, setLoading] = useState(true)
   const [newHabitTitle, setNewHabitTitle] = useState('')
@@ -389,21 +609,35 @@ function AppContent() {
   }
 
   const navTabs = [
+    { v: 'inicio', icon: Home, label: 'Inicio' },
     { v: 'habits', icon: CheckCircle, label: 'Hábitos' },
-    { v: 'meals', icon: Utensils, label: 'Comidas' },
-    { v: 'expenses', icon: Wallet, label: 'Gastos' },
-    { v: 'daily-expenses', icon: Calendar, label: 'Diario' },
-    { v: 'planning', icon: Layout, label: 'Plan' },
+    { v: 'expenses', icon: BarChart2, label: 'Finanzas' },
+    { v: 'perfil', icon: User, label: 'Perfil' },
   ]
 
-  const activeView = selectedHabitId ? 'habits' : view
+  const activeView = selectedHabitId ? 'habits' : (['meals', 'daily-expenses', 'planning'].includes(view) ? 'perfil' : view)
 
   return (
     <div className="min-h-screen bg-[#131f18] text-slate-100">
 
       {/* Content area with bottom padding for nav */}
-      <div className="pb-nav-safe">
-        {view === 'planning' ? (
+      <div className={view === 'inicio' || view === 'perfil' ? '' : 'pb-nav-safe'}>
+        {view === 'inicio' ? (
+          <DashboardView
+            habits={habits}
+            loading={loading}
+            toggleHabitDay={toggleHabitDay}
+            setView={setView}
+            setShowAddModal={setShowAddModal}
+          />
+        ) : view === 'perfil' ? (
+          <PerfilView
+            user={user}
+            signOut={signOut}
+            exportBackupJSON={exportBackupJSON}
+            setView={setView}
+          />
+        ) : view === 'planning' ? (
           <ErrorBoundary>
             <Suspense fallback={<LazySpinner />}>
               <PlanningProvider>
@@ -435,32 +669,23 @@ function AppContent() {
           /* ── Habits View ── */
           <>
             {/* Sticky Header */}
-            <header className="sticky top-0 z-10 bg-[#131f18]/80 backdrop-blur-xl px-4 pb-4 pt-safe border-b border-white/5">
-              <div className="flex items-center justify-between mt-2">
+            <header className="sticky top-0 z-10 bg-[#131f18]/80 backdrop-blur-xl px-5 pb-4 pt-safe border-b border-white/5">
+              <div className="flex items-center justify-between mt-3">
                 <div className="flex flex-col">
-                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Mis Hábitos</h1>
+                  <h1 className="text-[2rem] font-extrabold tracking-tight text-white">Mis Hábitos</h1>
                   {lastSync && (
-                    <span className="text-[10px] text-primary/70 font-bold uppercase tracking-widest mt-0.5 ml-1">
+                    <span className="text-[10px] text-primary/70 font-bold uppercase tracking-widest mt-0.5">
                       Actualizado: {lastSync}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={exportBackupJSON}
-                    className="w-11 h-11 rounded-full glass-panel flex items-center justify-center active-scale"
-                    title="Exportar backup"
-                  >
-                    <Download size={20} className="text-slate-300" />
-                  </button>
-                  <button
-                    onClick={signOut}
-                    className="w-11 h-11 rounded-full glass-panel flex items-center justify-center active-scale"
-                    title="Cerrar sesión"
-                  >
-                    <LogOut size={20} className="text-slate-300" />
-                  </button>
-                </div>
+                <button
+                  onClick={() => setView('perfil')}
+                  className="w-10 h-10 rounded-full glass-panel flex items-center justify-center active-scale"
+                  title="Perfil"
+                >
+                  <Settings size={18} className="text-slate-400" />
+                </button>
               </div>
             </header>
 

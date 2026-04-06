@@ -1,68 +1,127 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { CheckCircle, Wallet } from 'lucide-react';
+
+const PlantIllustration = () => (
+  <svg width="90" height="100" viewBox="0 0 90 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Ground arc */}
+    <path d="M12 90 Q45 80 78 90" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+    {/* Main stem */}
+    <line x1="45" y1="90" x2="45" y2="36" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+    {/* Center top leaf */}
+    <path d="M45 36 Q28 20 32 6 Q50 10 45 36" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    {/* Right leaf */}
+    <path d="M45 52 Q62 38 74 42 Q68 58 45 52" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+    {/* Left leaf */}
+    <path d="M45 64 Q28 52 16 56 Q20 72 45 64" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+  </svg>
+)
+
+const ScalesIllustration = () => (
+  <svg width="88" height="100" viewBox="0 0 88 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Pivot circle */}
+    <circle cx="44" cy="13" r="5" stroke="white" strokeWidth="2" fill="none"/>
+    {/* Vertical post */}
+    <line x1="44" y1="18" x2="44" y2="90" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+    {/* Horizontal arm */}
+    <line x1="8" y1="28" x2="80" y2="28" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+    {/* Left arm tip */}
+    <line x1="8" y1="28" x2="8" y2="24" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+    {/* Right arm tip */}
+    <line x1="80" y1="28" x2="80" y2="24" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+    {/* Left hanging strings */}
+    <line x1="6" y1="28" x2="2" y2="60" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="10" y1="28" x2="20" y2="60" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+    {/* Left plate */}
+    <path d="M0 60 Q11 55 22 60" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
+    {/* Right hanging strings */}
+    <line x1="78" y1="28" x2="68" y2="52" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+    <line x1="82" y1="28" x2="86" y2="52" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+    {/* Right plate */}
+    <path d="M64 52 Q77 47 88 52" stroke="white" strokeWidth="2" strokeLinecap="round" fill="none"/>
+    {/* Base */}
+    <line x1="30" y1="90" x2="58" y2="90" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+  </svg>
+)
 
 const Login = () => {
-    const { signInWithGoogle } = useAuth();
-    const [isLoading, setIsLoading] = useState(false);
+  const { signInWithGoogle } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = async () => {
-        setIsLoading(true);
-        try {
-            await signInWithGoogle();
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+  const handleLogin = async () => {
+    setIsLoading(true);
+    try {
+      await signInWithGoogle();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-[#131f18] flex items-center justify-center p-4">
-            {/* Background blobs */}
-            <div className="absolute top-[-15%] left-[-10%] w-72 h-72 bg-primary/10 rounded-full blur-[100px] pointer-events-none" />
-            <div className="absolute bottom-[-15%] right-[-10%] w-72 h-72 bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+  return (
+    <div
+      className="min-h-screen bg-black flex flex-col items-center relative overflow-hidden"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'max(env(safe-area-inset-bottom), 32px)',
+      }}
+    >
+      {/* Bottom radial green glow */}
+      <div
+        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+        style={{
+          height: '45%',
+          background: 'radial-gradient(ellipse at 50% 100%, rgba(46,204,112,0.38) 0%, rgba(46,204,112,0.10) 45%, transparent 72%)',
+        }}
+      />
 
-            <div className="bg-primary/5 border border-primary/10 p-8 rounded-2xl max-w-sm w-full relative z-10">
-                {/* Logo */}
-                <div className="flex items-center justify-center gap-3 mb-8">
-                    <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center text-primary">
-                        <CheckCircle size={28} />
-                    </div>
-                    <div className="w-14 h-14 rounded-2xl bg-primary/15 flex items-center justify-center text-primary">
-                        <Wallet size={28} />
-                    </div>
-                </div>
-
-                <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-slate-100 mb-2">Bienvenido</h1>
-                    <p className="text-slate-400 text-sm">Administra tus hábitos y finanzas en un solo lugar.</p>
-                </div>
-
-                <button
-                    onClick={handleLogin}
-                    disabled={isLoading}
-                    className="w-full bg-primary text-[#131f18] font-bold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-primary/20 active:scale-95"
-                >
-                    {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-[#131f18]/30 border-t-[#131f18] rounded-full animate-spin" />
-                    ) : (
-                        <svg className="w-5 h-5" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                        </svg>
-                    )}
-                    <span>{isLoading ? 'Iniciando sesión...' : 'Continuar con Google'}</span>
-                </button>
-
-                <p className="mt-6 text-xs text-slate-600 text-center">
-                    Al continuar, aceptas nuestros términos de servicio y política de privacidad.
-                </p>
-            </div>
+      {/* Center content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 w-full">
+        {/* Illustrations */}
+        <div className="flex items-end justify-center gap-3 mb-10 select-none">
+          <PlantIllustration />
+          <ScalesIllustration />
         </div>
-    );
+
+        {/* Headline */}
+        <h1 className="text-[2.6rem] font-extrabold text-white text-center leading-[1.15] mb-5 tracking-tight">
+          'Domina tus hábitos, asegura tu futuro
+        </h1>
+
+        {/* Subtitle */}
+        <p className="text-slate-400 text-center text-base leading-relaxed max-w-xs">
+          Tu camino hacia el crecimiento personal y la libertad financiera comienza aquí.
+        </p>
+      </div>
+
+      {/* CTA section */}
+      <div className="w-full px-6 space-y-4 relative z-10">
+        <button
+          onClick={handleLogin}
+          disabled={isLoading}
+          className="w-full bg-primary text-[#0a0a0a] font-bold py-5 rounded-[28px] text-lg flex items-center justify-center gap-3 active:scale-95 transition-transform disabled:opacity-70 shadow-lg"
+          style={{ boxShadow: '0 0 32px rgba(46,204,112,0.35)' }}
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+          ) : (
+            'Empezar Ahora'
+          )}
+        </button>
+
+        <p className="text-center text-slate-500 text-sm pb-1">
+          ¿Ya tienes cuenta?{' '}
+          <button
+            onClick={handleLogin}
+            disabled={isLoading}
+            className="text-white underline font-medium"
+          >
+            Inicia sesión
+          </button>
+        </p>
+      </div>
+    </div>
+  );
 };
 
 export default Login;
