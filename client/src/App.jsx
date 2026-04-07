@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Capacitor } from '@capacitor/core'
+
 import { usePedometer } from './hooks/usePedometer'
 import { useActivityDetection } from './hooks/useActivityDetection'
 import { ExpensesProvider } from './features/expenses/ExpensesContext'
@@ -427,15 +428,6 @@ function AppContent() {
   usePedometer(habits, setHabits, getLocalDateString, session, API_URL)
 
   useEffect(() => {
-    if (!habits.length || !Capacitor.isNativePlatform()) return
-
-    const hasWalkingHabit = habits.some(h => h.unit?.toLowerCase().includes('paso'))
-    if (hasWalkingHabit && !activity.isTracking) {
-      activity.startTracking()
-    }
-  }, [habits, activity.isTracking]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
     if (!habits.length || !user) return
     const savedOrder = localStorage.getItem(`habits_order_${user.id}`)
     if (!savedOrder) return
@@ -721,6 +713,7 @@ function AppContent() {
                         : colorClass.includes('purple') ? '#c084fc'
                           : '#2ecc70'
 
+                  const isStepHabit = isCounter && habit.unit?.toLowerCase().includes('paso')
                   return isCounter ? (
                     /* Counter habit card */
                     <div
@@ -775,12 +768,23 @@ function AppContent() {
                         </div>
                       </div>
 
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteHabit(habit.id) }}
-                        className="mt-3 text-slate-600 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="mt-3 flex items-center justify-between">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteHabit(habit.id) }}
+                          className="text-slate-600 hover:text-red-400 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        {isStepHabit && Capacitor.isNativePlatform() && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); activity.isTracking ? activity.stopTracking() : activity.startTracking() }}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active-scale ${activity.isTracking ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-primary/15 text-primary border border-primary/20'}`}
+                          >
+                            <Activity size={12} />
+                            {activity.isTracking ? 'Detener caminata' : 'Iniciar caminata'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     /* Boolean habit card */
