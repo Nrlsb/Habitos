@@ -3,7 +3,7 @@ import {
   Plus, Trash2, CheckCircle, Circle, Calendar, Wallet, LogOut,
   Layout, Utensils, Check, ChevronDown, Ban, Activity, Droplets,
   Dumbbell, Heart, Briefcase, BookOpen, Star, Download, X,
-  Home, BarChart2, User, ChevronRight, Settings
+  Home, BarChart2, User, ChevronRight, Settings, ShoppingCart
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Capacitor } from '@capacitor/core'
@@ -20,6 +20,7 @@ const Expenses = lazy(() => import('./features/expenses/Expenses'))
 const DailyExpenses = lazy(() => import('./features/expenses/DailyExpenses'))
 const Planning = lazy(() => import('./features/planning/Planning'))
 const Meals = lazy(() => import('./features/meals/Meals'))
+const ShoppingList = lazy(() => import('./features/shopping/ShoppingList'))
 
 const LazySpinner = () => (
   <div className="flex items-center justify-center py-20">
@@ -193,6 +194,7 @@ function PerfilView({ user, signOut, exportBackupJSON, setView }) {
     { v: 'meals', icon: Utensils, label: 'Comidas', desc: 'Registro y seguimiento de comidas' },
     { v: 'daily-expenses', icon: Calendar, label: 'Diario de Gastos', desc: 'Gastos del día a día' },
     { v: 'planning', icon: Layout, label: 'Planificación', desc: 'Plan financiero y presupuestos' },
+    { v: 'shopping', icon: ShoppingCart, label: 'Lista del Super', desc: 'Lista de compras del supermercado' },
   ]
 
   return (
@@ -615,7 +617,7 @@ function AppContent() {
     { v: 'perfil', icon: User, label: 'Perfil' },
   ]
 
-  const activeView = selectedHabitId ? 'habits' : (['meals', 'daily-expenses', 'planning'].includes(view) ? 'perfil' : view)
+  const activeView = selectedHabitId ? 'habits' : (['meals', 'daily-expenses', 'planning', 'shopping'].includes(view) ? 'perfil' : view)
 
   return (
     <div className="min-h-screen bg-[#131f18] text-slate-100">
@@ -649,6 +651,12 @@ function AppContent() {
           <ErrorBoundary>
             <Suspense fallback={<LazySpinner />}>
               <Meals />
+            </Suspense>
+          </ErrorBoundary>
+        ) : view === 'shopping' ? (
+          <ErrorBoundary>
+            <Suspense fallback={<LazySpinner />}>
+              <ShoppingList />
             </Suspense>
           </ErrorBoundary>
         ) : view === 'expenses' || view === 'daily-expenses' ? (

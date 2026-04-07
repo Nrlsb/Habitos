@@ -69,6 +69,7 @@ app.use('/api/subscriptions', require('./routes/subscriptions')(supabase, authen
 app.use('/api/bna', require('./routes/bna')());
 app.use('/api/activities', require('./routes/activities')(supabase, authenticateUser));
 app.use('/api/parse-pdf', require('./routes/parsePdf')(authenticateUser));
+app.use('/api/shopping', require('./routes/shopping')(supabase, authenticateUser));
 
 
 // Heartbeat: Update current time in DB every 10 minutes

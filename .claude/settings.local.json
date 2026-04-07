@@ -15,7 +15,9 @@
       "Bash(grep -r walk_sessions /c/Users/Usuario/Desktop/Proyectos/Habitos --include=*.md --include=*.txt --include=*.js)",
       "Bash(find C:UsersUsuarioDesktopProyectosHabitosserver -type f \\\\\\(-name *.ts -o -name *.js \\\\\\))",
       "Bash(find C:UsersUsuarioDesktopProyectosHabitos -type f -name *.java)",
-      "Bash(grep -r \"walk_sessions\\\\|walkSessions\" C:UsersUsuarioDesktopProyectosHabitos --include=*.sql --include=*.js --include=*.jsx --include=*.ts --include=*.tsx)"
+      "Bash(grep -r \"walk_sessions\\\\|walkSessions\" C:UsersUsuarioDesktopProyectosHabitos --include=*.sql --include=*.js --include=*.jsx --include=*.ts --include=*.tsx)",
+      "Bash(wc -l features/**/*.jsx components/*.jsx context/*.jsx)",
+      "Bash(ls /c/Users/Usuario/Desktop/Proyectos/Habitos/*.js)"
     ]
   }
 }
