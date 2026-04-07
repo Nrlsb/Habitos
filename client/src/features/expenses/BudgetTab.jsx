@@ -2,11 +2,19 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useExpenses } from './ExpensesContext';
 import {
     Wallet, TrendingUp, Calendar, DollarSign, AlertCircle,
-    Plus, Trash2, Target, Save
+    Plus, Trash2, Target, Save, TriangleAlert, CheckCircle2, XCircle, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const fmt = (n) => (isNaN(n) ? '0' : Math.abs(n).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }));
+
+const subMonthlyEquivalent = (sub, dolarRate) => {
+    const amt = parseFloat(sub.amount) || 0;
+    const inArs = sub.currency === 'USD' && dolarRate ? amt * dolarRate : amt;
+    if (sub.frequency === 'annual') return inArs / 12;
+    if (sub.frequency === 'quarterly') return inArs / 3;
+    return inArs;
+};
 
 const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
     const { upsertBudget, getBudgets, subscriptions, categories, expenses: allExpenses } = useExpenses();
@@ -26,6 +34,7 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
     const [prevBudgets, setPrevBudgets] = useState([]);
     const [isSaving, setIsSaving] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
+    const [showAnnual, setShowAnnual] = useState(false);
 
     // Editable state
     const [incomes, setIncomes] = useState([]); // [{key, label, amount}]
@@ -105,11 +114,13 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
 
     const savingsGoalNum = useMemo(() => parseFloat(savingsGoal) || 0, [savingsGoal]);
 
+    const activeSubscriptions = useMemo(() =>
+        (Array.isArray(subscriptions) ? subscriptions : []).filter(s => s.active !== false),
+        [subscriptions]);
+
     const fixedExpensesARS = useMemo(() =>
-        subscriptions.reduce((acc, sub) => {
-            const amt = sub.currency === 'USD' && dolarRate ? sub.amount * dolarRate : sub.amount;
-            return acc + amt;
-        }, 0), [subscriptions, dolarRate]);
+        activeSubscriptions.reduce((acc, sub) => acc + subMonthlyEquivalent(sub, dolarRate), 0),
+        [activeSubscriptions, dolarRate]);
 
     const totalExpensesARS = useMemo(() =>
         expenses.reduce((acc, e) => {
@@ -173,6 +184,21 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
     }, [allExpenses, prevMonthKey, dolarRate]);
 
     const prevBalance = prevIncome - prevSavingsGoal - prevMonthExpenses;
+    const prevSavingsAchieved = prevIncome > 0 ? prevBalance >= prevSavingsGoal : null;
+
+    // Proyección anual
+    const annualIncome = totalIncome * 12;
+    const annualFixed = activeSubscriptions.reduce((acc, sub) => {
+        const amt = parseFloat(sub.amount) || 0;
+        const inArs = sub.currency === 'USD' && dolarRate ? amt * dolarRate : amt;
+        if (sub.frequency === 'annual') return acc + inArs;
+        if (sub.frequency === 'quarterly') return acc + inArs * 4;
+        return acc + inArs * 12;
+    }, 0);
+    const dailyRate = daysElapsed > 0 ? totalExpensesARS / daysElapsed : 0;
+    const annualVariable = dailyRate * 365;
+    const annualSavingsGoal = savingsGoalNum * 12;
+    const annualBalance = annualIncome - annualFixed - annualVariable - annualSavingsGoal;
 
     // ---- HANDLERS ----
     const addIncome = () => {
@@ -331,10 +357,30 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
                     />
                 </div>
                 <div className="flex justify-between mt-2 text-[11px] text-slate-500 flex-wrap gap-x-4">
-                    <span>Fijos: ${fmt(fixedExpensesARS)}</span>
+                    <span>Suscripciones: ${fmt(fixedExpensesARS)}</span>
                     <span>Variables: ${fmt(totalExpensesARS)}</span>
                     {savingsGoalNum > 0 && <span>Ahorro obj: ${fmt(savingsGoalNum)}</span>}
                 </div>
+                {/* Desglose visual fijos vs variables */}
+                {totalIncome > 0 && (
+                    <div className="mt-3 flex h-1.5 w-full rounded-full overflow-hidden gap-px bg-white/5">
+                        <div style={{ width: `${Math.min((fixedExpensesARS / totalIncome) * 100, 100)}%` }}
+                            className="bg-cyan-500 rounded-l-full transition-all duration-700" title={`Suscripciones: $${fmt(fixedExpensesARS)}`} />
+                        <div style={{ width: `${Math.min((totalExpensesARS / totalIncome) * 100, 100)}%` }}
+                            className="bg-primary transition-all duration-700" title={`Variables: $${fmt(totalExpensesARS)}`} />
+                        {savingsGoalNum > 0 && (
+                            <div style={{ width: `${Math.min((savingsGoalNum / totalIncome) * 100, 100)}%` }}
+                                className="bg-purple-500 rounded-r-full transition-all duration-700" title={`Ahorro: $${fmt(savingsGoalNum)}`} />
+                        )}
+                    </div>
+                )}
+                {totalIncome > 0 && (
+                    <div className="flex gap-4 mt-1.5 text-[10px]">
+                        <span className="flex items-center gap-1 text-cyan-400"><span className="w-2 h-2 rounded-full bg-cyan-500 inline-block" />Suscripciones</span>
+                        <span className="flex items-center gap-1 text-primary"><span className="w-2 h-2 rounded-full bg-primary inline-block" />Variables</span>
+                        {savingsGoalNum > 0 && <span className="flex items-center gap-1 text-purple-400"><span className="w-2 h-2 rounded-full bg-purple-500 inline-block" />Ahorro</span>}
+                    </div>
+                )}
                 {availableAfterSavings < 0 && (
                     <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2">
                         <AlertCircle className="text-red-400 shrink-0" size={16} />
@@ -395,6 +441,12 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
                                     <div className="flex items-center gap-3 mb-2">
                                         <span className="text-lg shrink-0">{cat.icon || '📦'}</span>
                                         <span className="text-slate-200 text-sm font-medium flex-1 min-w-0 truncate">{catName}</span>
+                                        {budget > 0 && pct >= 80 && !over && (
+                                            <TriangleAlert size={14} className="text-orange-400 shrink-0" title="Cerca del límite" />
+                                        )}
+                                        {over && (
+                                            <TriangleAlert size={14} className="text-red-400 shrink-0" title="Límite excedido" />
+                                        )}
                                         <div className="relative shrink-0">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">$</span>
                                             <input
@@ -441,6 +493,24 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
                         <Calendar className="text-primary" size={20} />
                         Comparación Mensual
                     </h3>
+                    {/* Ahorro logrado el mes anterior */}
+                    {prevSavingsGoal > 0 && (
+                        <div className={`mb-4 p-4 rounded-xl border flex items-center gap-3
+                            ${prevSavingsAchieved ? 'bg-primary/10 border-primary/20' : 'bg-red-500/10 border-red-500/20'}`}>
+                            {prevSavingsAchieved
+                                ? <CheckCircle2 className="text-primary shrink-0" size={20} />
+                                : <XCircle className="text-red-400 shrink-0" size={20} />}
+                            <div>
+                                <p className="text-sm font-semibold text-white">
+                                    {prevSavingsAchieved ? 'Objetivo de ahorro alcanzado' : 'Objetivo de ahorro no alcanzado'}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                    Meta: ${fmt(prevSavingsGoal)} · Balance: {prevBalance < 0 ? '-' : ''}${fmt(prevBalance)}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-3 gap-3">
                         {[
                             { label: 'Ingreso', curr: totalIncome, prev: prevIncome, higherIsBetter: true },
@@ -465,6 +535,61 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
                             );
                         })}
                     </div>
+                </div>
+            )}
+
+            {/* === PROYECCIÓN ANUAL === */}
+            {totalIncome > 0 && (
+                <div className="bg-primary/5 border border-primary/10 rounded-2xl shadow-xl overflow-hidden">
+                    <button
+                        onClick={() => setShowAnnual(p => !p)}
+                        className="w-full p-6 flex items-center justify-between text-left"
+                    >
+                        <h3 className="text-lg font-bold text-slate-200 flex items-center gap-2">
+                            <TrendingUp className="text-primary" size={20} />
+                            Proyección Anual
+                        </h3>
+                        {showAnnual ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
+                    </button>
+                    {showAnnual && (
+                        <div className="px-6 pb-6 space-y-3 border-t border-white/5 pt-4">
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                                    <p className="text-slate-400 text-[11px] uppercase tracking-wide mb-1">Ingreso anual</p>
+                                    <p className="text-base font-bold text-primary tabular-nums">${fmt(annualIncome)}</p>
+                                    <p className="text-[10px] text-slate-500 mt-0.5">${fmt(totalIncome)}/mes × 12</p>
+                                </div>
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                                    <p className="text-slate-400 text-[11px] uppercase tracking-wide mb-1">Suscripciones</p>
+                                    <p className="text-base font-bold text-cyan-400 tabular-nums">${fmt(annualFixed)}</p>
+                                    <p className="text-[10px] text-slate-500 mt-0.5">Costo real anual</p>
+                                </div>
+                                <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                                    <p className="text-slate-400 text-[11px] uppercase tracking-wide mb-1">Gasto variable</p>
+                                    <p className="text-base font-bold text-white tabular-nums">${fmt(annualVariable)}</p>
+                                    <p className="text-[10px] text-slate-500 mt-0.5">Ritmo actual × 365 días</p>
+                                </div>
+                                {annualSavingsGoal > 0 && (
+                                    <div className="p-4 bg-white/5 rounded-xl border border-white/5">
+                                        <p className="text-slate-400 text-[11px] uppercase tracking-wide mb-1">Ahorro anual</p>
+                                        <p className="text-base font-bold text-purple-400 tabular-nums">${fmt(annualSavingsGoal)}</p>
+                                        <p className="text-[10px] text-slate-500 mt-0.5">${fmt(savingsGoalNum)}/mes × 12</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className={`p-4 rounded-xl border ${annualBalance >= 0 ? 'bg-primary/10 border-primary/20' : 'bg-red-500/10 border-red-500/20'}`}>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-slate-300 text-sm font-semibold">Balance anual estimado</p>
+                                    <p className={`text-xl font-bold tabular-nums ${annualBalance >= 0 ? 'text-primary' : 'text-red-400'}`}>
+                                        {annualBalance < 0 ? '-' : ''}${fmt(annualBalance)}
+                                    </p>
+                                </div>
+                                {daysElapsed === 0 && (
+                                    <p className="text-xs text-slate-500 mt-1">Registrá gastos para calcular el variable proyectado</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
 

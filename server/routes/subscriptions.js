@@ -5,7 +5,7 @@ module.exports = (supabase, authenticateUser) => {
 
     router.get('/', authenticateUser, async (req, res) => {
         const { data, error } = await supabase
-            .from('subscriptions').select('*').eq('user_id', req.user.id).eq('active', true)
+            .from('subscriptions').select('*').eq('user_id', req.user.id)
             .order('created_at');
         if (error) return res.status(500).json({ error: error.message });
         res.json(data);
@@ -28,7 +28,7 @@ module.exports = (supabase, authenticateUser) => {
 
     router.put('/:id', authenticateUser, async (req, res) => {
         const { id } = req.params;
-        const { name, amount, currency, category_name, frequency, billing_date } = req.body;
+        const { name, amount, currency, category_name, frequency, billing_date, active } = req.body;
         const updates = {};
         if (name) updates.name = name;
         if (amount) updates.amount = amount;
@@ -36,6 +36,7 @@ module.exports = (supabase, authenticateUser) => {
         if (category_name) updates.category_name = category_name;
         if (frequency) updates.frequency = frequency;
         if (billing_date !== undefined) updates.billing_date = billing_date;
+        if (active !== undefined) updates.active = active;
 
         const { data, error } = await supabase
             .from('subscriptions').update(updates).eq('id', id).eq('user_id', req.user.id).select();
