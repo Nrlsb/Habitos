@@ -16,7 +16,7 @@ module.exports = (supabase, authenticateUser) => {
         if (!planilla) return res.status(403).json({ error: 'Unauthorized' });
 
         const { description, amount, currency, category, esCompartido, enCuotas,
-            cuotaActual, totalCuotas, payer_name, split_details } = req.body;
+            cuotaActual, totalCuotas, payer_name, split_details, is_paid } = req.body;
 
         const { data, error } = await supabase
             .from('expenses')
@@ -26,8 +26,31 @@ module.exports = (supabase, authenticateUser) => {
                 current_installment: cuotaActual, total_installments: totalCuotas,
                 payer_name: esCompartido ? payer_name : null,
                 created_at: req.body.date,
-                split_details: split_details || null
+                split_details: split_details || null,
+                is_paid: is_paid ?? false
             })
+            .eq('id', id).select();
+
+        if (error) return res.status(500).json({ error: error.message });
+        res.json(data[0]);
+    });
+
+    // Toggle paid status
+    router.patch('/:id/paid', authenticateUser, async (req, res) => {
+        const { id } = req.params;
+        const { is_paid } = req.body;
+
+        const { data: expense } = await supabase
+            .from('expenses').select('planilla_id').eq('id', id).single();
+        if (!expense) return res.status(404).json({ error: 'Expense not found' });
+
+        const { data: planilla } = await supabase
+            .from('planillas').select('id').eq('id', expense.planilla_id).eq('user_id', req.user.id).single();
+        if (!planilla) return res.status(403).json({ error: 'Unauthorized' });
+
+        const { data, error } = await supabase
+            .from('expenses')
+            .update({ is_paid: !!is_paid })
             .eq('id', id).select();
 
         if (error) return res.status(500).json({ error: error.message });

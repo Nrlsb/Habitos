@@ -19,6 +19,7 @@ function Expenses() {
         getExpenses,
         addExpense,
         updateExpense,
+        toggleExpensePaid,
         deleteExpense,
         sharePlanilla,
         copyExpensesToPlanilla,
@@ -77,6 +78,7 @@ function Expenses() {
     const [totalCuotas, setTotalCuotas] = useState('');
     const [cuotaActual, setCuotaActual] = useState('');
     const [category, setCategory] = useState('General'); // New Category State
+    const [isPaid, setIsPaid] = useState(false); // Paid status
     const [paidBy, setPaidBy] = useState(''); // New Paid By State
     const [splitDetails, setSplitDetails] = useState([]); // [{ name: 'Lucas', amount: 0 }, { name: 'Gise', amount: 0 }]
     const [editingId, setEditingId] = useState(null);
@@ -350,6 +352,7 @@ function Expenses() {
         setEnCuotas(false);
         setCuotaActual('');
         setTotalCuotas('');
+        setIsPaid(false);
         setPaidBy('');
         setSplitDetails([]);
         setEditingId(null);
@@ -391,7 +394,8 @@ function Expenses() {
             totalCuotas: enCuotas ? parseInt(totalCuotas) : null,
             payer_name: esCompartido ? paidBy : null,
             date: localDate.toISOString(),
-            split_details: (esCompartido && splitDetails.length > 0) ? splitDetails : null
+            split_details: (esCompartido && splitDetails.length > 0) ? splitDetails : null,
+            is_paid: isPaid
         };
 
         if (editingId) {
@@ -424,6 +428,7 @@ function Expenses() {
         setEnCuotas(expense.is_installment);
         setCuotaActual(expense.current_installment || '');
         setTotalCuotas(expense.total_installments || '');
+        setIsPaid(expense.is_paid || false);
         setPaidBy(expense.payer_name || '');
         setSplitDetails(expense.split_details || []);
 
@@ -433,6 +438,14 @@ function Expenses() {
 
 
 
+
+    const handleTogglePaid = async (expense) => {
+        try {
+            await toggleExpensePaid(selectedPlanillaId, expense.id, !expense.is_paid);
+        } catch (err) {
+            console.error('Error toggling paid status:', err);
+        }
+    };
 
     const handleDeleteExpense = async (id) => {
         if (window.confirm('¿Eliminar gasto?')) {
@@ -1330,6 +1343,19 @@ function Expenses() {
                                         />
                                         <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">Pagar en cuotas</span>
                                     </label>
+
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${isPaid ? 'bg-primary border-primary' : 'border-slate-600 bg-white/5 group-hover:border-slate-500'}`}>
+                                            {isPaid && <Check size={14} className="text-[#131f18]" />}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={isPaid}
+                                            onChange={(e) => setIsPaid(e.target.checked)}
+                                            className="hidden"
+                                        />
+                                        <span className="text-slate-400 text-sm group-hover:text-slate-300 transition-colors">Ya fue pagado</span>
+                                    </label>
                                 </div>
 
                                 {esCompartido && (
@@ -1603,15 +1629,23 @@ function Expenses() {
                                                     )}
                                                 </div>
 
-                                                <div className="flex gap-2">
-                                                    {expense.is_shared ? (
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="bg-cyan-500/10 text-cyan-400 text-xs px-3 py-1.5 rounded-xl font-bold border border-cyan-500/20">Compartido</span>
-                                                            {expense.payer_name && <span className="text-[10px] text-slate-400">Pagado por: <span className="text-slate-200 font-medium">{expense.payer_name}</span></span>}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="bg-white/5 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold border border-white/10">Personal</span>
-                                                    )}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex gap-2 flex-wrap">
+                                                        {expense.is_shared ? (
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="bg-cyan-500/10 text-cyan-400 text-xs px-3 py-1.5 rounded-xl font-bold border border-cyan-500/20">Compartido</span>
+                                                                {expense.payer_name && <span className="text-[10px] text-slate-400">Pagado por: <span className="text-slate-200 font-medium">{expense.payer_name}</span></span>}
+                                                            </div>
+                                                        ) : (
+                                                            <span className="bg-white/5 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold border border-white/10">Personal</span>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleTogglePaid(expense)}
+                                                        className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-bold border transition-all ${expense.is_paid ? 'bg-primary/15 text-primary border-primary/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}
+                                                    >
+                                                        {expense.is_paid ? <><Check size={12} /> Pagado</> : <><span className="text-[11px]">⏳</span> Pendiente</>}
+                                                    </button>
                                                 </div>
                                             </div>
                                         );
@@ -1641,6 +1675,7 @@ function Expenses() {
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Ref. USD</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Cuotas</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Tipo</th>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Estado</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Fecha</th>
                                             <th scope="col" className="px-6 py-4 text-center"></th>
                                         </tr>
@@ -1648,7 +1683,7 @@ function Expenses() {
                                     <tbody className="divide-y divide-slate-700/50">
                                         {displayedExpenses.length === 0 ? (
                                             <tr>
-                                                <td colSpan="9" className="px-6 py-12 text-center text-slate-500">
+                                                <td colSpan="10" className="px-6 py-12 text-center text-slate-500">
                                                     {searchQuery ? 'No hay resultados para tu búsqueda.' : 'No hay gastos registrados en este mes.'}
                                                 </td>
                                             </tr>
@@ -1718,6 +1753,14 @@ function Expenses() {
                                                             ) : (
                                                                 <span className="inline-flex items-center justify-center text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-slate-700 tracking-wide">Personal</span>
                                                             )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            <button
+                                                                onClick={() => handleTogglePaid(expense)}
+                                                                className={`flex items-center gap-1.5 mx-auto text-xs px-3 py-1.5 rounded-xl font-bold border transition-all ${expense.is_paid ? 'bg-primary/15 text-primary border-primary/30 hover:bg-primary/25' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20'}`}
+                                                            >
+                                                                {expense.is_paid ? <><Check size={12} /> Pagado</> : <>⏳ Pendiente</>}
+                                                            </button>
                                                         </td>
                                                         <td className="px-6 py-4 text-right text-slate-500 text-xs">
                                                             {new Date(expense.created_at).toLocaleDateString()}

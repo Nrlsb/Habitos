@@ -329,6 +329,24 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, session, getExpenses]);
 
+    const toggleExpensePaid = useCallback(async (planillaId, expenseId, isPaid) => {
+        try {
+            const response = await fetch(`${API_URL}/api/expenses/${expenseId}/paid`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ is_paid: isPaid }),
+            });
+            if (!response.ok) throw new Error('Failed to update paid status');
+            await getExpenses(planillaId);
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, getExpenses]);
+
     const deleteExpense = useCallback(async (planillaId, expenseId) => {
         try {
             const response = await fetch(`${API_URL}/api/expenses/${expenseId}`, {
@@ -545,6 +563,7 @@ export const ExpensesProvider = ({ children }) => {
         getDailyExpenses, // Add to context
         addExpense,
         updateExpense,
+        toggleExpensePaid,
         deleteExpense,
         sharePlanilla,
         copyExpensesToPlanilla,
