@@ -91,10 +91,13 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, session]);
 
-    const fetchSubscriptions = useCallback(async () => {
+    const fetchSubscriptions = useCallback(async (planillaId) => {
         if (!session) return;
         try {
-            const response = await fetch(`${API_URL}/api/subscriptions`, {
+            const url = planillaId
+                ? `${API_URL}/api/subscriptions?planilla_id=${planillaId}`
+                : `${API_URL}/api/subscriptions`;
+            const response = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${session.access_token}` }
             });
             if (!response.ok) throw new Error('Failed to fetch subscriptions');
@@ -548,6 +551,7 @@ export const ExpensesProvider = ({ children }) => {
         performMonthRollover,
         getBudgets,
         upsertBudget,
+        fetchSubscriptions,
         addSubscription,
         updateSubscription,
         deleteSubscription,

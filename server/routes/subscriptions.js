@@ -4,15 +4,17 @@ const router = express.Router();
 module.exports = (supabase, authenticateUser) => {
 
     router.get('/', authenticateUser, async (req, res) => {
-        const { data, error } = await supabase
-            .from('subscriptions').select('*').eq('user_id', req.user.id)
-            .order('created_at');
+        const { planilla_id } = req.query;
+        let query = supabase
+            .from('subscriptions').select('*').eq('user_id', req.user.id);
+        if (planilla_id) query = query.eq('planilla_id', planilla_id);
+        const { data, error } = await query.order('created_at');
         if (error) return res.status(500).json({ error: error.message });
         res.json(data);
     });
 
     router.post('/', authenticateUser, async (req, res) => {
-        const { name, amount, currency, category_name, frequency, billing_date } = req.body;
+        const { name, amount, currency, category_name, frequency, billing_date, planilla_id } = req.body;
         if (!name || !amount) return res.status(400).json({ error: 'Name and amount required' });
 
         const { data, error } = await supabase.from('subscriptions').insert([{
@@ -20,7 +22,8 @@ module.exports = (supabase, authenticateUser) => {
             currency: currency || 'ARS',
             category_name: category_name || 'General',
             frequency: frequency || 'monthly',
-            billing_date: billing_date || null
+            billing_date: billing_date || null,
+            planilla_id: planilla_id || null
         }]).select();
         if (error) return res.status(500).json({ error: error.message });
         res.status(201).json(data[0]);

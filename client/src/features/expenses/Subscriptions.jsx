@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from './ExpensesContext';
 import Modal from '../../components/Modal';
 import { toast } from 'sonner';
@@ -46,9 +46,10 @@ const getCategoryEmoji = (catName) => {
 
 const fmt = (n) => (isNaN(n) ? '0' : Math.abs(n).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }));
 
-const Subscriptions = () => {
+const Subscriptions = ({ currentPlanillaId }) => {
     const {
         subscriptions,
+        fetchSubscriptions,
         addSubscription,
         deleteSubscription,
         updateSubscription,
@@ -57,6 +58,10 @@ const Subscriptions = () => {
         tarjetaFactor,
         setTarjetaFactor
     } = useExpenses();
+
+    useEffect(() => {
+        fetchSubscriptions(currentPlanillaId);
+    }, [currentPlanillaId]);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSubscription, setEditingSubscription] = useState(null);
@@ -102,7 +107,7 @@ const Subscriptions = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const payload = { ...formData, amount: parseFloat(formData.amount) };
+            const payload = { ...formData, amount: parseFloat(formData.amount), planilla_id: currentPlanillaId };
             if (editingSubscription) {
                 await updateSubscription(editingSubscription.id, payload);
                 toast.success('Suscripción actualizada');
