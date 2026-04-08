@@ -521,6 +521,17 @@ function Expenses() {
         }, 0);
     }, [filteredExpenses, dolarRate]);
 
+    const pendientePersonalARS = useMemo(() => {
+        if (!dolarRate) return 0;
+        return filteredExpenses
+            .filter(expense => !expense.is_paid)
+            .reduce((acc, expense) => {
+                const amountInARS = expense.currency === 'USD' ? expense.amount * dolarRate : expense.amount;
+                const personalAmount = expense.is_shared ? amountInARS / 2 : amountInARS;
+                return acc + personalAmount;
+            }, 0);
+    }, [filteredExpenses, dolarRate]);
+
     // Expenses filtered by month AND search query (used in list view only)
     const displayedExpenses = useMemo(() => {
         if (!searchQuery.trim()) return filteredExpenses;
@@ -1162,6 +1173,10 @@ function Expenses() {
                                 <span className="text-[#131f18]/70 text-xs font-bold uppercase tracking-wider block mb-0.5">Gasto Personal Total</span>
                                 <div className="text-3xl font-bold text-[#131f18] tabular-nums">
                                     ARS <span>${totalPersonalARS.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-[#131f18]/40 inline-block"></span>
+                                    <span className="text-[#131f18]/60 text-xs font-medium">Pendiente: ARS ${pendientePersonalARS.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                             </div>
                         </div>

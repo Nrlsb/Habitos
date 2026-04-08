@@ -156,6 +156,18 @@ const Subscriptions = ({ currentPlanillaId }) => {
 
     const totalEstimadoArs = totalArsMonthly + (totalUsdMonthly * (dolarTarjeta || 0));
 
+    // Pendiente: suscripciones cuyo día de cobro aún no llegó este mes
+    const pendienteEstimadoArs = useMemo(() => {
+        const todayDay = new Date().getDate();
+        return activeSubscriptions
+            .filter(s => parseInt(s.billing_date) >= todayDay)
+            .reduce((acc, s) => {
+                const monthly = monthlyEquivalent(s);
+                const inArs = s.currency === 'USD' ? monthly * (dolarTarjeta || 0) : monthly;
+                return acc + inArs;
+            }, 0);
+    }, [activeSubscriptions, dolarTarjeta]);
+
     // Agrupación por categoría
     const groupedByCategory = useMemo(() => {
         const map = {};
@@ -193,6 +205,10 @@ const Subscriptions = ({ currentPlanillaId }) => {
                     <p className="text-primary text-xs font-semibold uppercase tracking-wider mb-1">Total Estimado Final</p>
                     <p className="text-2xl font-bold text-white tabular-nums">${fmt(totalEstimadoArs)}</p>
                     <p className="text-xs text-slate-500 mt-1">Mensual · Con impuestos incluidos</p>
+                    <div className="flex items-center gap-1.5 mt-2">
+                        <span className="w-2 h-2 rounded-full bg-slate-500 inline-block"></span>
+                        <span className="text-xs text-slate-400">Pendiente: ${fmt(pendienteEstimadoArs)}</span>
+                    </div>
                 </div>
             </div>
 
