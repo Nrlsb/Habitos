@@ -683,7 +683,7 @@ function Expenses() {
 
     // VIEW: EXPENSE SHEET
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-nav-safe">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <NotificationModal
                 isOpen={notification.isOpen}
                 onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
@@ -969,7 +969,7 @@ function Expenses() {
                 <span>Planillas</span>
             </button>
 
-            <div className="max-w-7xl mx-auto px-4 overflow-x-hidden">
+            <div className="max-w-7xl mx-auto px-4 w-full overflow-x-hidden">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div className="flex items-center gap-3">
                         <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-cyan-200">
@@ -1190,7 +1190,7 @@ function Expenses() {
                 </div>
 
                 {/* TABS NAVIGATION */}
-                <div className="flex gap-1 mb-6 bg-slate-800/50 p-1 rounded-xl w-full border border-primary/10">
+                <div className="flex gap-1 mb-6 bg-slate-800/50 p-1 rounded-xl w-full border border-primary/10 overflow-x-auto no-scrollbar scroll-smooth">
                     <button
                         onClick={() => setActiveTab('list')}
                         className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-1 min-w-0 ${activeTab === 'list' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}

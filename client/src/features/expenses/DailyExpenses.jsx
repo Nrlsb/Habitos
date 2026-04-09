@@ -255,7 +255,7 @@ const DailyExpenses = () => {
     const isToday = isSameDay(selectedDate, new Date());
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-nav-safe">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header / Date Navigation */}
             <div className="sticky top-0 z-10 bg-[#131f18]/80 backdrop-blur-xl border-b border-white/5 px-4 pb-4 flex items-center justify-between pt-safe">
                 <button
@@ -570,8 +570,8 @@ const DailyExpenses = () => {
                                 type="submit"
                                 disabled={isSubmitting || !description || !amount || selectedPlanillaIds.length === 0}
                                 className={`w-full flex justify-center items-center gap-2 mt-4 py-4 font-bold text-lg rounded-2xl transition-all active-scale disabled:opacity-50 disabled:cursor-not-allowed ${editingGroup
-                                        ? 'bg-amber-500 text-[#131f18] hover:bg-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]'
-                                        : 'bg-primary text-[#131f18] hover:bg-primary/90 hover:shadow-[var(--shadow-glow-strong)]'
+                                    ? 'bg-amber-500 text-[#131f18] hover:bg-amber-400 hover:shadow-[0_0_30px_rgba(245,158,11,0.4)]'
+                                    : 'bg-primary text-[#131f18] hover:bg-primary/90 hover:shadow-[var(--shadow-glow-strong)]'
                                     }`}
                             >
                                 {isSubmitting ? (

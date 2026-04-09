@@ -67,7 +67,7 @@ function DashboardView({ habits, loading, toggleHabitDay, setView, setShowAddMod
   const monthName = now.toLocaleString('es-AR', { month: 'long', year: 'numeric' })
 
   return (
-    <div className="pb-nav-safe">
+    <div>
       <header className="px-5 pt-safe pb-2 mt-3">
         <h1 className="text-[2rem] font-extrabold text-white tracking-tight">Dashboard Principal</h1>
       </header>
@@ -153,11 +153,10 @@ function DashboardView({ habits, loading, toggleHabitDay, setView, setShowAddMod
                 return (
                   <div
                     key={habit.id}
-                    className={`flex items-center gap-3 p-4 rounded-[18px] border transition-all duration-200 ${
-                      isCompleted
+                    className={`flex items-center gap-3 p-4 rounded-[18px] border transition-all duration-200 ${isCompleted
                         ? 'border-primary/20'
                         : 'glass-panel border-white/5'
-                    }`}
+                      }`}
                     style={isCompleted ? { background: 'rgba(46,204,112,0.07)' } : {}}
                   >
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colorClass}`}>
@@ -168,11 +167,10 @@ function DashboardView({ habits, loading, toggleHabitDay, setView, setShowAddMod
                     </p>
                     <button
                       onClick={(e) => toggleHabitDay(e, habit)}
-                      className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-200 shrink-0 active-scale ${
-                        isCompleted
+                      className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-200 shrink-0 active-scale ${isCompleted
                           ? 'bg-primary border-primary text-[#131f18]'
                           : 'border-slate-600'
-                      }`}
+                        }`}
                     >
                       {isCompleted && <Check size={14} />}
                     </button>
@@ -199,7 +197,7 @@ function PerfilView({ user, signOut, exportBackupJSON, setView }) {
   ]
 
   return (
-    <div className="pb-nav-safe">
+    <div>
       <header className="px-5 pt-safe pb-2 mt-3">
         <h1 className="text-[2rem] font-extrabold text-white tracking-tight">Perfil</h1>
       </header>
@@ -303,7 +301,7 @@ function AppContent() {
 
   // Keep Render server alive (free tier sleeps after 15 min inactivity)
   useEffect(() => {
-    const ping = () => fetch(`${API_URL}/ping`).catch(() => {})
+    const ping = () => fetch(`${API_URL}/ping`).catch(() => { })
     ping()
     const id = setInterval(ping, 10 * 60 * 1000)
     return () => clearInterval(id)
@@ -615,7 +613,7 @@ function AppContent() {
     <div className="min-h-screen bg-[#131f18] text-slate-100">
 
       {/* Content area with bottom padding for nav */}
-      <div className={view === 'inicio' || view === 'perfil' ? '' : 'pb-nav-safe'}>
+      <div className="pb-nav-safe w-full overflow-x-hidden">
         {view === 'inicio' ? (
           <DashboardView
             habits={habits}

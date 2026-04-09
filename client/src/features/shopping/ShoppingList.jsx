@@ -117,7 +117,7 @@ const ShoppingList = () => {
     const checked = items.filter(i => i.checked);
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-nav-safe pt-safe">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-safe">
             {/* Header */}
             <header className="px-5 pt-4 pb-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(46,204,112,0.15)' }}>
@@ -215,11 +215,10 @@ function ItemRow({ item, onToggle, onDelete }) {
         <div className={`flex items-center gap-3 p-4 rounded-[16px] glass-panel border-white/5 transition-opacity duration-200 ${item.checked ? 'opacity-40' : ''}`}>
             <button
                 onClick={() => onToggle(item)}
-                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all active-scale ${
-                    item.checked
+                className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all active-scale ${item.checked
                         ? 'bg-primary border-primary'
                         : 'border-white/20 hover:border-primary/60'
-                }`}
+                    }`}
             >
                 {item.checked && <Check size={13} className="text-[#131f18]" strokeWidth={3} />}
             </button>
