@@ -19,7 +19,9 @@
       "Bash(wc -l features/**/*.jsx components/*.jsx context/*.jsx)",
       "Bash(ls /c/Users/Usuario/Desktop/Proyectos/Habitos/*.js)",
       "Bash(git add:*)",
-      "Bash(git commit -m ':*)"
+      "Bash(git commit -m ':*)",
+      "Bash(grep -n \"export default\\\\|return.*<\" C:\\\\\\\\Users\\\\\\\\Usuario\\\\\\\\Desktop\\\\\\\\Proyectos\\\\\\\\Habitos\\\\\\\\client\\\\\\\\src\\\\\\\\App.jsx)",
+      "Bash(npm run:*)"
     ]
   }
 }

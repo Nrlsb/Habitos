@@ -15,6 +15,7 @@ import { PlanningProvider } from './features/planning/PlanningContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import ErrorBoundary from './components/ErrorBoundary'
+import UpdateChecker from './components/UpdateChecker'
 
 const HabitStats = lazy(() => import('./HabitStats'))
 const Expenses = lazy(() => import('./features/expenses/Expenses'))
@@ -611,6 +612,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-[#131f18] text-slate-100">
+      <UpdateChecker />
 
       {/* Content area with bottom padding for nav */}
       <div className="pb-nav-safe w-full overflow-x-hidden">
