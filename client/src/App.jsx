@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import Login from './pages/Login'
 import ErrorBoundary from './components/ErrorBoundary'
 import UpdateChecker from './components/UpdateChecker'
+import HabitCoachingBanner from './components/ai/HabitCoachingBanner'
 
 const HabitStats = lazy(() => import('./HabitStats'))
 const Expenses = lazy(() => import('./features/expenses/Expenses'))
@@ -691,6 +692,12 @@ function AppContent() {
 
             {/* Habits List */}
             <main className="px-4 py-4 space-y-3 overflow-y-auto max-h-[calc(100vh-220px)]">
+              {!loading && habits.length > 0 && (
+                <HabitCoachingBanner
+                  habits={habits}
+                  token={session?.access_token}
+                />
+              )}
               {loading ? (
                 <div className="flex justify-center py-12">
                   <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />

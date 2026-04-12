@@ -4,6 +4,9 @@ import { format, addDays, subDays, isSameDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Wallet, Calendar as CalendarIcon, ArrowRight, Trash2, Edit2 } from 'lucide-react';
 import { getDolarRate } from '../../services/dolarApi';
+import { categorizeExpense } from '../../services/aiApi';
+import AISuggestionPill from '../../components/ai/AISuggestionPill';
+import { useAuth } from '../../context/AuthContext';
 
 // Helper: genera ISO string con offset local (ej: 2026-03-04T20:52:00-03:00)
 const toLocalISOString = (date) => {
@@ -15,6 +18,7 @@ const toLocalISOString = (date) => {
 };
 
 const DailyExpenses = () => {
+    const { session } = useAuth();
     const {
         dailyExpenses,
         getDailyExpenses,
@@ -28,6 +32,10 @@ const DailyExpenses = () => {
 
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [dolarRate, setDolarRate] = useState(null);
+
+    // AI Categorization States
+    const [aiCategorySuggestion, setAiCategorySuggestion] = useState(null);
+    const [isAISuggesting, setIsAISuggesting] = useState(false);
 
     // Form State
     const [description, setDescription] = useState('');
@@ -80,6 +88,34 @@ const DailyExpenses = () => {
     useEffect(() => {
         getDailyExpenses(selectedDate);
     }, [selectedDate, getDailyExpenses]);
+
+    // AI Categorization debounce
+    useEffect(() => {
+        if (!description || description.length < 5 || !session || !session.access_token) {
+            setAiCategorySuggestion(null);
+            return;
+        }
+
+        // Clear previous suggestion when user manually changed category
+        if (category !== 'General' && aiCategorySuggestion === category) {
+            setAiCategorySuggestion(null);
+        }
+
+        const timer = setTimeout(async () => {
+            setIsAISuggesting(true);
+            try {
+                const { category: suggested } = await categorizeExpense(description, session.access_token);
+                setAiCategorySuggestion(suggested);
+            } catch (error) {
+                console.error('Error getting AI suggestion:', error);
+                setAiCategorySuggestion(null);
+            } finally {
+                setIsAISuggesting(false);
+            }
+        }, 800);
+
+        return () => clearTimeout(timer);
+    }, [description, session, category, aiCategorySuggestion]);
 
     const handlePrevDay = () => setSelectedDate(prev => subDays(prev, 1));
     const handleNextDay = () => setSelectedDate(prev => addDays(prev, 1));
@@ -395,6 +431,14 @@ const DailyExpenses = () => {
                                     onChange={(e) => setDescription(e.target.value)}
                                     placeholder="Descripción"
                                     className="w-full bg-white/5 border border-white/5 text-slate-100 text-base rounded-2xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-slate-500 transition-all"
+                                />
+                                <AISuggestionPill
+                                    suggestion={aiCategorySuggestion}
+                                    loading={isAISuggesting}
+                                    onAccept={() => {
+                                        setCategory(aiCategorySuggestion);
+                                        setAiCategorySuggestion(null);
+                                    }}
                                 />
                             </div>
 

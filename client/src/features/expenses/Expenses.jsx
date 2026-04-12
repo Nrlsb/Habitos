@@ -1,14 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useExpenses } from './ExpensesContext';
 import { getDolarRate } from '../../services/dolarApi';
-import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle, ChevronLeft, ChevronRight, Calendar, RefreshCcw, FileText } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle, ChevronLeft, ChevronRight, Calendar, RefreshCcw, FileText, Brain } from 'lucide-react';
 import ExpensesAnalysis from './ExpensesAnalysis';
 import Subscriptions from './Subscriptions';
 import BudgetTab from './BudgetTab';
 import NotificationModal from '../../components/NotificationModal';
 import PDFImporter from './PDFImporter';
+import AIChat from '../../components/ai/AIChat';
+import { useAuth } from '../../context/AuthContext';
 
 function Expenses() {
+    const { session } = useAuth();
     const {
         planillas,
         expenses,
@@ -1219,6 +1222,13 @@ function Expenses() {
                         <Wallet size={16} />
                         Presupuesto
                     </button>
+                    <button
+                        onClick={() => setActiveTab('ai')}
+                        className={`flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all flex-1 min-w-0 ${activeTab === 'ai' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                    >
+                        <Brain size={16} />
+                        IA
+                    </button>
                 </div>
 
                 {activeTab === 'analysis' ? (
@@ -1238,6 +1248,12 @@ function Expenses() {
                         dolarRate={dolarRate}
                         expenses={filteredExpenses}
                         currentDate={currentDate}
+                    />
+                ) : activeTab === 'ai' ? (
+                    <AIChat
+                        expenses={filteredExpenses}
+                        habits={[]}
+                        token={session?.access_token}
                     />
                 ) : (
                     <>

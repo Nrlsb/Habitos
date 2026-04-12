@@ -3,6 +3,8 @@ import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import { Wallet, TrendingUp, Calendar, AlertCircle, ArrowUpRight, CreditCard, Users, ArrowRightLeft, CheckCircle, Target, Edit2, Save, X, List } from 'lucide-react';
 import { useExpenses } from './ExpensesContext';
+import AIInsightsPanel from '../../components/ai/AIInsightsPanel';
+import { useAuth } from '../../context/AuthContext';
 
 const COLORS = ['#6366f1', '#06b6d4', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#ef4444', '#64748b'];
 const SHARED_COLORS = ['#3f46e4', '#06b6d4']; // Personal (Indigo), Shared (Cyan)
@@ -10,6 +12,7 @@ const INSTALLMENT_COLORS = ['#f59e0b', '#10b981']; // Installments (Amber), Curr
 const CURRENCY_COLORS = ['#6366f1', '#22c5e']; // ARS (Indigo), USD (Green)
 
 const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, participants = ['Yo'], currentPlanillaId }) => {
+    const { session } = useAuth();
     const [showProjection, setShowProjection] = useState(true);
     const [payerA, setPayerA] = useState('');
     const [payerB, setPayerB] = useState('');
@@ -974,6 +977,16 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
                             </div>
                         ))}
                     </div>
+                </div>
+
+                {/* AI Insights Panel */}
+                <div className="lg:col-span-2">
+                    <AIInsightsPanel
+                        expenses={expenses}
+                        month={selectedDate?.toISOString().slice(0, 7)}
+                        dolarRate={dolarRate}
+                        token={session?.access_token}
+                    />
                 </div>
 
             </div>

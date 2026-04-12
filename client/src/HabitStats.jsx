@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext'
 import { ArrowLeft, Calendar as CalendarIcon, Trophy, Flame, CheckCircle, Settings, TrendingUp, TrendingDown, Minus, RefreshCw, MapPin, Footprints, Clock, ChevronDown } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import Calendar from './Calendar'
+import HabitPredictionCard from './components/ai/HabitPredictionCard'
 
 function HabitStats({ habitId, onBack }) {
     const formatDate = (date) => {
@@ -843,6 +844,17 @@ function HabitStats({ habitId, onBack }) {
                     </div>
                 )}
             </div>
+
+            {/* AI Prediction Card */}
+            {habit && habit.completions && (
+                <HabitPredictionCard
+                    habit={habit}
+                    completions={habit.completions}
+                    currentStreak={calculateStats(habit.completions).currentStreak}
+                    token={session?.access_token}
+                />
+            )}
+
             {/* Modal for adding/editing completion */}
             {selectedDate && (
                 <CompletionModal
