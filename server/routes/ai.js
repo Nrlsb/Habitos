@@ -46,8 +46,8 @@ Responde ÚNICAMENTE con el nombre exacto de la categoría, sin explicaciones ni
             setCache(cacheKey, category);
             res.json({ category });
         } catch (err) {
-            console.error('[AI/categorize]', err.message);
-            res.status(500).json({ error: 'AI unavailable', fallback: 'General' });
+            console.error('[AI/categorize] Full Error:', err);
+            res.status(500).json({ error: 'AI unavailable', message: err.message, fallback: 'General' });
         }
     });
 
@@ -121,8 +121,8 @@ Sé conciso y práctico.`,
             setCache(cacheKey, parsed);
             res.json(parsed);
         } catch (err) {
-            console.error('[AI/expense-insights]', err.message);
-            res.status(500).json({ error: 'AI unavailable' });
+            console.error('[AI/expense-insights] Full Error:', err);
+            res.status(500).json({ error: 'AI unavailable', message: err.message });
         }
     });
 
@@ -164,8 +164,8 @@ Sé amigable y empático.`,
 
             res.json({ reply: response });
         } catch (err) {
-            console.error('[AI/chat]', err.message);
-            res.status(500).json({ error: 'AI unavailable' });
+            console.error('[AI/chat] Full Error:', err);
+            res.status(500).json({ error: 'AI unavailable', message: err.message });
         }
     });
 
@@ -226,8 +226,8 @@ Predice la probabilidad de completar hoy y da un tip.`,
             setCache(cacheKey, parsed);
             res.json(parsed);
         } catch (err) {
-            console.error('[AI/habit-prediction]', err.message);
-            res.status(500).json({ error: 'AI unavailable' });
+            console.error('[AI/habit-prediction] Full Error:', err);
+            res.status(500).json({ error: 'AI unavailable', message: err.message });
         }
     });
 
@@ -272,8 +272,8 @@ Tono: positivo, cercano, sin ser excesivamente efusivo. Sé breve.`,
             setCache(cacheKey, parsed);
             res.json(parsed);
         } catch (err) {
-            console.error('[AI/habit-coaching]', err.message);
-            res.status(500).json({ error: 'AI unavailable' });
+            console.error('[AI/habit-coaching] Full Error:', err);
+            res.status(500).json({ error: 'AI unavailable', message: err.message });
         }
     });
 
@@ -318,8 +318,8 @@ Sé positivo pero realista.`,
             setCache(cacheKey, parsed);
             res.json(parsed);
         } catch (err) {
-            console.error('[AI/weekly-insights]', err.message);
-            res.status(500).json({ error: 'AI unavailable' });
+            console.error('[AI/weekly-insights] Full Error:', err);
+            res.status(500).json({ error: 'AI unavailable', message: err.message });
         }
     });
 
