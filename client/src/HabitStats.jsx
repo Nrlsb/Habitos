@@ -427,7 +427,7 @@ function HabitStats({ habitId, onBack }) {
 
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto max-h-[calc(100vh-120px)]">
             <button
                 onClick={onBack}
                 className="flex items-center gap-3 text-slate-400 hover:text-white transition-all mb-6 group active-scale w-fit"

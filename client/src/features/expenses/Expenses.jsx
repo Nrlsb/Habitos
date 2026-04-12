@@ -683,7 +683,7 @@ function Expenses() {
 
     // VIEW: EXPENSE SHEET
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto max-h-[calc(100vh-120px)]">
             <NotificationModal
                 isOpen={notification.isOpen}
                 onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}

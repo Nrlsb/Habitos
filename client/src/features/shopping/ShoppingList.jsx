@@ -117,7 +117,7 @@ const ShoppingList = () => {
     const checked = items.filter(i => i.checked);
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-safe">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pt-safe overflow-y-auto max-h-[calc(100vh-120px)]">
             {/* Header */}
             <header className="px-5 pt-4 pb-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(46,204,112,0.15)' }}>

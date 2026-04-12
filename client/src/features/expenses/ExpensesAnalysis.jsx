@@ -428,7 +428,7 @@ const ExpensesAnalysis = ({ expenses, dolarRate, onSettleDebt, selectedDate, par
     };
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 overflow-y-auto max-h-[calc(100vh-120px)]">
 
             {/* KPI Cards Row 1 */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

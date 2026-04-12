@@ -197,7 +197,7 @@ function PerfilView({ user, signOut, exportBackupJSON, setView }) {
   ]
 
   return (
-    <div>
+    <div className="overflow-y-auto max-h-[calc(100vh-120px)]">
       <header className="px-5 pt-safe pb-2 mt-3">
         <h1 className="text-[2rem] font-extrabold text-white tracking-tight">Perfil</h1>
       </header>
@@ -688,7 +688,7 @@ function AppContent() {
             </header>
 
             {/* Habits List */}
-            <main className="px-4 py-4 space-y-3">
+            <main className="px-4 py-4 space-y-3 overflow-y-auto max-h-[calc(100vh-220px)]">
               {loading ? (
                 <div className="flex justify-center py-12">
                   <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
