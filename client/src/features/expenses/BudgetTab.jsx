@@ -215,7 +215,7 @@ const BudgetTab = ({ currentPlanillaId, dolarRate, expenses, currentDate }) => {
     const updateIncomeAmount = (key, val) => { setIncomes(p => p.map(i => i.key === key ? { ...i, amount: val } : i)); setIsDirty(true); };
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 overflow-y-auto max-h-[calc(100vh-220px)]" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
+        <div className="space-y-6 flex flex-col min-h-0" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
 
             {/* === INGRESOS === */}
             <div className="bg-primary/5 border border-primary/10 rounded-2xl p-6 shadow-xl">

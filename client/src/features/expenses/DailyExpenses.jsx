@@ -291,7 +291,7 @@ const DailyExpenses = () => {
     const isToday = isSameDay(selectedDate, new Date());
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-y-auto max-h-[calc(100vh-220px)]" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col min-h-0" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
             {/* Header / Date Navigation */}
             <div className="sticky top-0 z-10 bg-[#131f18]/80 backdrop-blur-xl border-b border-white/5 px-4 pb-4 flex items-center justify-between pt-safe">
                 <button

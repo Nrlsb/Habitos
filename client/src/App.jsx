@@ -156,8 +156,8 @@ function DashboardView({ habits, loading, toggleHabitDay, setView, setShowAddMod
                   <div
                     key={habit.id}
                     className={`flex items-center gap-3 p-4 rounded-[18px] border transition-all duration-200 ${isCompleted
-                        ? 'border-primary/20'
-                        : 'glass-panel border-white/5'
+                      ? 'border-primary/20'
+                      : 'glass-panel border-white/5'
                       }`}
                     style={isCompleted ? { background: 'rgba(46,204,112,0.07)' } : {}}
                   >
@@ -170,8 +170,8 @@ function DashboardView({ habits, loading, toggleHabitDay, setView, setShowAddMod
                     <button
                       onClick={(e) => toggleHabitDay(e, habit)}
                       className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-200 shrink-0 active-scale ${isCompleted
-                          ? 'bg-primary border-primary text-[#131f18]'
-                          : 'border-slate-600'
+                        ? 'bg-primary border-primary text-[#131f18]'
+                        : 'border-slate-600'
                         }`}
                     >
                       {isCompleted && <Check size={14} />}
@@ -199,7 +199,7 @@ function PerfilView({ user, signOut, exportBackupJSON, setView }) {
   ]
 
   return (
-    <div className="overflow-y-auto max-h-[calc(100vh-220px)]" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
+    <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
       <header className="px-5 pt-safe pb-2 mt-3">
         <h1 className="text-[2rem] font-extrabold text-white tracking-tight">Perfil</h1>
       </header>
@@ -612,11 +612,11 @@ function AppContent() {
   const activeView = selectedHabitId ? 'habits' : (['meals', 'daily-expenses', 'planning', 'shopping'].includes(view) ? 'perfil' : view)
 
   return (
-    <div className="min-h-screen bg-[#131f18] text-slate-100">
+    <div className="h-screen flex flex-col bg-[#131f18] text-slate-100 overflow-hidden">
       <UpdateChecker />
 
       {/* Content area with bottom padding for nav */}
-      <div className="pb-nav-safe w-full overflow-x-hidden">
+      <div className="flex-1 w-full overflow-y-auto pb-nav-safe">
         {view === 'inicio' ? (
           <DashboardView
             habits={habits}
@@ -691,7 +691,7 @@ function AppContent() {
             </header>
 
             {/* Habits List */}
-            <main className="px-4 py-4 space-y-3 overflow-y-auto max-h-[calc(100vh-220px)]">
+            <main className="flex-1 px-4 py-4 space-y-3 overflow-y-auto">
               {!loading && habits.length > 0 && (
                 <HabitCoachingBanner
                   habits={habits}

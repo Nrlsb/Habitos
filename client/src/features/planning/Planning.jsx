@@ -173,7 +173,7 @@ const Planning = () => {
     }
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 md:pb-0 px-4 pt-safe overflow-y-auto max-h-[calc(100vh-220px)]" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 md:pb-0 px-4 pt-safe flex flex-col min-h-0" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
             {/* Top Bar: Sheet Selection & Actions */}
             <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center mb-6">
                 <div className="flex items-center gap-3 w-full md:w-auto">
