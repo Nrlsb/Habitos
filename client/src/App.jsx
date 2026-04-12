@@ -199,7 +199,7 @@ function PerfilView({ user, signOut, exportBackupJSON, setView }) {
   ]
 
   return (
-    <div className="overflow-y-auto max-h-[calc(100vh-120px)]">
+    <div className="overflow-y-auto max-h-[calc(100vh-220px)]" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
       <header className="px-5 pt-safe pb-2 mt-3">
         <h1 className="text-[2rem] font-extrabold text-white tracking-tight">Perfil</h1>
       </header>
