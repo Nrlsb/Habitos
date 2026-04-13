@@ -70,6 +70,7 @@ app.use('/api/bna', require('./routes/bna')());
 app.use('/api/activities', require('./routes/activities')(supabase, authenticateUser));
 app.use('/api/parse-pdf', require('./routes/parsePdf')(authenticateUser));
 app.use('/api/shopping', require('./routes/shopping')(supabase, authenticateUser));
+app.use('/api/gmail', require('./routes/gmail')(supabase, authenticateUser));
 app.use('/api/app-updates', require('./routes/appUpdates')());
 app.use('/api/ai', require('./routes/ai')(supabase, authenticateUser));
 

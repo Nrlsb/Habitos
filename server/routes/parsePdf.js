@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const pdfParse = require('pdf-parse'); // Keeping for potential types/fallbacks, but we'll use pdfjs-dist directly
+const { callClaude } = require('../services/claudeClient');
 
 
 const upload = multer({
@@ -239,7 +240,7 @@ module.exports = (authenticateUser) => {
             const { text } = req.body;
             if (!text) return res.status(400).json({ error: 'No se recibió texto para procesar' });
 
-            handleData({ text, numpages: 1 }, res);
+            await handleData({ text, numpages: 1 }, res);
         } catch (err) {
             console.error('Text parse error:', err);
             res.status(500).json({ error: 'Error al procesar el texto: ' + err.message });
@@ -250,7 +251,7 @@ module.exports = (authenticateUser) => {
         try {
             // If text is provided in the body (even if a file was sent), prioritize it or handle it
             if (req.body.text) {
-                return handleData({ text: req.body.text, numpages: 1 }, res);
+                return await handleData({ text: req.body.text, numpages: 1 }, res);
             }
 
             if (!req.file) return res.status(400).json({ error: 'No se recibió ningún PDF' });
@@ -276,7 +277,7 @@ module.exports = (authenticateUser) => {
                 fullText += pageText + '\n';
             }
 
-            handleData({ text: fullText, numpages: pdf.numPages }, res);
+            await handleData({ text: fullText, numpages: pdf.numPages }, res);
 
         } catch (err) {
             console.error('PDF parse error:', err);
@@ -284,14 +285,44 @@ module.exports = (authenticateUser) => {
         }
     });
 
-    function handleData(data, res) {
+    async function handleData(data, res) {
         const text = data.text;
         if (!text || text.trim().length < 10) {
-            return res.status(422).json({ error: 'No se pudo extraer texto del PDF. Es posible que esté escaneado como imagen.' });
+            return res.status(422).json({ error: 'No se pudo extraer texto. Es posible que sea una imagen o esté vacío.' });
         }
 
         const bank = detectBank(text);
-        const transactions = bank === 'galicia' ? parseGalicia(text) : parseGeneric(text);
+        let transactions = bank === 'galicia' ? parseGalicia(text) : parseGeneric(text);
+
+        // FALLBACK: Use AI if no transactions were found and text is significant
+        if (transactions.length === 0 && text.trim().length > 20) {
+            console.log('[ParsePDF] No transactions found via RegEx, falling back to AI...');
+            try {
+                const aiResult = await callClaude({
+                    systemPrompt: `Eres un extractor de transacciones bancarias. Tu tarea es leer un texto (resumen, email, notificación) y extraer una lista de movimientos.
+Responde ÚNICAMENTE con un JSON válido que sea un array de objetos con este formato:
+[{ "date": "YYYY-MM-DD", "description": "...", "amount": 123.45, "currency": "ARS" | "USD" }]
+Si no encuentras nada, responde con un array vacío: [].
+Ignora saldos totales, CBU, alias, etc. Solo movimientos (gastos o ingresos).`,
+                    userMessage: `Extrae las transacciones de este texto:
+"""
+${text.slice(0, 4000)}
+"""`
+                });
+
+                // Clean JSON result (sometimes AI adds markdown blocks)
+                const match = aiResult.match(/\[[\s\S]*\]/);
+                if (match) {
+                    const parsed = JSON.parse(match[0]);
+                    if (Array.isArray(parsed)) {
+                        transactions = parsed;
+                        console.log(`[ParsePDF] AI found ${transactions.length} transactions.`);
+                    }
+                }
+            } catch (aiErr) {
+                console.error('[ParsePDF] AI Fallback Error:', aiErr);
+            }
+        }
 
         res.json({
             bank,

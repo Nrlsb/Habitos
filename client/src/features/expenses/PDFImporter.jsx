@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { X, Upload, FileText, CheckCircle, AlertCircle, Trash2, Loader2 } from 'lucide-react';
+import { X, Upload, FileText, CheckCircle, AlertCircle, Trash2, Loader2, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 
@@ -61,6 +61,9 @@ export default function PDFImporter({ planillaId, planillaNombre, onClose, onImp
     const [importProgress, setImportProgress] = useState(0);
     const [isOCRLoading, setIsOCRLoading] = useState(false);
     const [ocrFile, setOcrFile] = useState(null);
+    const [activeTab, setActiveTab] = useState('pdf'); // 'pdf', 'text' or 'gmail'
+    const [pastedText, setPastedText] = useState('');
+    const [isGmailConnected, setIsGmailConnected] = useState(true); // Assume true initially
 
     const handleFile = useCallback(async (file) => {
         if (!file || file.type !== 'application/pdf') {
@@ -156,6 +159,78 @@ export default function PDFImporter({ planillaId, planillaNombre, onClose, onImp
             setError("Error durante el proceso de OCR: " + err.message);
         } finally {
             setIsOCRLoading(false);
+        }
+    };
+
+    const handlePasteText = async () => {
+        if (!pastedText.trim()) return;
+        setIsLoading(true);
+        setError(null);
+        setTransactions([]);
+        setSelectedIds(new Set());
+
+        try {
+            const res = await fetch(`${API_URL}/api/parse-pdf/text`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ text: pastedText })
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error al procesar el texto');
+
+            processParsedData(data);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGmailSync = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const res = await fetch(`${API_URL}/api/gmail/sync`, {
+                headers: { Authorization: `Bearer ${session.access_token}` }
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                if (data.error?.includes('No Gmail integration found')) {
+                    setIsGmailConnected(false);
+                    return;
+                }
+                throw new Error(data.error || 'Error al sincronizar con Gmail');
+            }
+
+            if (data.transactions && data.transactions.length > 0) {
+                processParsedData(data);
+            } else {
+                setError('No se encontraron nuevos movimientos en tu Gmail recientemente.');
+            }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGmailConnect = async () => {
+        try {
+            const res = await fetch(`${API_URL}/api/gmail/auth`, {
+                headers: { Authorization: `Bearer ${session.access_token}` }
+            });
+            const { url } = await res.json();
+            if (url) {
+                // Open auth in a new window/tab
+                window.open(url, '_blank');
+            }
+        } catch (err) {
+            setError('Error al iniciar la conexión con Google');
         }
     };
 
@@ -294,8 +369,35 @@ export default function PDFImporter({ planillaId, planillaNombre, onClose, onImp
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-6 space-y-5">
-                    {/* Upload area — only show if no transactions yet */}
+                    {/* Tabs */}
                     {transactions.length === 0 && (
+                        <div className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/5">
+                            <button
+                                onClick={() => setActiveTab('pdf')}
+                                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'pdf' ? 'bg-primary text-[#131f18]' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                Subir PDF / Foto
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('text')}
+                                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'text' ? 'bg-primary text-[#131f18]' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                Pegar Texto
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('gmail')}
+                                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === 'gmail' ? 'bg-primary text-[#131f18]' : 'text-slate-400 hover:text-white'}`}
+                            >
+                                <div className="flex items-center justify-center gap-2">
+                                    <Mail size={14} />
+                                    Gmail
+                                </div>
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Upload area — only show if no transactions yet and pdf tab active */}
+                    {transactions.length === 0 && activeTab === 'pdf' && (
                         <div
                             onDrop={handleDrop}
                             onDragOver={handleDragOver}
@@ -326,6 +428,93 @@ export default function PDFImporter({ planillaId, planillaNombre, onClose, onImp
                                     </p>
                                 </>
                             )}
+                        </div>
+                    )}
+
+                    {/* Paste text area */}
+                    {transactions.length === 0 && activeTab === 'text' && (
+                        <div className="space-y-4 animate-in fade-in duration-300">
+                            <div className="relative">
+                                <textarea
+                                    value={pastedText}
+                                    onChange={(e) => setPastedText(e.target.value)}
+                                    placeholder="Pegá acá el texto de tu email o notificación bancaria...
+Ej: Has realizado una transferencia de $5.200 a MERCADO PAGO el 15/03/2026."
+                                    className="w-full h-48 bg-white/5 border border-primary/20 rounded-2xl p-4 text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all placeholder:text-slate-500"
+                                />
+                                {pastedText && (
+                                    <button
+                                        onClick={() => setPastedText('')}
+                                        className="absolute top-3 right-3 text-slate-500 hover:text-white"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                            </div>
+                            <button
+                                onClick={handlePasteText}
+                                disabled={!pastedText.trim() || isLoading}
+                                className="w-full bg-primary text-[#131f18] font-bold py-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50 transition-all active:scale-[0.98]"
+                            >
+                                {isLoading ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+                                Procesar Movimientos
+                            </button>
+                            <p className="text-center text-[10px] text-slate-500 leading-relaxed px-4">
+                                Podés pegar múltiples movimientos a la vez. El sistema intentará detectar fechas, montos y descripciones automáticamente.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Gmail Sync Area */}
+                    {transactions.length === 0 && activeTab === 'gmail' && (
+                        <div className="space-y-6 animate-in fade-in duration-300 py-4">
+                            <div className="flex flex-col items-center gap-4 text-center">
+                                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                                    <Mail size={32} />
+                                </div>
+                                <div>
+                                    <h3 className="text-white font-semibold">Sincronización Automática</h3>
+                                    <p className="text-xs text-slate-400 mt-1 px-8">
+                                        Detectamos automáticamente transferencias y pagos en tus correos de bancos argentinos y Mercado Pago.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white/5 border border-white/5 rounded-2xl p-6 space-y-4">
+                                {isGmailConnected ? (
+                                    <>
+                                        <button
+                                            onClick={handleGmailSync}
+                                            disabled={isLoading}
+                                            className="w-full bg-primary text-[#131f18] font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                                        >
+                                            {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Mail size={18} />}
+                                            Buscar Movimientos en Gmail
+                                        </button>
+                                        <button
+                                            onClick={handleGmailConnect}
+                                            className="w-full text-xs text-slate-500 hover:text-white transition-colors"
+                                        >
+                                            Re-vincular cuenta de Google
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={handleGmailConnect}
+                                        className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+                                    >
+                                        <img src="https://www.google.com/favicon.ico" className="w-4 h-4" alt="Google" />
+                                        Conectar con Gmail
+                                    </button>
+                                )}
+                            </div>
+
+                            <div className="flex items-start gap-3 px-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                                <p className="text-[10px] text-slate-500">
+                                    <strong>Seguridad:</strong> Solo leemos correos de bancos específicos. No guardamos tus credenciales, solo un token de acceso seguro provisto por Google.
+                                </p>
+                            </div>
                         </div>
                     )}
 

@@ -4,9 +4,10 @@ if (!process.env.ANTHROPIC_API_KEY) {
     console.warn('[AI] ANTHROPIC_API_KEY not configured — AI endpoints will return 503');
 }
 
-const client = new Anthropic({
+// Only initialize client if API key is present
+const client = process.env.ANTHROPIC_API_KEY ? new Anthropic({
     apiKey: process.env.ANTHROPIC_API_KEY
-});
+}) : null;
 
 const MODEL = 'claude-3-5-haiku-20241022';
 
@@ -37,7 +38,7 @@ const setCache = (key, result) => {
 
 // Simple call with cached system prompt
 const callClaude = async ({ systemPrompt, userMessage, maxTokens = 500 }) => {
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!client || !process.env.ANTHROPIC_API_KEY) {
         throw new Error('ANTHROPIC_API_KEY not configured');
     }
 
@@ -60,7 +61,7 @@ const callClaude = async ({ systemPrompt, userMessage, maxTokens = 500 }) => {
 
 // Call with message history (for chat)
 const callClaudeWithHistory = async ({ systemPrompt, messages, maxTokens = 400 }) => {
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!client || !process.env.ANTHROPIC_API_KEY) {
         throw new Error('ANTHROPIC_API_KEY not configured');
     }
 

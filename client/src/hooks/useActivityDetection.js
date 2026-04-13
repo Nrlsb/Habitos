@@ -2,8 +2,30 @@ import { useEffect, useRef, useState } from 'react';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { toast } from 'sonner';
 
-const StepService = registerPlugin('StepService');
-const LocationTracking = registerPlugin('LocationTracking');
+let StepService = null;
+let LocationTracking = null;
+
+const getStepService = () => {
+    if (!StepService) {
+        try {
+            StepService = registerPlugin('StepService');
+        } catch (e) {
+            console.log('[ActivityDetection] StepService plugin already registered or unavailable');
+        }
+    }
+    return StepService;
+};
+
+const getLocationTracking = () => {
+    if (!LocationTracking) {
+        try {
+            LocationTracking = registerPlugin('LocationTracking');
+        } catch (e) {
+            console.log('[ActivityDetection] LocationTracking plugin already registered or unavailable');
+        }
+    }
+    return LocationTracking;
+};
 
 // Solo para fallback web — en Android nativo el servicio maneja el timeout
 const INACTIVITY_TIMEOUT_MS = 5 * 60_000;
@@ -38,43 +60,52 @@ export const useActivityDetection = (session, API_URL) => {
 
         // Capturar baseline de pasos al inicio
         try {
-            const { steps: s } = await StepService.getStepCount();
-            startStepsRef.current = s || 0;
+            const ss = getStepService();
+            if (ss) {
+                const { steps: s } = await ss.getStepCount();
+                startStepsRef.current = s || 0;
+            } else {
+                startStepsRef.current = 0;
+            }
         } catch {
             startStepsRef.current = 0;
         }
 
         // Listener de actualizaciones en tiempo real (para mostrar mapa mientras camina)
-        locationListenerRef.current = await LocationTracking.addListener('locationUpdate', (data) => {
-            const point = { lat: data.lat, lng: data.lng, timestamp: data.timestamp, speed: data.speed };
-            pathRef.current = [...pathRef.current, point];
-            setCurrentPath([...pathRef.current]);
-            setLastPosition(point);
-        });
+        const lt = getLocationTracking();
+        if (lt) {
+            locationListenerRef.current = await lt.addListener('locationUpdate', (data) => {
+                const point = { lat: data.lat, lng: data.lng, timestamp: data.timestamp, speed: data.speed };
+                pathRef.current = [...pathRef.current, point];
+                setCurrentPath([...pathRef.current]);
+                setLastPosition(point);
+            });
 
-        // Listener de auto-stop por inactividad (5 min sin movimiento)
-        stoppedListenerRef.current = await LocationTracking.addListener('trackingStopped', async (data) => {
-            toast.info('Caminata guardada automáticamente (5 min sin movimiento)');
-            await removeNativeListeners();
-            await handleSessionEnd(data.path || []);
-        });
+            // Listener de auto-stop por inactividad (5 min sin movimiento)
+            stoppedListenerRef.current = await lt.addListener('trackingStopped', async (data) => {
+                toast.info('Caminata guardada automáticamente (5 min sin movimiento)');
+                await removeNativeListeners();
+                await handleSessionEnd(data.path || []);
+            });
 
-        try {
-            await LocationTracking.startTracking();
-            setIsTracking(true);
-            isTrackingRef.current = true;
-            toast.success('Seguimiento de actividad iniciado');
-        } catch (e) {
-            // Limpiar listeners si el arranque falla
-            await removeNativeListeners();
-            console.error('Error starting native tracking:', e);
-            toast.error(`Error GPS: ${e?.message || JSON.stringify(e)}`);
+            try {
+                await lt.startTracking();
+                setIsTracking(true);
+                isTrackingRef.current = true;
+                toast.success('Seguimiento de actividad iniciado');
+            } catch (e) {
+                // Limpiar listeners si el arranque falla
+                await removeNativeListeners();
+                console.error('Error starting native tracking:', e);
+                toast.error(`Error GPS: ${e?.message || JSON.stringify(e)}`);
+            }
         }
     };
 
     const stopTrackingNative = async () => {
         try {
-            const result = await LocationTracking.stopTracking();
+            const lt = getLocationTracking();
+            const result = lt ? await lt.stopTracking() : null;
             await removeNativeListeners();
             await handleSessionEnd(result?.path || []);
         } catch (e) {
@@ -213,9 +244,12 @@ export const useActivityDetection = (session, API_URL) => {
         if (Capacitor.isNativePlatform()) {
             let stepsOk = false;
             try {
-                const { steps: s } = await StepService.getStepCount();
-                steps = Math.max(0, (s || 0) - startStepsRef.current);
-                stepsOk = true;
+                const ss = getStepService();
+                if (ss) {
+                    const { steps: s } = await ss.getStepCount();
+                    steps = Math.max(0, (s || 0) - startStepsRef.current);
+                    stepsOk = true;
+                }
             } catch {
                 console.warn('No se pudo obtener pasos del pedómetro');
             }

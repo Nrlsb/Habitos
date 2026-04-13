@@ -5,7 +5,17 @@ import { App } from '@capacitor/app'
 import { supabase } from '../services/supabaseClient'
 import { Toaster, toast } from 'sonner'
 
-const WidgetAuth = registerPlugin('WidgetAuth')
+let WidgetAuth = null
+const getWidgetAuth = () => {
+    if (!WidgetAuth) {
+        try {
+            WidgetAuth = registerPlugin('WidgetAuth')
+        } catch (e) {
+            console.log('[Auth] WidgetAuth plugin already registered or unavailable')
+        }
+    }
+    return WidgetAuth
+}
 
 const AuthContext = createContext({})
 
@@ -67,11 +77,14 @@ export const AuthProvider = ({ children }) => {
 
             if (Capacitor.isNativePlatform() && session?.access_token) {
                 // Save token for the widget
-                WidgetAuth.saveAuthToken({
-                    token: session.access_token,
-                    url: supabase.supabaseUrl,
-                    key: supabase.supabaseKey
-                }).catch(e => console.error('Error saving widget token:', e))
+                const wa = getWidgetAuth()
+                if (wa) {
+                    wa.saveAuthToken({
+                        token: session.access_token,
+                        url: supabase.supabaseUrl,
+                        key: supabase.supabaseKey
+                    }).catch(e => console.error('Error saving widget token:', e))
+                }
             }
         })
 

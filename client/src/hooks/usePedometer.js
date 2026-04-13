@@ -2,7 +2,17 @@ import { useEffect, useRef } from 'react'
 import { Capacitor, registerPlugin } from '@capacitor/core'
 
 // Puente con StepCounterService (nativo Android)
-const StepService = registerPlugin('StepService')
+let StepService = null
+const getStepService = () => {
+    if (!StepService) {
+        try {
+            StepService = registerPlugin('StepService')
+        } catch (e) {
+            console.log('[Pedometer] StepService plugin already registered or unavailable')
+        }
+    }
+    return StepService
+}
 
 const withTimeout = (promise, ms) =>
   Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))])
@@ -78,7 +88,9 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
       try {
         // 1. Solicitar permisos nativamente (ACTIVITY_RECOGNITION + POST_NOTIFICATIONS)
         try {
-          const perms = await withTimeout(StepService.requestPermissions(), 5000)
+          const ss = getStepService()
+          if (!ss) throw new Error('StepService unavailable')
+          const perms = await withTimeout(ss.requestPermissions(), 5000)
           console.log('[PEDOMETER] Permisos:', JSON.stringify(perms))
           if (perms.activity === 'denied') {
             console.warn('[PEDOMETER] Permiso ACTIVITY_RECOGNITION denegado')
@@ -90,7 +102,8 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
         // 2. Guardar el goal en SharedPreferences para el widget
         if (stepHabit?.goal) {
           try {
-            await withTimeout(StepService.setGoal({ goal: stepHabit.goal }), 5000)
+            const ss = getStepService()
+            if (ss) await withTimeout(ss.setGoal({ goal: stepHabit.goal }), 5000)
           } catch (e) {
             console.error('[PEDOMETER] Error en setGoal:', e)
           }
@@ -98,14 +111,17 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
 
         // 3. Arrancar el servicio de fondo (timeout 8s para no colgar la app)
         try {
-          await withTimeout(StepService.startService(), 8000)
+          const ss = getStepService()
+          if (ss) await withTimeout(ss.startService(), 8000)
         } catch (e) {
           console.warn('[PEDOMETER] startService timeout o error, continuando con polling:', e)
         }
 
         // 4. Lectura inicial
         try {
-          const { steps, date } = await withTimeout(StepService.getStepCount(), 5000)
+          const ss = getStepService()
+          if (!ss) throw new Error('StepService unavailable')
+          const { steps, date } = await withTimeout(ss.getStepCount(), 5000)
           if (date === getLocalDateString() && steps > 0) {
             updateHabits(steps)
           }
@@ -117,7 +133,9 @@ export function usePedometer(habits, setHabits, getLocalDateString, session, API
         if (pollRef.current) clearInterval(pollRef.current)
         pollRef.current = setInterval(async () => {
           try {
-            const { steps: s, date: d } = await withTimeout(StepService.getStepCount(), 5000)
+            const ss = getStepService()
+            if (!ss) return
+            const { steps: s, date: d } = await withTimeout(ss.getStepCount(), 5000)
             if (d === getLocalDateString()) {
               updateHabits(s)
             }
