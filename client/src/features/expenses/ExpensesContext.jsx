@@ -19,6 +19,7 @@ export const ExpensesProvider = ({ children }) => {
     const [expenses, setExpenses] = useState([]);
     const [categories, setCategories] = useState([]);
     const [subscriptions, setSubscriptions] = useState([]);
+    const [creditCards, setCreditCards] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [dolarOficial, setDolarOficial] = useState(null);
@@ -108,6 +109,20 @@ export const ExpensesProvider = ({ children }) => {
         }
     }, [API_URL, session]);
 
+    const fetchCreditCards = useCallback(async () => {
+        if (!session) return;
+        try {
+            const response = await fetch(`${API_URL}/api/credit-cards`, {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch credit cards');
+            const data = await response.json();
+            setCreditCards(data);
+        } catch (err) {
+            console.error("Error fetching credit cards:", err);
+        }
+    }, [API_URL, session]);
+
     const fetchDolar = useCallback(async () => {
         try {
             const response = await fetch(`${API_URL}/api/bna`);
@@ -138,8 +153,9 @@ export const ExpensesProvider = ({ children }) => {
             fetchPlanillas();
             fetchCategories();
             fetchSubscriptions();
+            fetchCreditCards();
         }
-    }, [fetchPlanillas, fetchCategories, fetchSubscriptions, fetchDolar, session]);
+    }, [fetchPlanillas, fetchCategories, fetchSubscriptions, fetchDolar, fetchCreditCards, session]);
 
     // CRUD operations for Planillas
     const addPlanilla = useCallback(async (nombre, participants = ['Yo']) => {
@@ -244,6 +260,57 @@ export const ExpensesProvider = ({ children }) => {
             throw err;
         }
     }, [API_URL, session, fetchCategories]);
+
+    // CRUD operations for Credit Cards
+    const addCreditCard = useCallback(async (card) => {
+        try {
+            const response = await fetch(`${API_URL}/api/credit-cards`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(card),
+            });
+            if (!response.ok) throw new Error('Failed to add credit card');
+            await fetchCreditCards();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, fetchCreditCards]);
+
+    const updateCreditCard = useCallback(async (id, updates) => {
+        try {
+            const response = await fetch(`${API_URL}/api/credit-cards/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify(updates),
+            });
+            if (!response.ok) throw new Error('Failed to update credit card');
+            await fetchCreditCards();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, fetchCreditCards]);
+
+    const deleteCreditCard = useCallback(async (id) => {
+        try {
+            const response = await fetch(`${API_URL}/api/credit-cards/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+            if (!response.ok) throw new Error('Failed to delete credit card');
+            await fetchCreditCards();
+        } catch (err) {
+            setError(err.message);
+            throw err;
+        }
+    }, [API_URL, session, fetchCreditCards]);
 
     // CRUD operations for Expenses
     const getExpenses = useCallback(async (planillaId) => {
@@ -550,6 +617,7 @@ export const ExpensesProvider = ({ children }) => {
         expenses,
         categories,
         subscriptions,
+        creditCards,
         dailyExpenses, // Add to context
         loading,
         error,
@@ -559,6 +627,10 @@ export const ExpensesProvider = ({ children }) => {
         fetchCategories,
         addCategory,
         deleteCategory,
+        fetchCreditCards,
+        addCreditCard,
+        updateCreditCard,
+        deleteCreditCard,
         getExpenses,
         getDailyExpenses, // Add to context
         addExpense,

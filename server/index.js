@@ -66,6 +66,7 @@ app.use('/api/tasks', require('./routes/tasks')(supabase, authenticateUser));
 app.use('/api/categories', require('./routes/categories')(supabase, authenticateUser));
 app.use('/api/budgets', require('./routes/budgets')(supabase, authenticateUser));
 app.use('/api/subscriptions', require('./routes/subscriptions')(supabase, authenticateUser));
+app.use('/api/credit-cards', require('./routes/creditCards')(supabase, authenticateUser));
 app.use('/api/bna', require('./routes/bna')());
 app.use('/api/activities', require('./routes/activities')(supabase, authenticateUser));
 app.use('/api/parse-pdf', require('./routes/parsePdf')(authenticateUser));

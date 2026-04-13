@@ -8,6 +8,7 @@ import BudgetTab from './BudgetTab';
 import NotificationModal from '../../components/NotificationModal';
 import PDFImporter from './PDFImporter';
 import AIChat from '../../components/ai/AIChat';
+import CreditCardsManager from './CreditCardsManager';
 import { useAuth } from '../../context/AuthContext';
 
 function Expenses() {
@@ -30,6 +31,8 @@ function Expenses() {
         categories,
         addCategory,
         deleteCategory,
+        creditCards,
+        addCreditCard,
         error // Added error
     } = useExpenses();
 
@@ -85,6 +88,7 @@ function Expenses() {
     const [paidBy, setPaidBy] = useState(''); // New Paid By State
     const [splitDetails, setSplitDetails] = useState([]); // [{ name: 'Lucas', amount: 0 }, { name: 'Gise', amount: 0 }]
     const [editingId, setEditingId] = useState(null);
+    const [creditCardId, setCreditCardId] = useState(''); // Credit Card State
 
     // Selection  State for Copying
     const [selectedExpenseIds, setSelectedExpenseIds] = useState(new Set());
@@ -359,6 +363,7 @@ function Expenses() {
         setPaidBy('');
         setSplitDetails([]);
         setEditingId(null);
+        setCreditCardId('');
     };
 
     const addSplitDetail = () => {
@@ -398,7 +403,8 @@ function Expenses() {
             payer_name: esCompartido ? paidBy : null,
             date: localDate.toISOString(),
             split_details: (esCompartido && splitDetails.length > 0) ? splitDetails : null,
-            is_paid: isPaid
+            is_paid: isPaid,
+            credit_card_id: creditCardId || null
         };
 
         if (editingId) {
@@ -434,6 +440,7 @@ function Expenses() {
         setIsPaid(expense.is_paid || false);
         setPaidBy(expense.payer_name || '');
         setSplitDetails(expense.split_details || []);
+        setCreditCardId(expense.credit_card_id || '');
 
         // Scroll to form only on mobile/desktop as needed
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1338,6 +1345,26 @@ function Expenses() {
                                         </div>
                                     </div>
                                     <div className="md:col-span-2">
+                                        <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Tarjeta de Crédito</label>
+                                        <div className="relative">
+                                            <select
+                                                value={creditCardId}
+                                                onChange={(e) => setCreditCardId(e.target.value)}
+                                                className="w-full bg-white/5 border border-slate-600/50 hover:border-slate-500 text-slate-100 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 transition-all appearance-none cursor-pointer"
+                                            >
+                                                <option value="">Sin Tarjeta</option>
+                                                {creditCards.map(card => (
+                                                    <option key={card.id} value={card.id}>
+                                                        {card.name} {card.last_digits ? `(${card.last_digits})` : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="md:col-span-2">
                                         <label className="block text-xs text-slate-400 mb-1.5 font-medium ml-1">Fecha</label>
                                         <input
                                             type="date"
@@ -1547,8 +1574,8 @@ function Expenses() {
                         </div>
 
                         {/* SEARCH + CSV TOOLBAR */}
-                        <div className="flex gap-3 mb-4">
-                            <div className="relative flex-1">
+                        <div className="flex gap-3 mb-4 flex-wrap">
+                            <div className="relative flex-1 min-w-[250px]">
                                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
                                 <input
                                     type="text"
@@ -1563,6 +1590,7 @@ function Expenses() {
                                     </button>
                                 )}
                             </div>
+                            <CreditCardsManager />
                             <button
                                 onClick={exportToCSV}
                                 disabled={!filteredExpenses.length}
@@ -1670,6 +1698,11 @@ function Expenses() {
                                                         ) : (
                                                             <span className="bg-white/5 text-slate-300 text-xs px-3 py-1.5 rounded-xl font-bold border border-white/10">Personal</span>
                                                         )}
+                                                        {expense.credit_card_id && creditCards.find(c => c.id === expense.credit_card_id) && (
+                                                            <span className="bg-amber-500/10 text-amber-400 text-xs px-3 py-1.5 rounded-xl font-bold border border-amber-500/20">
+                                                                💳 {creditCards.find(c => c.id === expense.credit_card_id)?.name}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <button
                                                         onClick={() => handleTogglePaid(expense)}
@@ -1706,6 +1739,7 @@ function Expenses() {
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Ref. USD</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Cuotas</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Tipo</th>
+                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Tarjeta</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Estado</th>
                                             <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Fecha</th>
                                             <th scope="col" className="px-6 py-4 text-center"></th>
@@ -1783,6 +1817,15 @@ function Expenses() {
                                                                 </div>
                                                             ) : (
                                                                 <span className="inline-flex items-center justify-center text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-slate-700 tracking-wide">Personal</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4 text-center">
+                                                            {expense.credit_card_id && creditCards.find(c => c.id === expense.credit_card_id) ? (
+                                                                <span className="inline-flex items-center justify-center bg-amber-500/10 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/20">
+                                                                    💳 {creditCards.find(c => c.id === expense.credit_card_id)?.name}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-slate-600 text-[10px]">-</span>
                                                             )}
                                                         </td>
                                                         <td className="px-6 py-4 text-center">

@@ -24,7 +24,8 @@
       "Bash(npm run:*)",
       "Bash(ls -la /c/Users/Usuario/Desktop/Proyectos/Habitos/server/*.env)",
       "Bash(ls -la /c/Users/Usuario/Desktop/Proyectos/Habitos/*.env)",
-      "Bash(ls -la /c/Users/Usuario/Desktop/Proyectos/Habitos/client/*.env)"
+      "Bash(ls -la /c/Users/Usuario/Desktop/Proyectos/Habitos/client/*.env)",
+      "Bash(find C:\\\\Users\\\\Usuario\\\\Desktop\\\\Proyectos\\\\Habitos\\\\server\\\\routes:*)"
     ]
   }
 }

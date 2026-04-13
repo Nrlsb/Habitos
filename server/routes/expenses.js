@@ -16,7 +16,7 @@ module.exports = (supabase, authenticateUser) => {
         if (!planilla) return res.status(403).json({ error: 'Unauthorized' });
 
         const { description, amount, currency, category, esCompartido, enCuotas,
-            cuotaActual, totalCuotas, payer_name, split_details, is_paid } = req.body;
+            cuotaActual, totalCuotas, payer_name, split_details, is_paid, credit_card_id } = req.body;
 
         const { data, error } = await supabase
             .from('expenses')
@@ -27,7 +27,8 @@ module.exports = (supabase, authenticateUser) => {
                 payer_name: esCompartido ? payer_name : null,
                 created_at: req.body.date,
                 split_details: split_details || null,
-                is_paid: is_paid ?? false
+                is_paid: is_paid ?? false,
+                credit_card_id: credit_card_id || null
             })
             .eq('id', id).select();
 

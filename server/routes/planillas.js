@@ -135,7 +135,7 @@ module.exports = (supabase, supabaseAdmin, authenticateUser) => {
             return res.status(403).json({ error: 'Unauthorized or planilla not found' });
 
         const { description, amount, currency, category, esCompartido, enCuotas,
-            cuotaActual, totalCuotas, payer_name, split_details } = req.body;
+            cuotaActual, totalCuotas, payer_name, split_details, credit_card_id } = req.body;
 
         const { data, error } = await supabase
             .from('expenses')
@@ -149,7 +149,8 @@ module.exports = (supabase, supabaseAdmin, authenticateUser) => {
                 total_installments: totalCuotas || null,
                 payer_name: esCompartido ? payer_name : null,
                 created_at: req.body.date || new Date().toISOString(),
-                split_details: split_details || null
+                split_details: split_details || null,
+                credit_card_id: credit_card_id || null
             }])
             .select();
 
@@ -187,7 +188,7 @@ module.exports = (supabase, supabaseAdmin, authenticateUser) => {
                 payer_name: e.payer_name, is_installment: e.is_installment,
                 current_installment: e.current_installment,
                 total_installments: e.total_installments, created_at: e.created_at,
-                split_details: e.split_details
+                split_details: e.split_details, credit_card_id: e.credit_card_id
             }));
 
             const { data: inserted, error: insertError } = await supabase
