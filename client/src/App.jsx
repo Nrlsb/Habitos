@@ -298,6 +298,7 @@ function AppContent() {
   const [habitCategory, setHabitCategory] = useState('General')
   const [showAddModal, setShowAddModal] = useState(false)
   const [lastSync, setLastSync] = useState('')
+  const [manualDuration, setManualDuration] = useState(null)
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
@@ -853,6 +854,53 @@ function AppContent() {
         >
           <Plus size={30} className="text-[#131f18]" />
         </button>
+      )}
+
+      {/* Walking Tracking Modal */}
+      {activity.isTracking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl animate-fade-in">
+          <div className="bg-[#131f18] border border-primary/30 rounded-[32px] w-full max-w-sm p-8 shadow-[var(--shadow-glow-strong)] text-center">
+            <div className="mb-6">
+              <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-4 shadow-[var(--shadow-glow)]">
+                <Activity size={40} className="text-primary animate-pulse" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Registrando caminata</h2>
+              <p className="text-slate-400 text-sm">Sigue caminando para registrar tu actividad</p>
+            </div>
+
+            {/* Timer display */}
+            <div className="bg-primary/10 border border-primary/20 rounded-2xl p-6 mb-6">
+              <div className="text-5xl font-bold text-primary font-mono">
+                {String(Math.floor(activity.elapsedSeconds / 60)).padStart(2, '0')}:
+                {String(activity.elapsedSeconds % 60).padStart(2, '0')}
+              </div>
+              <p className="text-xs text-slate-400 uppercase tracking-widest mt-2 font-bold">Duración</p>
+            </div>
+
+            {/* Manual duration input */}
+            <div className="mb-6">
+              <label className="block text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">Duración manual (minutos) - Opcional</label>
+              <input
+                type="number"
+                min="0"
+                value={manualDuration || ''}
+                onChange={(e) => setManualDuration(e.target.value ? parseInt(e.target.value) : null)}
+                placeholder="Dejar en blanco para usar automático"
+                className="w-full bg-white/5 border border-primary/20 rounded-xl px-4 py-3 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all text-center"
+              />
+            </div>
+
+            <button
+              onClick={() => {
+                activity.stopTracking(manualDuration)
+                setManualDuration(null)
+              }}
+              className="w-full bg-primary hover:bg-primary/90 text-[#131f18] py-4 rounded-2xl font-bold shadow-[var(--shadow-glow)] transition-all active-scale"
+            >
+              Detener caminata
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Add Habit Bottom Sheet Modal */}

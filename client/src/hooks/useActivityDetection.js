@@ -34,10 +34,13 @@ export const useActivityDetection = (session, API_URL) => {
     const [isTracking, setIsTracking] = useState(false);
     const [currentPath, setCurrentPath] = useState([]);
     const [lastPosition, setLastPosition] = useState(null);
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
     // Refs compartidos
     const startStepsRef = useRef(0);
     const sessionEndedRef = useRef(false); // guard contra doble ejecución
+    const startTimeRef = useRef(null);
+    const timerRef = useRef(null);
 
     // Refs para listeners nativos
     const locationListenerRef = useRef(null);
@@ -57,6 +60,16 @@ export const useActivityDetection = (session, API_URL) => {
         sessionEndedRef.current = false;
         pathRef.current = [];
         setCurrentPath([]);
+        setElapsedSeconds(0);
+        startTimeRef.current = Date.now();
+
+        // Iniciar timer
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = setInterval(() => {
+            if (startTimeRef.current) {
+                setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+            }
+        }, 1000);
 
         // Capturar baseline de pasos al inicio
         try {
@@ -102,12 +115,12 @@ export const useActivityDetection = (session, API_URL) => {
         }
     };
 
-    const stopTrackingNative = async () => {
+    const stopTrackingNative = async (manualDurationMinutes = null) => {
         try {
             const lt = getLocationTracking();
             const result = lt ? await lt.stopTracking() : null;
             await removeNativeListeners();
-            await handleSessionEnd(result?.path || []);
+            await handleSessionEnd(result?.path || [], manualDurationMinutes);
         } catch (e) {
             console.error('Error stopping native tracking:', e);
             await removeNativeListeners();
@@ -116,10 +129,17 @@ export const useActivityDetection = (session, API_URL) => {
         }
     };
 
-    const handleSessionEnd = async (path) => {
+    const handleSessionEnd = async (path, manualDurationMinutes = null) => {
         // Guard: evitar que inactivity + stopTracking manual ejecuten esto dos veces
         if (sessionEndedRef.current) return;
         sessionEndedRef.current = true;
+
+        // Detener timer
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+        startTimeRef.current = null;
 
         setIsTracking(false);
         isTrackingRef.current = false;
@@ -128,7 +148,7 @@ export const useActivityDetection = (session, API_URL) => {
         pathRef.current = [];
 
         if (path && path.length > 5) {
-            await saveWalkSession(path);
+            await saveWalkSession(path, manualDurationMinutes);
         }
     };
 
@@ -168,6 +188,16 @@ export const useActivityDetection = (session, API_URL) => {
             isTrackingRef.current = true;
             pathRef.current = [];
             setCurrentPath([]);
+            setElapsedSeconds(0);
+            startTimeRef.current = Date.now();
+
+            // Iniciar timer
+            if (timerRef.current) clearInterval(timerRef.current);
+            timerRef.current = setInterval(() => {
+                if (startTimeRef.current) {
+                    setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+                }
+            }, 1000);
 
             watchId.current = await Geolocation.watchPosition({
                 enableHighAccuracy: true, timeout: 10000, maximumAge: 5000
@@ -196,15 +226,17 @@ export const useActivityDetection = (session, API_URL) => {
         }
     };
 
-    const stopTrackingWeb = async () => {
+    const stopTrackingWeb = async (manualDurationMinutes = null) => {
         if (inactivityTimer.current) { clearTimeout(inactivityTimer.current); inactivityTimer.current = null; }
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        startTimeRef.current = null;
         if (watchId.current) {
             const { Geolocation } = await import('@capacitor/geolocation');
             await Geolocation.clearWatch({ id: watchId.current });
             watchId.current = null;
         }
         isTrackingRef.current = false;
-        if (pathRef.current.length > 5) await saveWalkSession(pathRef.current);
+        if (pathRef.current.length > 5) await saveWalkSession(pathRef.current, manualDurationMinutes);
         setIsTracking(false);
         setLastPosition(null);
     };
@@ -219,11 +251,11 @@ export const useActivityDetection = (session, API_URL) => {
         await startTrackingNative();
     };
 
-    const stopTracking = async () => {
+    const stopTracking = async (manualDurationMinutes = null) => {
         if (Capacitor.isNativePlatform()) {
-            await stopTrackingNative();
+            await stopTrackingNative(manualDurationMinutes);
         } else {
-            await stopTrackingWeb();
+            await stopTrackingWeb(manualDurationMinutes);
         }
     };
 
@@ -231,13 +263,27 @@ export const useActivityDetection = (session, API_URL) => {
     const stopTrackingRef = useRef(stopTracking);
     useEffect(() => { stopTrackingRef.current = stopTracking; });
 
+    // Cleanup timer en unmount
+    useEffect(() => {
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current);
+        };
+    }, []);
+
     // ─── Guardar sesión ───────────────────────────────────────────────────────
 
-    const saveWalkSession = async (path) => {
+    const saveWalkSession = async (path, manualDurationMinutes = null) => {
         if (!session?.access_token || !API_URL) return;
 
-        const startTime = new Date(path[0].timestamp).toISOString();
-        const endTime = new Date(path[path.length - 1].timestamp).toISOString();
+        let startTime = new Date(path[0].timestamp).toISOString();
+        let endTime = new Date(path[path.length - 1].timestamp).toISOString();
+
+        // Si se proporciona duración manual, ajustar el endTime
+        if (manualDurationMinutes !== null && manualDurationMinutes > 0) {
+            const startDate = new Date(startTime);
+            endTime = new Date(startDate.getTime() + manualDurationMinutes * 60000).toISOString();
+        }
+
         const distance = calculateTotalDistance(path);
 
         let steps = 0;
@@ -299,5 +345,5 @@ export const useActivityDetection = (session, API_URL) => {
         return total;
     };
 
-    return { isTracking, currentPath, lastPosition, startTracking, stopTracking };
+    return { isTracking, currentPath, lastPosition, elapsedSeconds, startTracking, stopTracking };
 };
