@@ -199,7 +199,7 @@ function PerfilView({ user, signOut, exportBackupJSON, setView }) {
   ]
 
   return (
-    <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
+    <div className="flex-1" style={{ paddingBottom: 'calc(4.5rem + env(safe-area-inset-bottom))' }}>
       <header className="px-5 pt-safe pb-2 mt-3">
         <h1 className="text-[2rem] font-extrabold text-white tracking-tight">Perfil</h1>
       </header>
@@ -692,7 +692,7 @@ function AppContent() {
             </header>
 
             {/* Habits List */}
-            <main className="flex-1 px-4 py-4 space-y-3 overflow-y-auto">
+            <main className="flex-1 px-4 py-4 space-y-3">
               {!loading && habits.length > 0 && (
                 <HabitCoachingBanner
                   habits={habits}

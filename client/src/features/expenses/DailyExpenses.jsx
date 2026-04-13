@@ -651,7 +651,7 @@ const DailyExpenses = () => {
                             <p className="text-sm">No hay gastos en esta fecha.</p>
                         </div>
                     ) : (
-                        <div className="divide-y divide-white/5 max-h-[70vh] overflow-y-auto">
+                        <div className="divide-y divide-white/5">
                             {groupedExpenses.map((expense) => (
                                 <div key={expense.id} className="p-5 hover:bg-white/5 transition-colors flex items-center justify-between group active-scale cursor-pointer">
                                     <div className="flex items-center gap-3">

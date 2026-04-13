@@ -1720,7 +1720,7 @@ function Expenses() {
 
                         {/* DESKTOP TABLE VIEW */}
                         <div className="hidden md:block bg-primary/5 border border-primary/10 rounded-2xl overflow-hidden shadow-lg backdrop-blur-sm">
-                            <div className="overflow-x-auto">
+                            <div className="overflow-x-auto no-scrollbar">
                                 <table className="w-full text-sm text-left text-slate-400">
                                     <thead className="text-xs text-slate-300 uppercase bg-slate-900/80 border-b border-slate-700">
                                         <tr>
