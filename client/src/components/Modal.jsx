@@ -27,7 +27,7 @@ const Modal = ({ isOpen, onClose, title, children, showCloseButton = true }) => 
             {/* Backdrop click to close */}
             <div className="absolute inset-0" onClick={onClose}></div>
 
-            <div className="relative bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200 z-10">
+            <div className="relative bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col p-6 shadow-2xl animate-in zoom-in-95 duration-200 z-10">
                 {showCloseButton && (
                     <button
                         onClick={onClose}
@@ -43,7 +43,7 @@ const Modal = ({ isOpen, onClose, title, children, showCloseButton = true }) => 
                     </h3>
                 )}
 
-                <div className="text-slate-300 max-h-[90vh] overflow-y-auto">
+                <div className="text-slate-300 flex-1 overflow-y-auto">
                     {children}
                 </div>
             </div>
