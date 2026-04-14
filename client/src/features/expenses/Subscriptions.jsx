@@ -56,7 +56,8 @@ const Subscriptions = ({ currentPlanillaId }) => {
         dolarOficial,
         dolarTarjeta,
         tarjetaFactor,
-        setTarjetaFactor
+        setTarjetaFactor,
+        creditCards
     } = useExpenses();
 
     useEffect(() => {
@@ -72,7 +73,9 @@ const Subscriptions = ({ currentPlanillaId }) => {
         currency: 'ARS',
         category_name: 'General',
         frequency: 'monthly',
-        billing_date: ''
+        billing_date: '',
+        is_shared: false,
+        credit_card_id: ''
     });
 
     const safeSubscriptions = Array.isArray(subscriptions) ? subscriptions : [];
@@ -88,11 +91,13 @@ const Subscriptions = ({ currentPlanillaId }) => {
                 currency: subscription.currency,
                 category_name: subscription.category_name || 'General',
                 frequency: subscription.frequency || 'monthly',
-                billing_date: subscription.billing_date || ''
+                billing_date: subscription.billing_date || '',
+                is_shared: subscription.is_shared || false,
+                credit_card_id: subscription.credit_card_id || ''
             });
         } else {
             setEditingSubscription(null);
-            setFormData({ name: '', amount: '', currency: 'ARS', category_name: 'General', frequency: 'monthly', billing_date: '' });
+            setFormData({ name: '', amount: '', currency: 'ARS', category_name: 'General', frequency: 'monthly', billing_date: '', is_shared: false, credit_card_id: '' });
         }
         setIsModalOpen(true);
     };
@@ -259,6 +264,21 @@ const Subscriptions = ({ currentPlanillaId }) => {
                                                                 {daysLeft === 0 ? 'Hoy' : `${daysLeft}d`}
                                                             </span>
                                                         )}
+                                                        {sub.is_shared && (
+                                                            <span className="text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/20 px-2 py-0.5 rounded-full shrink-0">
+                                                                Compartida
+                                                            </span>
+                                                        )}
+                                                        {sub.credit_card_id && creditCards && (
+                                                            (() => {
+                                                                const card = creditCards.find(c => c.id === sub.credit_card_id);
+                                                                return card ? (
+                                                                    <span className="text-[10px] font-semibold bg-blue-500/15 text-blue-300 border border-blue-500/20 px-2 py-0.5 rounded-full shrink-0">
+                                                                        {card.name}
+                                                                    </span>
+                                                                ) : null;
+                                                            })()
+                                                        )}
                                                     </div>
                                                     <p className="text-xs text-slate-500">
                                                         {freqLabel}{sub.billing_date ? ` · Día ${sub.billing_date}` : ''}
@@ -398,6 +418,33 @@ const Subscriptions = ({ currentPlanillaId }) => {
                                 <option key={c.value} value={c.value}>{c.emoji} {c.value}</option>
                             ))}
                         </select>
+                    </div>
+
+                    {creditCards && creditCards.length > 0 && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1.5">Tarjeta de crédito</label>
+                            <select name="credit_card_id" value={formData.credit_card_id} onChange={handleChange}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/40">
+                                <option value="">No asignada</option>
+                                {creditCards.map(card => (
+                                    <option key={card.id} value={card.id}>{card.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="is_shared"
+                            name="is_shared"
+                            checked={formData.is_shared}
+                            onChange={(e) => setFormData(prev => ({ ...prev, is_shared: e.target.checked }))}
+                            className="w-4 h-4 rounded accent-primary cursor-pointer"
+                        />
+                        <label htmlFor="is_shared" className="text-sm font-medium text-slate-300 cursor-pointer">
+                            Compartida (dividida con otros)
+                        </label>
                     </div>
 
                     <div className="flex gap-3 pt-2">
