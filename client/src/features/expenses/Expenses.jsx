@@ -10,6 +10,7 @@ import NotificationModal from '../../components/NotificationModal';
 import PDFImporter from './PDFImporter';
 import AIChat from '../../components/ai/AIChat';
 import CreditCardsManager from './CreditCardsManager';
+import CreditCardsView from './CreditCardsView';
 import { useAuth } from '../../context/AuthContext';
 
 function Expenses() {
@@ -1247,6 +1248,13 @@ function Expenses() {
                         <Brain size={16} />
                         IA
                     </button>
+                    <button
+                        onClick={() => setActiveTab('tarjetas')}
+                        className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all flex-none min-w-[100px] ${activeTab === 'tarjetas' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                    >
+                        <Wallet size={16} />
+                        Tarjetas
+                    </button>
                 </div>
 
                 {activeTab === 'analysis' ? (
@@ -1280,6 +1288,8 @@ function Expenses() {
                         habits={[]}
                         token={session?.access_token}
                     />
+                ) : activeTab === 'tarjetas' ? (
+                    <CreditCardsView onBack={() => setActiveTab('list')} />
                 ) : (
                     <>
                         {/* ADD NEW EXPENSE FORM */}
