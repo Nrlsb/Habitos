@@ -4,6 +4,7 @@ import { getDolarRate } from '../../services/dolarApi';
 import { Plus, Trash2, ArrowLeft, Edit2, Wallet, CheckCircle, Share2, Users, X, PieChart, BarChart3, List, Check, ArrowRightCircle, ChevronLeft, ChevronRight, Calendar, RefreshCcw, FileText, Brain } from 'lucide-react';
 import ExpensesAnalysis from './ExpensesAnalysis';
 import Subscriptions from './Subscriptions';
+import CombinedItems from './CombinedItems';
 import BudgetTab from './BudgetTab';
 import NotificationModal from '../../components/NotificationModal';
 import PDFImporter from './PDFImporter';
@@ -33,6 +34,8 @@ function Expenses() {
         deleteCategory,
         creditCards,
         addCreditCard,
+        subscriptions,
+        fetchSubscriptions,
         error // Added error
     } = useExpenses();
 
@@ -145,8 +148,9 @@ function Expenses() {
     useEffect(() => {
         if (selectedPlanillaId) {
             getExpenses(selectedPlanillaId);
+            fetchSubscriptions(selectedPlanillaId);
         }
-    }, [selectedPlanillaId, getExpenses]);
+    }, [selectedPlanillaId, getExpenses, fetchSubscriptions]);
 
     // --- DERIVED STATE: Filtered Expenses by Month ---
     const filteredExpenses = useMemo(() => {
@@ -1216,6 +1220,13 @@ function Expenses() {
                         Análisis
                     </button>
                     <button
+                        onClick={() => setActiveTab('combined')}
+                        className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all flex-none min-w-[80px] ${activeTab === 'combined' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+                    >
+                        <BarChart3 size={16} />
+                        Todo
+                    </button>
+                    <button
                         onClick={() => setActiveTab('subscriptions')}
                         className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all flex-none min-w-[120px] ${activeTab === 'subscriptions' ? 'bg-indigo-600 text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
                     >
@@ -1245,6 +1256,13 @@ function Expenses() {
                         onSettleDebt={handleSettleDebt}
                         selectedDate={currentDate}
                         participants={currentPlanilla?.participants || ['Yo']}
+                        currentPlanillaId={selectedPlanillaId}
+                    />
+                ) : activeTab === 'combined' ? (
+                    <CombinedItems
+                        expenses={filteredExpenses}
+                        subscriptions={subscriptions}
+                        dolarRate={dolarRate}
                         currentPlanillaId={selectedPlanillaId}
                     />
                 ) : activeTab === 'subscriptions' ? (
