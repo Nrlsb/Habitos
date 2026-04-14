@@ -43,7 +43,7 @@ const Modal = ({ isOpen, onClose, title, children, showCloseButton = true }) => 
                     </h3>
                 )}
 
-                <div className="text-slate-300">
+                <div className="text-slate-300 max-h-[90vh] overflow-y-auto">
                     {children}
                 </div>
             </div>
