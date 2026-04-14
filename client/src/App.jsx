@@ -21,6 +21,7 @@ import HabitCoachingBanner from './components/ai/HabitCoachingBanner'
 const HabitStats = lazy(() => import('./HabitStats'))
 const Expenses = lazy(() => import('./features/expenses/Expenses'))
 const DailyExpenses = lazy(() => import('./features/expenses/DailyExpenses'))
+const CreditCardsView = lazy(() => import('./features/expenses/CreditCardsView'))
 const Planning = lazy(() => import('./features/planning/Planning'))
 const Meals = lazy(() => import('./features/meals/Meals'))
 const ShoppingList = lazy(() => import('./features/shopping/ShoppingList'))
@@ -194,6 +195,7 @@ function PerfilView({ user, signOut, exportBackupJSON, setView }) {
   const extraViews = [
     { v: 'meals', icon: Utensils, label: 'Comidas', desc: 'Registro y seguimiento de comidas' },
     { v: 'daily-expenses', icon: Calendar, label: 'Diario de Gastos', desc: 'Gastos del día a día' },
+    { v: 'credit-cards', icon: Wallet, label: 'Tarjetas', desc: 'Gastos por tarjeta de crédito' },
     { v: 'planning', icon: Layout, label: 'Planificación', desc: 'Plan financiero y presupuestos' },
     { v: 'shopping', icon: ShoppingCart, label: 'Lista del Super', desc: 'Lista de compras del supermercado' },
   ]
@@ -610,7 +612,7 @@ function AppContent() {
     { v: 'perfil', icon: User, label: 'Perfil' },
   ]
 
-  const activeView = selectedHabitId ? 'habits' : (['meals', 'daily-expenses', 'planning', 'shopping'].includes(view) ? 'perfil' : view)
+  const activeView = selectedHabitId ? 'habits' : (['meals', 'daily-expenses', 'credit-cards', 'planning', 'shopping'].includes(view) ? 'perfil' : view)
 
   return (
     <div className="h-screen flex flex-col bg-[#131f18] text-slate-100 overflow-hidden">
@@ -653,11 +655,11 @@ function AppContent() {
               <ShoppingList />
             </Suspense>
           </ErrorBoundary>
-        ) : view === 'expenses' || view === 'daily-expenses' ? (
+        ) : view === 'expenses' || view === 'daily-expenses' || view === 'credit-cards' ? (
           <ErrorBoundary>
             <Suspense fallback={<LazySpinner />}>
               <ExpensesProvider>
-                {view === 'expenses' ? <Expenses /> : <DailyExpenses />}
+                {view === 'expenses' ? <Expenses /> : view === 'daily-expenses' ? <DailyExpenses /> : <CreditCardsView onBack={() => setView('perfil')} />}
               </ExpensesProvider>
             </Suspense>
           </ErrorBoundary>
