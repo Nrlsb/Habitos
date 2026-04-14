@@ -1724,7 +1724,7 @@ function Expenses() {
                                 <table className="w-full text-sm text-left text-slate-400">
                                     <thead className="text-xs text-slate-300 uppercase bg-slate-900/80 border-b border-slate-700">
                                         <tr>
-                                            <th scope="col" className="px-6 py-4 w-10 text-center">
+                                            <th scope="col" className="px-4 py-4 w-10 text-center">
                                                 <input
                                                     type="checkbox"
                                                     checked={displayedExpenses.length > 0 && selectedExpenseIds.size === displayedExpenses.length}
@@ -1732,23 +1732,18 @@ function Expenses() {
                                                     className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-primary cursor-pointer"
                                                 />
                                             </th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide">Descripción</th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Total (ARS)</th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Categoría</th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Monto Personal (ARS)</th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Ref. USD</th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Cuotas</th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Tipo</th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Tarjeta</th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-center">Estado</th>
-                                            <th scope="col" className="px-6 py-4 font-semibold tracking-wide text-right">Fecha</th>
-                                            <th scope="col" className="px-6 py-4 text-center"></th>
+                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wide">Descripción y Fecha</th>
+                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wide text-right">Monto Total</th>
+                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wide text-right">Tu Gasto</th>
+                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wide text-center">Cuotas</th>
+                                            <th scope="col" className="px-4 py-4 font-semibold tracking-wide text-center">Estado</th>
+                                            <th scope="col" className="px-4 py-4 text-center"></th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-700/50">
                                         {displayedExpenses.length === 0 ? (
                                             <tr>
-                                                <td colSpan="10" className="px-6 py-12 text-center text-slate-500">
+                                                <td colSpan="7" className="px-6 py-12 text-center text-slate-500">
                                                     {searchQuery ? 'No hay resultados para tu búsqueda.' : 'No hay gastos registrados en este mes.'}
                                                 </td>
                                             </tr>
@@ -1758,7 +1753,7 @@ function Expenses() {
                                                 const montoPersonalArs = expense.is_shared ? montoTotalArs / 2 : montoTotalArs;
 
                                                 // Calculate USD amount for display
-                                                let montoUsdDisplay = '-';
+                                                let montoUsdDisplay = null;
                                                 if (expense.currency === 'USD') {
                                                     montoUsdDisplay = `$${expense.amount.toFixed(2)}`;
                                                 } else if (dolarRate) {
@@ -1767,7 +1762,7 @@ function Expenses() {
 
                                                 return (
                                                     <tr key={expense.id} className={`group hover:bg-primary/5 transition-colors ${index % 2 === 0 ? 'bg-transparent' : 'bg-slate-800/30'} ${selectedExpenseIds.has(expense.id) ? 'bg-primary/5' : ''}`}>
-                                                        <td className="px-6 py-4 text-center">
+                                                        <td className="px-4 py-4 text-center">
                                                             <input
                                                                 type="checkbox"
                                                                 checked={selectedExpenseIds.has(expense.id)}
@@ -1775,30 +1770,40 @@ function Expenses() {
                                                                 className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-indigo-600 focus:ring-primary cursor-pointer"
                                                             />
                                                         </td>
-                                                        <td className="px-6 py-4 font-medium text-slate-200">
-                                                            {expense.description}
+                                                        <td className="px-4 py-4">
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className="font-medium text-slate-200 line-clamp-1">{expense.description}</span>
+                                                                <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                                                                    <span className="text-slate-500">{new Date(expense.created_at).toLocaleDateString()}</span>
+                                                                    <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                                                                    <span className="bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
+                                                                        {expense.category || 'General'}
+                                                                    </span>
+                                                                    {expense.is_shared && (
+                                                                        <span className="bg-cyan-500/10 text-cyan-400 px-1.5 py-0.5 rounded border border-cyan-500/20 font-bold uppercase tracking-tighter">Shared</span>
+                                                                    )}
+                                                                    {expense.credit_card_id && (
+                                                                        <span className="text-amber-500/80">💳 {creditCards.find(c => c.id === expense.credit_card_id)?.name}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                         </td>
-                                                        <td className="px-6 py-4 text-right tabular-nums text-slate-300">
-                                                            {`$ ${montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                                                        <td className="px-4 py-4 text-right tabular-nums">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-slate-300 font-medium">${montoTotalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                                                                {montoUsdDisplay && <span className="text-[10px] text-slate-500 font-mono">Ref: {montoUsdDisplay}</span>}
+                                                            </div>
                                                         </td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            <span className="bg-slate-700/50 text-slate-300 px-2 py-1 rounded-md text-xs border border-slate-600/50">
-                                                                {expense.category || 'General'}
-                                                            </span>
+                                                        <td className="px-4 py-4 text-right tabular-nums">
+                                                            <span className="font-bold text-primary">${montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                         </td>
-                                                        <td className="px-6 py-4 text-right tabular-nums font-semibold text-primary">
-                                                            $ {montoPersonalArs.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-right tabular-nums text-slate-500 font-mono text-xs">
-                                                            {montoUsdDisplay}
-                                                        </td>
-                                                        <td className="px-6 py-4">
+                                                        <td className="px-4 py-4">
                                                             {expense.is_installment ? (
-                                                                <div className="w-24 mx-auto">
-                                                                    <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                                                                <div className="w-20 mx-auto">
+                                                                    <div className="flex justify-between text-[9px] text-slate-500 mb-0.5">
                                                                         <span>{expense.current_installment}/{expense.total_installments}</span>
                                                                     </div>
-                                                                    <div className="h-1.5 w-full bg-slate-700 rounded-full overflow-hidden">
+                                                                    <div className="h-1 w-full bg-slate-700 rounded-full overflow-hidden">
                                                                         <div
                                                                             style={{ width: `${(expense.current_installment / expense.total_installments) * 100}%` }}
                                                                             className={`h-full rounded-full bg-gradient-to-r from-indigo-400 to-cyan-400`}
@@ -1809,51 +1814,27 @@ function Expenses() {
                                                                 <div className="text-center text-slate-600">-</div>
                                                             )}
                                                         </td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            {expense.is_shared ? (
-                                                                <div className="flex flex-col items-center gap-1">
-                                                                    <span className="inline-flex items-center justify-center bg-cyan-500/10 text-cyan-400 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-cyan-500/20 tracking-wide">Shared</span>
-                                                                    {expense.payer_name && <span className="text-[9px] text-slate-500 whitespace-nowrap">Por: {expense.payer_name}</span>}
-                                                                </div>
-                                                            ) : (
-                                                                <span className="inline-flex items-center justify-center text-slate-500 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-slate-700 tracking-wide">Personal</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-center">
-                                                            {expense.credit_card_id && creditCards.find(c => c.id === expense.credit_card_id) ? (
-                                                                <span className="inline-flex items-center justify-center bg-amber-500/10 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-500/20">
-                                                                    💳 {creditCards.find(c => c.id === expense.credit_card_id)?.name}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-slate-600 text-[10px]">-</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-6 py-4 text-center">
+                                                        <td className="px-4 py-4 text-center">
                                                             <button
                                                                 onClick={() => handleTogglePaid(expense)}
-                                                                className={`flex items-center gap-1.5 mx-auto text-xs px-3 py-1.5 rounded-xl font-bold border transition-all ${expense.is_paid ? 'bg-primary/15 text-primary border-primary/30 hover:bg-primary/25' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20'}`}
+                                                                className={`flex items-center gap-1 mx-auto text-[10px] px-2 py-1 rounded-lg font-bold border transition-all ${expense.is_paid ? 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20'}`}
                                                             >
-                                                                {expense.is_paid ? <><Check size={12} /> Pagado</> : <>⏳ Pendiente</>}
+                                                                {expense.is_paid ? <><Check size={10} /> PAGADO</> : <>⏳ PENDIENTE</>}
                                                             </button>
                                                         </td>
-                                                        <td className="px-6 py-4 text-right text-slate-500 text-xs">
-                                                            {new Date(expense.created_at).toLocaleDateString()}
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className={`flex justify-end gap-2 transition-opacity opacity-0 group-hover:opacity-100`}>
+                                                        <td className="px-4 py-4">
+                                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                                 <button
                                                                     onClick={() => handleEditExpense(expense)}
-                                                                    className="text-slate-400 hover:text-primary p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
-                                                                    title="Editar"
+                                                                    className="text-slate-500 hover:text-white p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
                                                                 >
-                                                                    <Edit2 size={16} />
+                                                                    <Edit2 size={14} />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleDeleteExpense(expense.id)}
-                                                                    className="text-slate-400 hover:text-red-400 p-1.5 rounded-lg hover:bg-slate-700 transition-colors"
-                                                                    title="Eliminar"
+                                                                    className="text-slate-500 hover:text-red-400 p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
                                                                 >
-                                                                    <Trash2 size={16} />
+                                                                    <Trash2 size={14} />
                                                                 </button>
                                                             </div>
                                                         </td>
