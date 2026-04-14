@@ -14,7 +14,7 @@ module.exports = (supabase, authenticateUser) => {
     });
 
     router.post('/', authenticateUser, async (req, res) => {
-        const { name, amount, currency, category_name, frequency, billing_date, planilla_id } = req.body;
+        const { name, amount, currency, category_name, frequency, billing_date, planilla_id, credit_card_id } = req.body;
         if (!name || !amount) return res.status(400).json({ error: 'Name and amount required' });
 
         const { data, error } = await supabase.from('subscriptions').insert([{
@@ -23,7 +23,8 @@ module.exports = (supabase, authenticateUser) => {
             category_name: category_name || 'General',
             frequency: frequency || 'monthly',
             billing_date: billing_date || null,
-            planilla_id: planilla_id || null
+            planilla_id: planilla_id || null,
+            credit_card_id: credit_card_id || null
         }]).select();
         if (error) return res.status(500).json({ error: error.message });
         res.status(201).json(data[0]);
@@ -31,7 +32,7 @@ module.exports = (supabase, authenticateUser) => {
 
     router.put('/:id', authenticateUser, async (req, res) => {
         const { id } = req.params;
-        const { name, amount, currency, category_name, frequency, billing_date, active } = req.body;
+        const { name, amount, currency, category_name, frequency, billing_date, active, credit_card_id } = req.body;
         const updates = {};
         if (name) updates.name = name;
         if (amount) updates.amount = amount;
@@ -40,6 +41,7 @@ module.exports = (supabase, authenticateUser) => {
         if (frequency) updates.frequency = frequency;
         if (billing_date !== undefined) updates.billing_date = billing_date;
         if (active !== undefined) updates.active = active;
+        if (credit_card_id !== undefined) updates.credit_card_id = credit_card_id;
 
         const { data, error } = await supabase
             .from('subscriptions').update(updates).eq('id', id).eq('user_id', req.user.id).select();
